@@ -25,28 +25,46 @@ interface ShowdownCardProps {
   role: 'player' | 'enemy';
   result: TurnResult;
   winner: WinnerSide;
+  stage: 'intro' | 'result';
 }
 
-function ShowdownCard({ role, result, winner }: ShowdownCardProps) {
+const ROLE_META = {
+  player: { label: 'YOU', fanLabel: 'Your Fans' },
+  enemy: { label: 'ENEMY', fanLabel: 'Enemy Fans' },
+} as const;
+
+function ShowdownCard({ role, result, winner, stage }: ShowdownCardProps) {
   const action = role === 'player' ? result.playerAction : result.enemyAction;
   const meta = ACTION_META[action];
   const isWinner = (winner === 'player' && role === 'player') || (winner === 'enemy' && role === 'enemy');
   const isLoser = winner !== 'draw' && !isWinner;
-  const damage = role === 'player' ? result.damage.toEnemy : result.damage.toPlayer;
+  const damageTaken = role === 'player' ? result.damage.toPlayer : result.damage.toEnemy;
   const fanChange = role === 'player' ? result.fanChange.player : result.fanChange.enemy;
+  const statsVisible = stage === 'result';
+  const emphasize = statsVisible && isWinner;
+  const deemphasize = statsVisible && isLoser;
+
+  const hpDelta = -Math.round(damageTaken);
+  const hpDisplay =
+    hpDelta === 0 ? '±0' : hpDelta > 0 ? `+${hpDelta}` : `${hpDelta}`;
+
+  const hpLabel = role === 'player' ? 'Player HP' : 'Enemy HP';
+  const fanLabel = ROLE_META[role].fanLabel;
+  const fanValue =
+    fanChange === 0 ? '±0%' : `${fanChange > 0 ? '+' : ''}${Math.round(fanChange * 100)}%`;
 
   return (
     <div
       className={clsx(
         'flex w-full max-w-[240px] flex-col items-center text-center transition-all duration-500',
-        isWinner ? 'text-white' : 'text-white/70',
-        isLoser ? 'scale-95 opacity-60' : 'scale-100'
+        emphasize ? 'text-white' : 'text-white/80',
+        deemphasize ? 'scale-95 opacity-60' : 'scale-100'
       )}
     >
       <div
         className={clsx(
           'relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 bg-black/40 shadow-[0_20px_45px_rgba(12,8,40,0.65)]',
-          isWinner ? 'border-white/80 scale-110' : 'border-white/25'
+          emphasize ? 'border-white/80 scale-110' : 'border-white/25'
         )}
       >
         <span
@@ -59,24 +77,26 @@ function ShowdownCard({ role, result, winner }: ShowdownCardProps) {
       </div>
 
       <p className="mt-4 text-xs uppercase tracking-[0.45em] text-white/50">{role === 'player' ? 'YOU' : 'ENEMY'}</p>
+      <p className="text-xs uppercase tracking-[0.35em] text-white/30">Action</p>
       <p className="mt-1 text-lg font-semibold tracking-[0.2em]">{meta.label}</p>
 
-      <div className="mt-4 space-y-1 text-xs tracking-[0.15em] text-white/60">
+      <div
+        className={clsx(
+          'mt-4 space-y-1 text-xs tracking-[0.15em] text-white/60 transition-opacity duration-300',
+          statsVisible ? 'opacity-100' : 'opacity-0'
+        )}
+      >
         <p>
-          HP&nbsp;
-          <span className="font-semibold text-white">
-            {damage > 0 ? `-${Math.round(damage)}` : '±0'}
-          </span>
+          {hpLabel}&nbsp;
+          <span className="font-semibold text-white">{hpDisplay}</span>
         </p>
         <p>
-          Fans&nbsp;
-          <span className="font-semibold text-white">
-            {fanChange === 0 ? '±0%' : `${fanChange > 0 ? '+' : ''}${Math.round(fanChange * 100)}%`}
-          </span>
+          {fanLabel}&nbsp;
+          <span className="font-semibold text-white">{fanValue}</span>
         </p>
       </div>
 
-      {isWinner && (
+      {emphasize && (
         <p className="mt-3 text-[10px] uppercase tracking-[0.6em] text-white/60">Advantage</p>
       )}
     </div>
@@ -85,16 +105,29 @@ function ShowdownCard({ role, result, winner }: ShowdownCardProps) {
 
 interface ActionShowdownProps {
   result: TurnResult;
+  stage: 'intro' | 'result';
+  onContinue: () => void;
 }
 
-export function ActionShowdown({ result }: ActionShowdownProps) {
+export function ActionShowdown({ result, stage, onContinue }: ActionShowdownProps) {
   const winner: WinnerSide =
     result.judgement === 'win' ? 'player' : result.judgement === 'lose' ? 'enemy' : 'draw';
+  const canContinue = stage === 'result';
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="relative flex w-[min(720px,90vw)] max-w-4xl items-center justify-between gap-10 px-6 py-10">
-        <ShowdownCard role="player" result={result} winner={winner} />
+    <div
+      className={clsx(
+        'absolute inset-0 z-40 flex items-center justify-center bg-transparent transition-opacity',
+        canContinue ? 'cursor-pointer' : 'cursor-default'
+      )}
+      onClick={() => {
+        if (canContinue) {
+          onContinue();
+        }
+      }}
+    >
+      <div className="relative flex w-[min(720px,90vw)] max-w-4xl items-center justify-between gap-10 px-6 py-8">
+        <ShowdownCard role="player" result={result} winner={winner} stage={stage} />
 
         <div className="flex flex-col items-center gap-3 text-white">
           <span className="text-xs uppercase tracking-[0.65em] text-white/50">Turn {result.turnNumber}</span>
@@ -102,9 +135,17 @@ export function ActionShowdown({ result }: ActionShowdownProps) {
           <span className="text-[11px] uppercase tracking-[0.4em] text-white/40">
             {winner === 'draw' ? 'Draw' : winner === 'player' ? 'Player Wins' : 'Enemy Wins'}
           </span>
+          <span
+            className={clsx(
+              'mt-2 text-[10px] uppercase tracking-[0.5em] text-white/40 transition-opacity',
+              canContinue ? 'opacity-80' : 'opacity-0'
+            )}
+          >
+            Tap / Click to Continue
+          </span>
         </div>
 
-        <ShowdownCard role="enemy" result={result} winner={winner} />
+        <ShowdownCard role="enemy" result={result} winner={winner} stage={stage} />
       </div>
     </div>
   );

@@ -41,6 +41,7 @@ type CommandBubble = {
 };
 
 type BattlePhase = 'announcing' | 'selecting' | 'resolving' | 'ended';
+type ShowdownStage = 'intro' | 'result';
 
 export function useBattle() {
   const [state, dispatch] = useReducer(battleReducer, null as unknown as BattleState, initBattle);
@@ -48,9 +49,11 @@ export function useBattle() {
   const [commandBubbles, setCommandBubbles] = useState<CommandBubble[]>([]);
   const [visibleBubbleCount, setVisibleBubbleCount] = useState(0);
   const [showdownResult, setShowdownResult] = useState<TurnResult | null>(null);
+  const [showdownStage, setShowdownStage] = useState<ShowdownStage>('intro');
   const phaseTimerRef = useRef<number | null>(null);
   const bubbleRevealTimersRef = useRef<number[]>([]);
   const showdownTimerRef = useRef<number | null>(null);
+  const showdownStageTimerRef = useRef<number | null>(null);
   const previousTurnCountRef = useRef(state.turnHistory.length);
   const bubbleCount = commandBubbles.length;
 
@@ -100,11 +103,16 @@ export function useBattle() {
       window.clearTimeout(showdownTimerRef.current);
       showdownTimerRef.current = null;
     }
+    if (showdownStageTimerRef.current) {
+      window.clearTimeout(showdownStageTimerRef.current);
+      showdownStageTimerRef.current = null;
+    }
     dispatch({ type: 'RESET_BATTLE' });
     previousTurnCountRef.current = 0;
     setCommandBubbles([]);
     setVisibleBubbleCount(0);
     setShowdownResult(null);
+    setShowdownStage('intro');
     setPhase('announcing');
   }, []);
 
@@ -115,6 +123,30 @@ export function useBattle() {
     // 観客指示は自動生成されるため、特に何もしない
     // 必要に応じて将来拡張可能
   }, []);
+
+  const acknowledgeShowdown = useCallback(() => {
+    if (!showdownResult || showdownStage !== 'result') {
+      return;
+    }
+
+    if (showdownStageTimerRef.current) {
+      window.clearTimeout(showdownStageTimerRef.current);
+      showdownStageTimerRef.current = null;
+    }
+    if (showdownTimerRef.current) {
+      window.clearTimeout(showdownTimerRef.current);
+      showdownTimerRef.current = null;
+    }
+
+    setShowdownResult(null);
+    setShowdownStage('intro');
+
+    if (state.isActive) {
+      setPhase('announcing');
+    } else {
+      setPhase('ended');
+    }
+  }, [showdownResult, showdownStage, state.isActive]);
 
   useEffect(() => {
     if (phase !== 'announcing') {
@@ -223,6 +255,7 @@ export function useBattle() {
     if (current > previous) {
       const latest = state.turnHistory[current - 1];
       setShowdownResult(latest);
+      setShowdownStage('intro');
       setVisibleBubbleCount(0);
 
       if (phaseTimerRef.current) {
@@ -236,25 +269,28 @@ export function useBattle() {
 
       setPhase('showdown');
 
+      if (showdownStageTimerRef.current) {
+        window.clearTimeout(showdownStageTimerRef.current);
+        showdownStageTimerRef.current = null;
+      }
       if (showdownTimerRef.current) {
         window.clearTimeout(showdownTimerRef.current);
+        showdownTimerRef.current = null;
       }
 
-      const showdownDuration = state.isActive ? 1600 : 1600;
+      showdownStageTimerRef.current = window.setTimeout(() => {
+        setShowdownStage('result');
 
-      showdownTimerRef.current = window.setTimeout(() => {
-        showdownTimerRef.current = null;
-        setShowdownResult(null);
-        if (state.isActive) {
-          setPhase('announcing');
-        } else {
-          setPhase('ended');
+        if (!state.isActive) {
+          showdownTimerRef.current = window.setTimeout(() => {
+            acknowledgeShowdown();
+          }, 1000);
         }
-      }, showdownDuration);
+      }, 1200);
     }
 
     previousTurnCountRef.current = current;
-  }, [state.isActive, state.turnHistory.length]);
+  }, [acknowledgeShowdown, state.isActive, state.turnHistory.length]);
 
   useEffect(() => {
     return () => {
@@ -267,6 +303,10 @@ export function useBattle() {
       if (showdownTimerRef.current) {
         window.clearTimeout(showdownTimerRef.current);
         showdownTimerRef.current = null;
+      }
+      if (showdownStageTimerRef.current) {
+        window.clearTimeout(showdownStageTimerRef.current);
+        showdownStageTimerRef.current = null;
       }
     };
   }, []);
@@ -288,7 +328,9 @@ export function useBattle() {
     commandBubbles,
     visibleBubbleCount,
     showdownResult,
+    showdownStage,
     canSelectAction,
+    acknowledgeShowdown,
 
     // アクション
     startBattle,
