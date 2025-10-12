@@ -106,15 +106,24 @@ function decideEnemyAction(_state: BattleState): ActionType {
 /**
  * 勝敗を判定
  * 勝利条件: 相手HP 0以下
+ * 引き分け条件: 同じターンに両者HP 0以下
  */
-export function checkWinner(state: BattleState): 'player' | 'enemy' | null {
+export function checkWinner(state: BattleState): 'player' | 'enemy' | 'draw' | null {
   const { HP_THRESHOLD } = BATTLE_PARAMS.WIN_CONDITIONS;
 
+  const playerDead = state.player.hp <= HP_THRESHOLD;
+  const enemyDead = state.enemy.hp <= HP_THRESHOLD;
+
+  // 両者同時に倒れた場合は引き分け
+  if (playerDead && enemyDead) {
+    return 'draw';
+  }
+
   // HPによる判定
-  if (state.enemy.hp <= HP_THRESHOLD) {
+  if (enemyDead) {
     return 'player';
   }
-  if (state.player.hp <= HP_THRESHOLD) {
+  if (playerDead) {
     return 'enemy';
   }
 

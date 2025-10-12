@@ -1,12 +1,13 @@
 import { Button } from '../ui/Button';
 
 interface BattleResultProps {
-  winner: 'player' | 'enemy';
+  winner: 'player' | 'enemy' | 'draw';
   onReset: () => void;
 }
 
 export function BattleResult({ winner, onReset }: BattleResultProps) {
   const isPlayerWin = winner === 'player';
+  const isDraw = winner === 'draw';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
@@ -21,17 +22,19 @@ export function BattleResult({ winner, onReset }: BattleResultProps) {
             <p className="text-xs uppercase tracking-[0.6em] text-white/40">Battle Result</p>
             <h2
               className={`mt-3 text-4xl font-black tracking-wide ${
-                isPlayerWin ? 'text-arena-player' : 'text-arena-enemy'
+                isDraw ? 'text-white' : isPlayerWin ? 'text-arena-player' : 'text-arena-enemy'
               }`}
             >
-              {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
+              {isDraw ? 'DRAW' : isPlayerWin ? 'VICTORY' : 'DEFEAT'}
             </h2>
           </div>
 
           <p className="leading-relaxed text-white/80">
-            {isPlayerWin
-              ? '観客を熱狂させ、魔法少女同士のライブバトルに勝利した！'
-              : '観客の支持を得られず敗北…。次のステージで巻き返そう。'}
+            {isDraw
+              ? '両者同時に倒れた…！激闘の末、引き分けに終わった。'
+              : isPlayerWin
+                ? '観客を熱狂させ、魔法少女同士のライブバトルに勝利した！'
+                : '観客の支持を得られず敗北…。次のステージで巻き返そう。'}
           </p>
 
           <div className="pt-2">

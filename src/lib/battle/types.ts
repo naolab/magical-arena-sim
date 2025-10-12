@@ -75,7 +75,7 @@ export interface BattleState {
   audience: AudienceComposition;
   currentCommands: AudienceCommand[]; // 現在ターンの観客指示（3つ）
   turnHistory: TurnResult[]; // 過去のターン履歴
-  winner: 'player' | 'enemy' | null; // 勝者
+  winner: 'player' | 'enemy' | 'draw' | null; // 勝者
 }
 
 // ダメージ計算のパラメータ
