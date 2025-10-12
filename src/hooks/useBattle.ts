@@ -3,7 +3,7 @@
 import { useReducer, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { initBattle, executePlayerAction, resetBattle } from '@/lib/battle/battleEngine';
 import { generateAudienceCommand } from '@/lib/battle/audienceCommand';
-import type { AudienceCommand, BattleState, ActionType } from '@/lib/battle/types';
+import type { AudienceCommand, BattleState, ActionType, TurnResult } from '@/lib/battle/types';
 
 type BattleAction =
   | { type: 'START_BATTLE' }
@@ -47,8 +47,12 @@ export function useBattle() {
   const [phase, setPhase] = useState<BattlePhase>('announcing');
   const [commandBubbles, setCommandBubbles] = useState<CommandBubble[]>([]);
   const [visibleBubbleCount, setVisibleBubbleCount] = useState(0);
+  const [showdownResult, setShowdownResult] = useState<TurnResult | null>(null);
   const phaseTimerRef = useRef<number | null>(null);
   const bubbleRevealTimersRef = useRef<number[]>([]);
+  const showdownTimerRef = useRef<number | null>(null);
+  const previousTurnCountRef = useRef(state.turnHistory.length);
+  const bubbleCount = commandBubbles.length;
 
   /**
    * バトル開始
@@ -65,17 +69,43 @@ export function useBattle() {
       if (!state.isActive || phase !== 'selecting') {
         return;
       }
+      if (phaseTimerRef.current) {
+        window.clearTimeout(phaseTimerRef.current);
+        phaseTimerRef.current = null;
+      }
+      if (bubbleRevealTimersRef.current.length) {
+        bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+        bubbleRevealTimersRef.current = [];
+      }
+      setVisibleBubbleCount(bubbleCount);
       setPhase('resolving');
       dispatch({ type: 'EXECUTE_ACTION', payload: action });
     },
-    [phase, state.isActive]
+    [bubbleCount, phase, state.isActive]
   );
 
   /**
    * バトルをリセット
    */
   const reset = useCallback(() => {
+    if (phaseTimerRef.current) {
+      window.clearTimeout(phaseTimerRef.current);
+      phaseTimerRef.current = null;
+    }
+    if (bubbleRevealTimersRef.current.length) {
+      bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      bubbleRevealTimersRef.current = [];
+    }
+    if (showdownTimerRef.current) {
+      window.clearTimeout(showdownTimerRef.current);
+      showdownTimerRef.current = null;
+    }
     dispatch({ type: 'RESET_BATTLE' });
+    previousTurnCountRef.current = 0;
+    setCommandBubbles([]);
+    setVisibleBubbleCount(0);
+    setShowdownResult(null);
+    setPhase('announcing');
   }, []);
 
   /**
@@ -87,6 +117,10 @@ export function useBattle() {
   }, []);
 
   useEffect(() => {
+    if (phase !== 'announcing') {
+      return;
+    }
+
     if (phaseTimerRef.current) {
       window.clearTimeout(phaseTimerRef.current);
       phaseTimerRef.current = null;
@@ -97,7 +131,6 @@ export function useBattle() {
     }
 
     if (!state.isActive) {
-      setPhase('ended');
       setCommandBubbles([]);
       setVisibleBubbleCount(0);
       return;
@@ -154,7 +187,6 @@ export function useBattle() {
 
     setCommandBubbles(bubbleList);
     setVisibleBubbleCount(0);
-    setPhase('announcing');
 
     const revealInterval = 400;
 
@@ -167,7 +199,9 @@ export function useBattle() {
 
     const selectingDelay = bubbleList.length * revealInterval + 600;
     phaseTimerRef.current = window.setTimeout(() => {
-      setPhase('selecting');
+      if (state.isActive) {
+        setPhase('selecting');
+      }
     }, selectingDelay);
 
     return () => {
@@ -180,7 +214,47 @@ export function useBattle() {
         bubbleRevealTimersRef.current = [];
       }
     };
-  }, [state.currentTurn, state.currentCommand, state.isActive]);
+  }, [phase, state.currentCommand, state.currentTurn, state.isActive]);
+
+  useEffect(() => {
+    const previous = previousTurnCountRef.current;
+    const current = state.turnHistory.length;
+
+    if (current > previous) {
+      const latest = state.turnHistory[current - 1];
+      setShowdownResult(latest);
+      setVisibleBubbleCount(0);
+
+      if (phaseTimerRef.current) {
+        window.clearTimeout(phaseTimerRef.current);
+        phaseTimerRef.current = null;
+      }
+      if (bubbleRevealTimersRef.current.length) {
+        bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+        bubbleRevealTimersRef.current = [];
+      }
+
+      setPhase('showdown');
+
+      if (showdownTimerRef.current) {
+        window.clearTimeout(showdownTimerRef.current);
+      }
+
+      const showdownDuration = state.isActive ? 1600 : 1600;
+
+      showdownTimerRef.current = window.setTimeout(() => {
+        showdownTimerRef.current = null;
+        setShowdownResult(null);
+        if (state.isActive) {
+          setPhase('announcing');
+        } else {
+          setPhase('ended');
+        }
+      }, showdownDuration);
+    }
+
+    previousTurnCountRef.current = current;
+  }, [state.isActive, state.turnHistory.length]);
 
   useEffect(() => {
     return () => {
@@ -189,6 +263,10 @@ export function useBattle() {
       }
       if (bubbleRevealTimersRef.current.length) {
         bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      }
+      if (showdownTimerRef.current) {
+        window.clearTimeout(showdownTimerRef.current);
+        showdownTimerRef.current = null;
       }
     };
   }, []);
@@ -209,6 +287,7 @@ export function useBattle() {
     phase,
     commandBubbles,
     visibleBubbleCount,
+    showdownResult,
     canSelectAction,
 
     // アクション

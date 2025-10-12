@@ -7,6 +7,7 @@ import { AudienceDisplay } from '@/components/battle/AudienceDisplay';
 import { CommandBubbles } from '@/components/battle/CommandBubbles';
 import { ActionButtons } from '@/components/battle/ActionButtons';
 import { BattleResult } from '@/components/battle/BattleResult';
+import { ActionShowdown } from '@/components/battle/ActionShowdown';
 
 export default function BattlePage() {
   const {
@@ -18,6 +19,7 @@ export default function BattlePage() {
     phase,
     commandBubbles,
     visibleBubbleCount,
+    showdownResult,
     canSelectAction,
     selectAction,
     winner,
@@ -30,6 +32,8 @@ export default function BattlePage() {
       {/* 16:9固定のゲーム画面 */}
       <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] bg-arena-bg">
         <CommandBubbles bubbles={commandBubbles} phase={phase} visibleCount={visibleBubbleCount} />
+
+        {phase === 'showdown' && showdownResult && <ActionShowdown result={showdownResult} />}
 
         <div className="absolute left-8 top-8">
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
