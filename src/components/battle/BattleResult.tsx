@@ -1,4 +1,5 @@
 import { Button } from '../ui/Button';
+import { useRouter } from 'next/navigation';
 
 interface BattleResultProps {
   winner: 'player' | 'enemy' | 'draw';
@@ -6,6 +7,7 @@ interface BattleResultProps {
 }
 
 export function BattleResult({ winner, onReset }: BattleResultProps) {
+  const router = useRouter();
   const isPlayerWin = winner === 'player';
   const isDraw = winner === 'draw';
 
@@ -37,7 +39,7 @@ export function BattleResult({ winner, onReset }: BattleResultProps) {
                 : '観客の支持を得られず敗北…。次のステージで巻き返そう。'}
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-3">
             <Button
               onClick={onReset}
               variant="primary"
@@ -45,6 +47,14 @@ export function BattleResult({ winner, onReset }: BattleResultProps) {
               className="w-full rounded-full bg-gradient-to-br from-white/20 to-white/10 text-white border border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/30 hover:to-white/20 hover:border-white/40"
             >
               再戦する
+            </Button>
+            <Button
+              onClick={() => router.push('/')}
+              variant="secondary"
+              size="lg"
+              className="w-full rounded-full bg-gradient-to-br from-white/10 to-white/5 text-white/80 border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/15 hover:to-white/8 hover:text-white hover:border-white/30"
+            >
+              トップに戻る
             </Button>
           </div>
         </div>
