@@ -54,8 +54,8 @@ export default function BattlePage() {
           <EnemyStatus enemy={enemy} />
         </div>
 
-        <div className="absolute bottom-10 left-[28%] right-10">
-          <div className="flex justify-end">
+        <div className="absolute bottom-[9%] left-1/2 w-[36%] max-w-2xl -translate-x-1/2">
+          <div className="flex justify-center">
             <div
               className={`transform transition-all duration-500 ${
                 phase === 'selecting'

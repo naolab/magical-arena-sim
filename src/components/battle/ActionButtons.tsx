@@ -16,7 +16,7 @@ export function ActionButtons({ onAction, disabled }: ActionButtonsProps) {
         size="lg"
         className="flex-1"
       >
-        ⚔️ アタック
+        ATTACK
       </Button>
       <Button
         onClick={() => onAction('appeal')}
@@ -25,7 +25,7 @@ export function ActionButtons({ onAction, disabled }: ActionButtonsProps) {
         size="lg"
         className="flex-1"
       >
-        ✨ アピール
+        APPEAL
       </Button>
       <Button
         onClick={() => onAction('guard')}
@@ -34,7 +34,7 @@ export function ActionButtons({ onAction, disabled }: ActionButtonsProps) {
         size="lg"
         className="flex-1"
       >
-        🛡️ ガード
+        GUARD
       </Button>
     </div>
   );

@@ -24,7 +24,7 @@ export function Button({
           'bg-arena-enemy text-white': variant === 'danger',
           'px-4 py-2 text-sm': size === 'sm',
           'px-6 py-3 text-base': size === 'md',
-          'px-8 py-4 text-lg': size === 'lg',
+          'px-10 py-5 text-xl tracking-[0.3em] leading-none': size === 'lg',
         },
         className
       )}
