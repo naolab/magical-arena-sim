@@ -56,12 +56,14 @@ export function updateAudienceComposition(
   playerFanChange: number,
   enemyFanChange: number
 ): AudienceComposition {
+  const MIN_NEUTRAL_RESERVE = 0.1;
   let { playerFans, enemyFans, neutralFans } = current;
 
   // プレイヤーファンの変動
   if (playerFanChange > 0) {
-    // ファン増加: どっちつかずから獲得
-    const gain = Math.min(playerFanChange, neutralFans);
+    // ファン増加: どっちつかずのリザーブを残して獲得
+    const availableNeutral = Math.max(neutralFans - MIN_NEUTRAL_RESERVE, 0);
+    const gain = Math.min(playerFanChange, availableNeutral);
     playerFans += gain;
     neutralFans -= gain;
   } else if (playerFanChange < 0) {
@@ -73,7 +75,8 @@ export function updateAudienceComposition(
 
   // 敵ファンの変動
   if (enemyFanChange > 0) {
-    const gain = Math.min(enemyFanChange, neutralFans);
+    const availableNeutral = Math.max(neutralFans - MIN_NEUTRAL_RESERVE, 0);
+    const gain = Math.min(enemyFanChange, availableNeutral);
     enemyFans += gain;
     neutralFans -= gain;
   } else if (enemyFanChange < 0) {

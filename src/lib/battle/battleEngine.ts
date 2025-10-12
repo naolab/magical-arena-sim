@@ -97,24 +97,16 @@ function decideEnemyAction(_state: BattleState): ActionType {
 
 /**
  * 勝敗を判定
- * 勝利条件: 相手HP 0以下、またはファン率80%以上
+ * 勝利条件: 相手HP 0以下
  */
 export function checkWinner(state: BattleState): 'player' | 'enemy' | null {
-  const { HP_THRESHOLD, FAN_THRESHOLD } = BATTLE_PARAMS.WIN_CONDITIONS;
+  const { HP_THRESHOLD } = BATTLE_PARAMS.WIN_CONDITIONS;
 
   // HPによる判定
   if (state.enemy.hp <= HP_THRESHOLD) {
     return 'player';
   }
   if (state.player.hp <= HP_THRESHOLD) {
-    return 'enemy';
-  }
-
-  // ファン率による判定
-  if (state.player.fanRate >= FAN_THRESHOLD) {
-    return 'player';
-  }
-  if (state.enemy.fanRate >= FAN_THRESHOLD) {
     return 'enemy';
   }
 
