@@ -3,7 +3,15 @@
 import { useReducer, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { initBattle, executePlayerAction, resetBattle } from '@/lib/battle/battleEngine';
 import { generateAudienceCommand } from '@/lib/battle/audienceCommand';
-import type { AudienceCommand, BattleState, ActionType, TurnResult } from '@/lib/battle/types';
+import type {
+  AudienceCommand,
+  AudienceComposition,
+  BattleState,
+  ActionType,
+  EnemyState,
+  PlayerState,
+  TurnResult,
+} from '@/lib/battle/types';
 
 type BattleAction =
   | { type: 'START_BATTLE' }
@@ -56,6 +64,14 @@ export function useBattle() {
   const showdownStageTimerRef = useRef<number | null>(null);
   const previousTurnCountRef = useRef(state.turnHistory.length);
   const bubbleCount = commandBubbles.length;
+  const [displayPlayer, setDisplayPlayer] = useState<PlayerState>(state.player);
+  const [displayEnemy, setDisplayEnemy] = useState<EnemyState>(state.enemy);
+  const [displayAudience, setDisplayAudience] = useState<AudienceComposition>(state.audience);
+  const pendingStateRef = useRef<{
+    player: PlayerState;
+    enemy: EnemyState;
+    audience: AudienceComposition;
+  } | null>(null);
 
   /**
    * バトル開始
@@ -81,6 +97,7 @@ export function useBattle() {
         bubbleRevealTimersRef.current = [];
       }
       setVisibleBubbleCount(bubbleCount);
+      pendingStateRef.current = null;
       setPhase('resolving');
       dispatch({ type: 'EXECUTE_ACTION', payload: action });
     },
@@ -113,6 +130,7 @@ export function useBattle() {
     setVisibleBubbleCount(0);
     setShowdownResult(null);
     setShowdownStage('intro');
+    pendingStateRef.current = null;
     setPhase('announcing');
   }, []);
 
@@ -138,6 +156,7 @@ export function useBattle() {
       showdownTimerRef.current = null;
     }
 
+    pendingStateRef.current = null;
     setShowdownResult(null);
     setShowdownStage('intro');
 
@@ -257,6 +276,11 @@ export function useBattle() {
       setShowdownResult(latest);
       setShowdownStage('intro');
       setVisibleBubbleCount(0);
+      pendingStateRef.current = {
+        player: latest.playerState,
+        enemy: latest.enemyState,
+        audience: latest.audienceComposition,
+      };
 
       if (phaseTimerRef.current) {
         window.clearTimeout(phaseTimerRef.current);
@@ -280,6 +304,12 @@ export function useBattle() {
 
       showdownStageTimerRef.current = window.setTimeout(() => {
         setShowdownStage('result');
+
+        if (pendingStateRef.current) {
+          setDisplayPlayer(pendingStateRef.current.player);
+          setDisplayEnemy(pendingStateRef.current.enemy);
+          setDisplayAudience(pendingStateRef.current.audience);
+        }
 
         if (!state.isActive) {
           showdownTimerRef.current = window.setTimeout(() => {
@@ -311,6 +341,16 @@ export function useBattle() {
     };
   }, []);
 
+  useEffect(() => {
+    if (phase === 'showdown' || showdownResult) {
+      return;
+    }
+    pendingStateRef.current = null;
+    setDisplayPlayer(state.player);
+    setDisplayEnemy(state.enemy);
+    setDisplayAudience(state.audience);
+  }, [phase, showdownResult, state.audience, state.enemy, state.player]);
+
   const canSelectAction = useMemo(() => phase === 'selecting' && state.isActive, [phase, state.isActive]);
 
   return {
@@ -318,9 +358,9 @@ export function useBattle() {
     state,
     isActive: state.isActive,
     currentTurn: state.currentTurn,
-    player: state.player,
-    enemy: state.enemy,
-    audience: state.audience,
+    player: displayPlayer,
+    enemy: displayEnemy,
+    audience: displayAudience,
     currentCommand: state.currentCommand,
     turnHistory: state.turnHistory,
     winner: state.winner,
