@@ -40,7 +40,7 @@ type CommandBubble = {
   isPrimary: boolean;
 };
 
-type BattlePhase = 'announcing' | 'selecting' | 'resolving' | 'ended';
+type BattlePhase = 'announcing' | 'selecting' | 'resolving' | 'showdown' | 'ended';
 type ShowdownStage = 'intro' | 'result';
 
 export function useBattle() {
