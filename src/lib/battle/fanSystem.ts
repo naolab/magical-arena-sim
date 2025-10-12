@@ -56,16 +56,24 @@ export function updateAudienceComposition(
   playerFanChange: number,
   enemyFanChange: number
 ): AudienceComposition {
-  const MIN_NEUTRAL_RESERVE = 0.1;
   let { playerFans, enemyFans, neutralFans } = current;
 
   // プレイヤーファンの変動
   if (playerFanChange > 0) {
-    // ファン増加: どっちつかずのリザーブを残して獲得
-    const availableNeutral = Math.max(neutralFans - MIN_NEUTRAL_RESERVE, 0);
-    const gain = Math.min(playerFanChange, availableNeutral);
-    playerFans += gain;
-    neutralFans -= gain;
+    // ファン増加: 中立と敵ファンから半分ずつ奪う
+    const halfGain = playerFanChange / 2;
+
+    // 1. 中立ファンから半分を試みる
+    const gainFromNeutral = Math.min(halfGain, neutralFans);
+
+    // 2. 敵ファンから残りを奪う
+    const remainingGain = playerFanChange - gainFromNeutral;
+    const gainFromEnemy = Math.min(remainingGain, enemyFans);
+
+    // 3. 適用
+    neutralFans -= gainFromNeutral;
+    enemyFans -= gainFromEnemy;
+    playerFans += gainFromNeutral + gainFromEnemy;
   } else if (playerFanChange < 0) {
     // ファン減少: どっちつかずに移動
     const loss = Math.min(Math.abs(playerFanChange), playerFans);
@@ -75,10 +83,20 @@ export function updateAudienceComposition(
 
   // 敵ファンの変動
   if (enemyFanChange > 0) {
-    const availableNeutral = Math.max(neutralFans - MIN_NEUTRAL_RESERVE, 0);
-    const gain = Math.min(enemyFanChange, availableNeutral);
-    enemyFans += gain;
-    neutralFans -= gain;
+    // ファン増加: 中立とプレイヤーファンから半分ずつ奪う
+    const halfGain = enemyFanChange / 2;
+
+    // 1. 中立ファンから半分を試みる
+    const gainFromNeutral = Math.min(halfGain, neutralFans);
+
+    // 2. プレイヤーファンから残りを奪う
+    const remainingGain = enemyFanChange - gainFromNeutral;
+    const gainFromPlayer = Math.min(remainingGain, playerFans);
+
+    // 3. 適用
+    neutralFans -= gainFromNeutral;
+    playerFans -= gainFromPlayer;
+    enemyFans += gainFromNeutral + gainFromPlayer;
   } else if (enemyFanChange < 0) {
     const loss = Math.min(Math.abs(enemyFanChange), enemyFans);
     enemyFans -= loss;
