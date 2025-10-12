@@ -67,27 +67,6 @@ export function getAntiLevelName(level: AntiLevel): string {
 }
 
 /**
- * ブーイングLv3が発動中かチェック
- */
-export function isBooingActive(antiGauge: number): boolean {
-  return antiGauge >= BATTLE_PARAMS.ANTI_THRESHOLDS.LV3;
-}
-
-/**
- * ブーイングLv3時のアンチゲージ減少量を取得
- */
-export function getBooingAntiReduction(): number {
-  return BATTLE_PARAMS.BOOING_LV3.ANTI_REDUCTION;
-}
-
-/**
- * ブーイングLv3時のファン減少量を取得
- */
-export function getBooingFanLoss(): number {
-  return BATTLE_PARAMS.BOOING_LV3.FAN_LOSS;
-}
-
-/**
  * アンチゲージを0-100の範囲にクランプ
  */
 export function clampAntiGauge(value: number): number {

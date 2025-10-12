@@ -1,6 +1,7 @@
 import { Gauge } from '../ui/Gauge';
 import { Badge } from '../ui/Badge';
 import { getAntiLevel } from '@/lib/battle/antiGauge';
+import { BATTLE_PARAMS } from '@/config/battleParams';
 import type { PlayerState } from '@/types';
 
 interface PlayerStatusProps {
@@ -8,10 +9,10 @@ interface PlayerStatusProps {
 }
 
 const antiLevelLabel: Record<number, string> = {
-  0: '通常',
-  1: '冷淡期',
-  2: 'ブーイング期',
-  3: '炎上期',
+  0: 'Lv0',
+  1: 'Lv1',
+  2: 'Lv2',
+  3: 'Lv3',
 };
 
 const antiLevelBadgeVariant: Record<number, 'default' | 'warning' | 'danger'> = {
@@ -30,6 +31,16 @@ const antiLevelGaugeColor: Record<number, 'neutral' | 'anti-lv1' | 'anti-lv2' | 
 
 export function PlayerStatus({ player }: PlayerStatusProps) {
   const level = getAntiLevel(player.antiGauge);
+  const levelKey = `LV${level}` as keyof typeof BATTLE_PARAMS.ANTI_EFFECTS;
+  const { fanPenalty, powerPenalty } = BATTLE_PARAMS.ANTI_EFFECTS[levelKey];
+  const fanPenaltyPercent = Math.round(fanPenalty * 100);
+  const powerMultiplierPercent = Math.round(powerPenalty * 100);
+  const powerPenaltyPercent = 100 - powerMultiplierPercent;
+
+  const penaltyDescription =
+    level === 0
+      ? 'ペナルティなし'
+      : `ファン獲得数 -${fanPenaltyPercent}%, 火力 -${powerPenaltyPercent}%`;
 
   return (
     <div className="space-y-5 rounded-3xl bg-gradient-to-br from-black/70 via-black/40 to-transparent/0 px-6 py-5 shadow-[0_15px_45px_rgba(10,6,30,0.55)] backdrop-blur">
@@ -50,6 +61,7 @@ export function PlayerStatus({ player }: PlayerStatusProps) {
             color={antiLevelGaugeColor[level]}
             showText={false}
           />
+          <p className="text-[11px] text-white/40">{penaltyDescription}</p>
         </div>
 
         <div className="space-y-1">
