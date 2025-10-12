@@ -218,26 +218,16 @@ export function useBattle() {
       return { top: fallbackTop, left: fallbackLeft };
     };
 
-    const primaryBubble: CommandBubble = {
-      id: `cmd-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      command: state.currentCommand,
-      ...(() => {
-        const pos = randomPosition([]);
-        return { top: `${pos.top}%`, left: `${pos.left}%` };
-      })(),
-      isPrimary: true,
-    };
+    const bubbleList: CommandBubble[] = [];
 
-    const bubbleList: CommandBubble[] = [primaryBubble];
-
-    for (let i = 0; i < 2; i += 1) {
+    for (let i = 0; i < state.currentCommands.length; i += 1) {
       const pos = randomPosition(bubbleList);
       bubbleList.push({
-        id: `cmd-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        command: generateAudienceCommand(),
+        id: `cmd-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        command: state.currentCommands[i],
         top: `${pos.top}%`,
         left: `${pos.left}%`,
-        isPrimary: false,
+        isPrimary: i === 0, // 最初の1つをprimaryとする
       });
     }
 
@@ -270,7 +260,7 @@ export function useBattle() {
         bubbleRevealTimersRef.current = [];
       }
     };
-  }, [phase, state.currentCommand, state.currentTurn, state.isActive]);
+  }, [phase, state.currentCommands, state.currentTurn, state.isActive]);
 
   useEffect(() => {
     const previous = previousTurnCountRef.current;
@@ -365,7 +355,7 @@ export function useBattle() {
     player: displayPlayer,
     enemy: displayEnemy,
     audience: displayAudience,
-    currentCommand: state.currentCommand,
+    currentCommands: state.currentCommands,
     turnHistory: state.turnHistory,
     winner: state.winner,
     phase,

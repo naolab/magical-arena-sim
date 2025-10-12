@@ -5,9 +5,9 @@
 
 import { judgeAction, getActionName, getResultName } from './judgement';
 import { calculateDamage } from './damage';
-import { calculateFanChange, updateAudienceComposition } from './fanSystem';
-import { calculateAntiChange, getAntiLevel, clampAntiGauge } from './antiGauge';
-import { isCommandFollowed } from './audienceCommand';
+import { calculateMultipleFanChange, updateAudienceComposition } from './fanSystem';
+import { calculateMultipleAntiChange, getAntiLevel, clampAntiGauge } from './antiGauge';
+import { checkMultipleCommands } from './audienceCommand';
 import type { BattleState, ActionType, TurnResult } from './types';
 
 /**
@@ -19,14 +19,14 @@ export function processTurn(
   enemyAction: ActionType
 ): TurnResult {
   const turnNumber = state.currentTurn + 1;
-  const command = state.currentCommand;
+  const commands = state.currentCommands;
 
   // 1. 三すくみ判定
   const judgement = judgeAction(playerAction, enemyAction);
   const enemyJudgement = judgeAction(enemyAction, playerAction);
 
-  // 2. 観客指示のチェック
-  const commandFollowed = isCommandFollowed(command, playerAction);
+  // 2. 観客指示のチェック（3つすべて）
+  const commandsFollowed = checkMultipleCommands(commands, playerAction);
 
   // 3. ダメージ計算
   const damageToEnemy = calculateDamage({
@@ -47,12 +47,12 @@ export function processTurn(
     isDefending: playerAction === 'guard',
   });
 
-  // 4. アンチゲージ変動
-  const antiChange = calculateAntiChange({
+  // 4. アンチゲージ変動（3つの指示すべて）
+  const antiChange = calculateMultipleAntiChange({
     action: playerAction,
     result: judgement,
-    commandFollowed,
-    audienceCommand: command,
+    commandsFollowed,
+    audienceCommands: commands,
   });
 
   // 5. HP更新
@@ -63,20 +63,20 @@ export function processTurn(
   const newAntiGauge = clampAntiGauge(state.player.antiGauge + antiChange);
   const newAntiLevel = getAntiLevel(newAntiGauge);
 
-  // 7. ファン変動計算
-  const playerFanChange = calculateFanChange({
-    result: judgement,
-    action: playerAction,
-    commandFollowed,
-    antiLevel: newAntiLevel,
-  });
+  // 7. ファン変動計算（3つの指示すべて）
+  const playerFanChange = calculateMultipleFanChange(
+    judgement,
+    playerAction,
+    commandsFollowed,
+    newAntiLevel
+  );
 
-  const enemyFanChange = calculateFanChange({
-    result: enemyJudgement,
-    action: enemyAction,
-    commandFollowed: true, // 敵は常に指示を無視
-    antiLevel: 0,
-  });
+  const enemyFanChange = calculateMultipleFanChange(
+    enemyJudgement,
+    enemyAction,
+    [true, true, true], // 敵は常に指示に従う
+    0
+  );
 
   // 8. ファン率更新
   const newPlayerFanRate = Math.max(0, Math.min(1, state.player.fanRate + playerFanChange));
@@ -90,7 +90,7 @@ export function processTurn(
     playerAction,
     enemyAction,
     judgement,
-    commandFollowed,
+    commandsFollowed,
     damageToEnemy,
     damageToPlayer,
     playerFanChange,
@@ -103,8 +103,8 @@ export function processTurn(
     playerAction,
     enemyAction,
     judgement,
-    audienceCommand: command,
-    commandFollowed,
+    audienceCommands: commands,
+    commandsFollowed,
     damage: {
       toEnemy: damageToEnemy,
       toPlayer: damageToPlayer,
@@ -138,7 +138,7 @@ function generateTurnMessage(params: {
   playerAction: ActionType;
   enemyAction: ActionType;
   judgement: 'win' | 'draw' | 'lose';
-  commandFollowed: boolean;
+  commandsFollowed: boolean[];
   damageToEnemy: number;
   damageToPlayer: number;
   playerFanChange: number;
@@ -148,7 +148,7 @@ function generateTurnMessage(params: {
     playerAction,
     enemyAction,
     judgement,
-    commandFollowed,
+    commandsFollowed,
     damageToEnemy,
     damageToPlayer,
     playerFanChange,
@@ -164,10 +164,13 @@ function generateTurnMessage(params: {
     msg += `${damageToPlayer}ダメージを受けた！ `;
   }
 
-  if (commandFollowed) {
-    msg += `観客の指示に従った！ `;
+  const followedCount = commandsFollowed.filter((f) => f).length;
+  if (followedCount === 3) {
+    msg += `観客の指示すべてに従った！ `;
+  } else if (followedCount > 0) {
+    msg += `観客の指示に${followedCount}つ従った！ `;
   } else {
-    msg += `観客の指示を無視した... `;
+    msg += `観客の指示をすべて無視した... `;
   }
 
   if (playerFanChange > 0) {

@@ -39,3 +39,13 @@ export function isCommandFollowed(
       return playerAction !== 'guard';
   }
 }
+
+/**
+ * 複数の観客指示に対してプレイヤーの行動をチェック
+ */
+export function checkMultipleCommands(
+  commands: AudienceCommand[],
+  playerAction: ActionType
+): boolean[] {
+  return commands.map((command) => isCommandFollowed(command, playerAction));
+}

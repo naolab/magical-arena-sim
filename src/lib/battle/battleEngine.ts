@@ -36,7 +36,11 @@ export function initBattle(): BattleState {
       neutralFans: INITIAL_AUDIENCE.NEUTRAL_FANS,
       playerFans: INITIAL_AUDIENCE.PLAYER_FANS,
     },
-    currentCommand: generateAudienceCommand(),
+    currentCommands: [
+      generateAudienceCommand(),
+      generateAudienceCommand(),
+      generateAudienceCommand(),
+    ],
     turnHistory: [],
     winner: null,
   };
@@ -59,8 +63,12 @@ export function executePlayerAction(
   // ターン処理
   const turnResult = processTurn(state, playerAction, enemyAction);
 
-  // 新しい観客指示を生成
-  const nextCommand = generateAudienceCommand();
+  // 新しい観客指示を生成（3つ）
+  const nextCommands = [
+    generateAudienceCommand(),
+    generateAudienceCommand(),
+    generateAudienceCommand(),
+  ];
 
   // バトル状態を更新
   const newState: BattleState = {
@@ -69,7 +77,7 @@ export function executePlayerAction(
     player: turnResult.playerState,
     enemy: turnResult.enemyState,
     audience: turnResult.audienceComposition,
-    currentCommand: nextCommand,
+    currentCommands: nextCommands,
     turnHistory: [...state.turnHistory, turnResult],
     winner: null,
     isActive: true,
