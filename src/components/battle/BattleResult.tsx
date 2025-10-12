@@ -39,7 +39,7 @@ export function BattleResult({ winner, onReset }: BattleResultProps) {
               onClick={onReset}
               variant="primary"
               size="lg"
-              className="w-full rounded-full bg-white/90 text-black shadow-[0_18px_28px_rgba(255,255,255,0.25)] transition hover:bg-white"
+              className="w-full rounded-full bg-gradient-to-br from-white/20 to-white/10 text-white border border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/30 hover:to-white/20 hover:border-white/40"
             >
               再戦する
             </Button>
