@@ -62,18 +62,12 @@ export const BATTLE_PARAMS = {
     },
     LV2: {
       fanPenalty: 0.4, // ファン獲得 -40%
-      powerPenalty: 0.8, // 火力 -20%
+      powerPenalty: 0.75, // 火力 -25%
     },
     LV3: {
-      fanPenalty: 1.0, // ファン獲得 -100%（実質停止）
-      powerPenalty: 0.5, // 火力 -50%
+      fanPenalty: 0.6, // ファン獲得 -60%
+      powerPenalty: 0.6, // 火力 -40%
     },
-  },
-
-  // ブーイングLv3効果
-  BOOING_LV3: {
-    FAN_LOSS: -0.1, // ファン率 -10%
-    ANTI_REDUCTION: -30, // アンチゲージ -30
   },
 
   // 観客指示出現確率

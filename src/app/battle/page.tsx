@@ -1,81 +1,88 @@
 'use client';
 
-import Link from 'next/link';
-import { useBattle } from '@/hooks/useBattle';
-import { PlayerStatus } from '@/components/battle/PlayerStatus';
 import { EnemyStatus } from '@/components/battle/EnemyStatus';
-import { ActionButtons } from '@/components/battle/ActionButtons';
-import { CommandIndicator } from '@/components/battle/CommandIndicator';
+import { PlayerStatus } from '@/components/battle/PlayerStatus';
+import { useBattle } from '@/hooks/useBattle';
 import { AudienceDisplay } from '@/components/battle/AudienceDisplay';
-import { BattleLog } from '@/components/battle/BattleLog';
+import { CommandBubbles } from '@/components/battle/CommandBubbles';
+import { ActionButtons } from '@/components/battle/ActionButtons';
 import { BattleResult } from '@/components/battle/BattleResult';
-import { Button } from '@/components/ui/Button';
+import { ActionShowdown } from '@/components/battle/ActionShowdown';
 
 export default function BattlePage() {
   const {
-    state,
-    isActive,
-    currentTurn,
     player,
     enemy,
     audience,
-    currentCommand,
-    turnHistory,
-    winner,
+    currentTurn,
+    isActive,
+    phase,
+    commandBubbles,
+    visibleBubbleCount,
+    showdownResult,
+    showdownStage,
+    canSelectAction,
     selectAction,
+    acknowledgeShowdown,
+    winner,
     reset,
   } = useBattle();
+  const displayTurn = Math.max(1, isActive ? currentTurn + 1 : currentTurn);
 
   return (
-    <main className="min-h-screen bg-arena-bg p-4 md:p-8">
-      <div className="mx-auto max-w-7xl">
-        {/* ヘッダー */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-arena-text">Magical Arena</h1>
-            <p className="text-arena-subtext">ターン {currentTurn}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={reset} variant="secondary" size="sm">
-              リセット
-            </Button>
-            <Link href="/">
-              <Button variant="secondary" size="sm">
-                戻る
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <main className="w-screen h-screen bg-black flex items-center justify-center">
+      {/* 16:9固定のゲーム画面 */}
+      <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] bg-arena-bg">
+        <CommandBubbles bubbles={commandBubbles} phase={phase} visibleCount={visibleBubbleCount} />
 
-        {/* メインバトルエリア */}
-        <div className="grid gap-4 md:grid-cols-3 mb-4">
-          {/* 左: プレイヤー */}
-          <div>
-            <PlayerStatus player={player} />
-          </div>
+        {phase === 'showdown' && showdownResult && (
+          <ActionShowdown
+            result={showdownResult}
+            stage={showdownStage}
+            onContinue={acknowledgeShowdown}
+          />
+        )}
 
-          {/* 中央: 観客指示と行動ボタン */}
-          <div className="space-y-4">
-            <CommandIndicator command={currentCommand} />
-            <ActionButtons
-              onAction={selectAction}
-              disabled={!isActive || winner !== null}
-            />
-            <AudienceDisplay audience={audience} />
-          </div>
-
-          {/* 右: 敵 */}
-          <div>
-            <EnemyStatus enemy={enemy} />
+        <div className="absolute left-8 top-8">
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
+            <div className="absolute inset-2.5 rounded-full border border-white/10" />
+            <div className="text-center">
+              <p className="text-[9px] uppercase tracking-[0.45em] text-white/60">Turn</p>
+              <p className="text-2xl font-black text-white leading-tight">
+                {String(displayTurn).padStart(2, '0')}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* バトルログ */}
-        <BattleLog turnHistory={turnHistory} />
+        <div className="absolute left-6 bottom-6 w-[22%] max-w-sm">
+          <PlayerStatus player={player} />
+        </div>
 
-        {/* 勝敗結果モーダル */}
-        {winner && <BattleResult winner={winner} onReset={reset} />}
+        <div className="absolute left-1/2 top-6 w-[36%] max-w-2xl -translate-x-1/2">
+          <AudienceDisplay audience={audience} />
+        </div>
+
+        <div className="absolute right-6 top-6 w-[22%] max-w-sm">
+          <EnemyStatus enemy={enemy} />
+        </div>
+
+        <div className="absolute bottom-[9%] left-1/2 w-[36%] max-w-2xl -translate-x-1/2">
+          <div className="flex justify-center">
+            <div
+              className={`transform transition-all duration-500 ${
+                phase === 'selecting'
+                  ? 'opacity-100 translate-y-0'
+                  : 'pointer-events-none opacity-0 translate-y-4'
+              }`}
+            >
+              <ActionButtons onAction={selectAction} disabled={!canSelectAction} />
+            </div>
+          </div>
+        </div>
       </div>
+
+      {phase === 'ended' && winner && <BattleResult winner={winner} onReset={reset} />}
     </main>
   );
 }
