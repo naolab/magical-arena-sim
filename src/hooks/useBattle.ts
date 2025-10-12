@@ -46,7 +46,9 @@ export function useBattle() {
   const [state, dispatch] = useReducer(battleReducer, null as unknown as BattleState, initBattle);
   const [phase, setPhase] = useState<BattlePhase>('announcing');
   const [commandBubbles, setCommandBubbles] = useState<CommandBubble[]>([]);
+  const [visibleBubbleCount, setVisibleBubbleCount] = useState(0);
   const phaseTimerRef = useRef<number | null>(null);
+  const bubbleRevealTimersRef = useRef<number[]>([]);
 
   /**
    * バトル開始
@@ -89,10 +91,15 @@ export function useBattle() {
       window.clearTimeout(phaseTimerRef.current);
       phaseTimerRef.current = null;
     }
+    if (bubbleRevealTimersRef.current.length) {
+      bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      bubbleRevealTimersRef.current = [];
+    }
 
     if (!state.isActive) {
       setPhase('ended');
       setCommandBubbles([]);
+      setVisibleBubbleCount(0);
       return;
     }
 
@@ -146,16 +153,31 @@ export function useBattle() {
     }
 
     setCommandBubbles(bubbleList);
+    setVisibleBubbleCount(0);
     setPhase('announcing');
 
+    const revealInterval = 400;
+
+    bubbleList.forEach((_, index) => {
+      const timer = window.setTimeout(() => {
+        setVisibleBubbleCount(index + 1);
+      }, index * revealInterval);
+      bubbleRevealTimersRef.current.push(timer);
+    });
+
+    const selectingDelay = bubbleList.length * revealInterval + 600;
     phaseTimerRef.current = window.setTimeout(() => {
       setPhase('selecting');
-    }, 1500);
+    }, selectingDelay);
 
     return () => {
       if (phaseTimerRef.current) {
         window.clearTimeout(phaseTimerRef.current);
         phaseTimerRef.current = null;
+      }
+      if (bubbleRevealTimersRef.current.length) {
+        bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+        bubbleRevealTimersRef.current = [];
       }
     };
   }, [state.currentTurn, state.currentCommand, state.isActive]);
@@ -164,6 +186,9 @@ export function useBattle() {
     return () => {
       if (phaseTimerRef.current) {
         window.clearTimeout(phaseTimerRef.current);
+      }
+      if (bubbleRevealTimersRef.current.length) {
+        bubbleRevealTimersRef.current.forEach((timer) => window.clearTimeout(timer));
       }
     };
   }, []);
@@ -183,6 +208,7 @@ export function useBattle() {
     winner: state.winner,
     phase,
     commandBubbles,
+    visibleBubbleCount,
     canSelectAction,
 
     // アクション
