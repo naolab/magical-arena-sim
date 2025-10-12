@@ -49,8 +49,8 @@ export interface TurnResult {
   playerAction: ActionType;
   enemyAction: ActionType;
   judgement: BattleResult; // プレイヤー視点での勝敗
-  audienceCommand: AudienceCommand;
-  commandFollowed: boolean; // 観客指示に従ったか
+  audienceCommands: AudienceCommand[]; // 3つの観客指示
+  commandsFollowed: boolean[]; // 各指示に従ったか
   damage: {
     toEnemy: number;
     toPlayer: number;
@@ -73,9 +73,9 @@ export interface BattleState {
   player: PlayerState;
   enemy: EnemyState;
   audience: AudienceComposition;
-  currentCommand: AudienceCommand; // 現在ターンの観客指示
+  currentCommands: AudienceCommand[]; // 現在ターンの観客指示（3つ）
   turnHistory: TurnResult[]; // 過去のターン履歴
-  winner: 'player' | 'enemy' | null; // 勝者
+  winner: 'player' | 'enemy' | 'draw' | null; // 勝者
 }
 
 // ダメージ計算のパラメータ
@@ -96,10 +96,18 @@ export interface FanChangeParams {
   antiLevel: AntiLevel;
 }
 
-// アンチゲージ変動計算のパラメータ
+// アンチゲージ変動計算のパラメータ（単一指示用）
 export interface AntiChangeParams {
   action: ActionType;
   result: BattleResult;
   commandFollowed: boolean;
   audienceCommand: AudienceCommand;
+}
+
+// アンチゲージ変動計算のパラメータ（複数指示用）
+export interface MultipleAntiChangeParams {
+  action: ActionType;
+  result: BattleResult;
+  commandsFollowed: boolean[];
+  audienceCommands: AudienceCommand[];
 }

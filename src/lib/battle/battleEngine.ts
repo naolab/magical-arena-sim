@@ -36,7 +36,11 @@ export function initBattle(): BattleState {
       neutralFans: INITIAL_AUDIENCE.NEUTRAL_FANS,
       playerFans: INITIAL_AUDIENCE.PLAYER_FANS,
     },
-    currentCommand: generateAudienceCommand(),
+    currentCommands: [
+      generateAudienceCommand(),
+      generateAudienceCommand(),
+      generateAudienceCommand(),
+    ],
     turnHistory: [],
     winner: null,
   };
@@ -59,8 +63,12 @@ export function executePlayerAction(
   // ターン処理
   const turnResult = processTurn(state, playerAction, enemyAction);
 
-  // 新しい観客指示を生成
-  const nextCommand = generateAudienceCommand();
+  // 新しい観客指示を生成（3つ）
+  const nextCommands = [
+    generateAudienceCommand(),
+    generateAudienceCommand(),
+    generateAudienceCommand(),
+  ];
 
   // バトル状態を更新
   const newState: BattleState = {
@@ -69,7 +77,7 @@ export function executePlayerAction(
     player: turnResult.playerState,
     enemy: turnResult.enemyState,
     audience: turnResult.audienceComposition,
-    currentCommand: nextCommand,
+    currentCommands: nextCommands,
     turnHistory: [...state.turnHistory, turnResult],
     winner: null,
     isActive: true,
@@ -98,15 +106,24 @@ function decideEnemyAction(_state: BattleState): ActionType {
 /**
  * 勝敗を判定
  * 勝利条件: 相手HP 0以下
+ * 引き分け条件: 同じターンに両者HP 0以下
  */
-export function checkWinner(state: BattleState): 'player' | 'enemy' | null {
+export function checkWinner(state: BattleState): 'player' | 'enemy' | 'draw' | null {
   const { HP_THRESHOLD } = BATTLE_PARAMS.WIN_CONDITIONS;
 
+  const playerDead = state.player.hp <= HP_THRESHOLD;
+  const enemyDead = state.enemy.hp <= HP_THRESHOLD;
+
+  // 両者同時に倒れた場合は引き分け
+  if (playerDead && enemyDead) {
+    return 'draw';
+  }
+
   // HPによる判定
-  if (state.enemy.hp <= HP_THRESHOLD) {
+  if (enemyDead) {
     return 'player';
   }
-  if (state.player.hp <= HP_THRESHOLD) {
+  if (playerDead) {
     return 'enemy';
   }
 

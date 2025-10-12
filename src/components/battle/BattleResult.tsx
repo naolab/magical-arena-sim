@@ -1,12 +1,15 @@
 import { Button } from '../ui/Button';
+import { useRouter } from 'next/navigation';
 
 interface BattleResultProps {
-  winner: 'player' | 'enemy';
+  winner: 'player' | 'enemy' | 'draw';
   onReset: () => void;
 }
 
 export function BattleResult({ winner, onReset }: BattleResultProps) {
+  const router = useRouter();
   const isPlayerWin = winner === 'player';
+  const isDraw = winner === 'draw';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
@@ -21,27 +24,37 @@ export function BattleResult({ winner, onReset }: BattleResultProps) {
             <p className="text-xs uppercase tracking-[0.6em] text-white/40">Battle Result</p>
             <h2
               className={`mt-3 text-4xl font-black tracking-wide ${
-                isPlayerWin ? 'text-arena-player' : 'text-arena-enemy'
+                isDraw ? 'text-white' : isPlayerWin ? 'text-arena-player' : 'text-arena-enemy'
               }`}
             >
-              {isPlayerWin ? 'VICTORY' : 'DEFEAT'}
+              {isDraw ? 'DRAW' : isPlayerWin ? 'VICTORY' : 'DEFEAT'}
             </h2>
           </div>
 
           <p className="leading-relaxed text-white/80">
-            {isPlayerWin
-              ? '観客を熱狂させ、魔法少女同士のライブバトルに勝利した！'
-              : '観客の支持を得られず敗北…。次のステージで巻き返そう。'}
+            {isDraw
+              ? '両者同時に倒れた…！激闘の末、引き分けに終わった。'
+              : isPlayerWin
+                ? '観客を熱狂させ、魔法少女同士のライブバトルに勝利した！'
+                : '観客の支持を得られず敗北…。次のステージで巻き返そう。'}
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-3">
             <Button
               onClick={onReset}
               variant="primary"
               size="lg"
-              className="w-full rounded-full bg-white/90 text-black shadow-[0_18px_28px_rgba(255,255,255,0.25)] transition hover:bg-white"
+              className="w-full rounded-full bg-gradient-to-br from-white/20 to-white/10 text-white border border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/30 hover:to-white/20 hover:border-white/40"
             >
               再戦する
+            </Button>
+            <Button
+              onClick={() => router.push('/')}
+              variant="secondary"
+              size="lg"
+              className="w-full rounded-full bg-gradient-to-br from-white/10 to-white/5 text-white/80 border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/15 hover:to-white/8 hover:text-white hover:border-white/30"
+            >
+              トップに戻る
             </Button>
           </div>
         </div>
