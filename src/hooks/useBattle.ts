@@ -97,11 +97,16 @@ export function useBattle() {
         bubbleRevealTimersRef.current = [];
       }
       setVisibleBubbleCount(bubbleCount);
-      pendingStateRef.current = null;
+      // 現在の表示状態を保持（showdownまで更新しない）
+      pendingStateRef.current = {
+        player: state.player,
+        enemy: state.enemy,
+        audience: state.audience,
+      };
       setPhase('resolving');
       dispatch({ type: 'EXECUTE_ACTION', payload: action });
     },
-    [bubbleCount, phase, state.isActive]
+    [bubbleCount, phase, state.isActive, state.player, state.enemy, state.audience]
   );
 
   /**
@@ -342,10 +347,9 @@ export function useBattle() {
   }, []);
 
   useEffect(() => {
-    if (phase === 'showdown' || showdownResult) {
+    if (phase === 'showdown' || phase === 'resolving' || showdownResult || pendingStateRef.current) {
       return;
     }
-    pendingStateRef.current = null;
     setDisplayPlayer(state.player);
     setDisplayEnemy(state.enemy);
     setDisplayAudience(state.audience);
