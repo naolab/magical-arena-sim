@@ -11,7 +11,7 @@ export function AntiGaugeDisplay({ antiGauge }: AntiGaugeDisplayProps) {
   const level = getAntiLevel(antiGauge);
 
   const getLevelBadge = () => {
-    if (level === 0) return <Badge variant="info">通常</Badge>;
+    if (level === 0) return <Badge variant="default">通常</Badge>;
     if (level === 1) return <Badge variant="warning">冷淡期</Badge>;
     if (level === 2) return <Badge variant="danger">ブーイング期</Badge>;
     return <Badge variant="danger">炎上期</Badge>;
@@ -23,7 +23,7 @@ export function AntiGaugeDisplay({ antiGauge }: AntiGaugeDisplayProps) {
         <h3 className="text-lg font-bold text-arena-text">アンチゲージ</h3>
         {getLevelBadge()}
       </div>
-      <Gauge value={antiGauge} maxValue={100} color="danger" label="アンチ" />
+      <Gauge value={antiGauge} maxValue={100} color="anti-lv3" label="アンチ" />
     </Card>
   );
 }

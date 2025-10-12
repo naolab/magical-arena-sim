@@ -290,7 +290,7 @@ export function useBattle() {
     }
 
     previousTurnCountRef.current = current;
-  }, [acknowledgeShowdown, state.isActive, state.turnHistory.length]);
+  }, [acknowledgeShowdown, state.isActive, state.turnHistory, state.turnHistory.length]);
 
   useEffect(() => {
     return () => {
