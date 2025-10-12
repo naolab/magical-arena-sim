@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import type { AudienceCommand } from '@/types';
 
-type BubblePhase = 'announcing' | 'selecting' | 'resolving' | 'ended';
+type BubblePhase = 'announcing' | 'selecting' | 'resolving' | 'showdown' | 'ended';
 
 interface CommandBubbleData {
   id: string;
