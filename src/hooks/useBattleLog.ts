@@ -49,8 +49,12 @@ export function useBattleLog(turnHistory: TurnResult[]) {
     const totalDamageDealt = turnHistory.reduce((sum, turn) => sum + turn.damage.toEnemy, 0);
     const totalDamageTaken = turnHistory.reduce((sum, turn) => sum + turn.damage.toPlayer, 0);
 
-    const commandFollowCount = turnHistory.filter((turn) => turn.commandFollowed).length;
-    const commandFollowRate = total > 0 ? (commandFollowCount / total) * 100 : 0;
+    const commandFollowCount = turnHistory.reduce(
+      (sum, turn) => sum + turn.commandsFollowed.filter((followed) => followed).length,
+      0
+    );
+    const totalCommands = turnHistory.reduce((sum, turn) => sum + turn.commandsFollowed.length, 0);
+    const commandFollowRate = totalCommands > 0 ? (commandFollowCount / totalCommands) * 100 : 0;
 
     return {
       totalTurns: total,
