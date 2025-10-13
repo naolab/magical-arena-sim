@@ -17,9 +17,9 @@ export function calculateAntiChange(params: AntiChangeParams): number {
   // 1. 行動によるアンチゲージ変動
   if (action === 'attack' && result === 'win') {
     change += BATTLE_PARAMS.ANTI_CHANGE.ATTACK;
-  } else if (action === 'appeal' && result === 'win') {
+  } else if (action === 'appeal') {
     change += BATTLE_PARAMS.ANTI_CHANGE.APPEAL_SUCCESS;
-  } else if (action === 'guard' && result === 'win') {
+  } else if (action === 'guard') {
     change += BATTLE_PARAMS.ANTI_CHANGE.GUARD_SUCCESS;
   }
 
@@ -86,9 +86,9 @@ export function calculateMultipleAntiChange(params: MultipleAntiChangeParams): n
   // 1. 行動によるアンチゲージ変動
   if (action === 'attack' && result === 'win') {
     change += BATTLE_PARAMS.ANTI_CHANGE.ATTACK;
-  } else if (action === 'appeal' && result === 'win') {
+  } else if (action === 'appeal') {
     change += BATTLE_PARAMS.ANTI_CHANGE.APPEAL_SUCCESS;
-  } else if (action === 'guard' && result === 'win') {
+  } else if (action === 'guard') {
     change += BATTLE_PARAMS.ANTI_CHANGE.GUARD_SUCCESS;
   }
 
