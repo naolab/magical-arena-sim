@@ -8,7 +8,7 @@ import { calculateDamage } from './damage';
 import { calculateMultipleFanChange, updateAudienceComposition } from './fanSystem';
 import { calculateMultipleAntiChange, getAntiLevel, clampAntiGauge } from './antiGauge';
 import { checkMultipleCommands } from './audienceCommand';
-import { BATTLE_PARAMS } from '@/config/battleParams';
+import type { BattleParams } from '@/config/battleParams';
 import type { BattleState, ActionType, TurnResult } from './types';
 
 /**
@@ -18,7 +18,7 @@ export function processTurn(
   state: BattleState,
   playerAction: ActionType,
   enemyAction: ActionType,
-  battleParams: BattleParams,
+  battleParams: BattleParams
 ): TurnResult {
   const turnNumber = state.currentTurn + 1;
   const commands = state.currentCommands;
@@ -68,6 +68,11 @@ export function processTurn(
     battleParams
   );
 
+  // 5. HP更新
+  const newPlayerHp = Math.max(0, state.player.hp - damageToPlayer);
+  const newEnemyHp = Math.max(0, state.enemy.hp - damageToEnemy);
+
+  // 6. アンチゲージ更新とレベル判定
   const newAntiGauge = clampAntiGauge(state.player.antiGauge + antiChange);
   const newAntiLevel = getAntiLevel(newAntiGauge, battleParams);
 
@@ -76,25 +81,26 @@ export function processTurn(
     judgement,
     playerAction,
     commandsFollowed,
-    newAntiLevel
+    newAntiLevel,
+    battleParams
   );
 
   // 敵のファン変動計算（観客指示は常に±0）
   let enemyFanChange = 0;
   // 1. 勝敗補正
   if (enemyJudgement === 'win') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.WIN;
+    enemyFanChange += battleParams.FAN_CHANGE.WIN;
   } else if (enemyJudgement === 'draw') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.DRAW_WIN;
+    enemyFanChange += battleParams.FAN_CHANGE.DRAW_WIN;
   } else if (enemyJudgement === 'lose') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.LOSE;
+    enemyFanChange += battleParams.FAN_CHANGE.LOSE;
   }
   // 2. 技成功ボーナス
   if (enemyJudgement === 'win') {
     if (enemyAction === 'appeal') {
-      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.APPEAL_SUCCESS;
+      enemyFanChange += battleParams.FAN_CHANGE.APPEAL_SUCCESS;
     } else if (enemyAction === 'guard') {
-      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.GUARD_SUCCESS;
+      enemyFanChange += battleParams.FAN_CHANGE.GUARD_SUCCESS;
     }
   }
 
