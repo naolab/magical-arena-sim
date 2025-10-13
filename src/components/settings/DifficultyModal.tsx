@@ -139,6 +139,19 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
               <p className="text-sm text-white/60 mt-2">アピールで勝利した際の、追加ファン獲得ボーナス。</p>
             </section>
             <section>
+              <h3 className="text-lg font-bold mb-3">ガード成功ボーナス</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="0.2" step="0.01"
+                  value={params.FAN_CHANGE.GUARD_SUCCESS}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, GUARD_SUCCESS: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.GUARD_SUCCESS * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">ガードで勝利した際の、追加ファン獲得ボーナス。</p>
+            </section>
+            <section>
               <h3 className="text-lg font-bold mb-3">指示成功ボーナス</h3>
               <div className="flex items-center gap-4">
                 <input
