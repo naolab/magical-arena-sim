@@ -94,7 +94,7 @@ export default function BattlePage() {
             />
           )}
 
-          <div className="absolute left-8 top-8">
+          <div className="absolute left-36 top-8">
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
               <div className="absolute inset-2.5 rounded-full border border-white/10" />
               <div className="text-center">
@@ -108,7 +108,7 @@ export default function BattlePage() {
 
           <button
             onClick={() => setIsRulesOpen(true)}
-            className="absolute left-36 top-9 z-10 text-white/80 transition-colors hover:text-white"
+            className="absolute left-8 top-8 z-10 flex h-24 w-24 items-center justify-center text-white/80 transition-colors hover:text-white"
             aria-label="ルールを表示"
           >
             <BookIcon className="h-8 w-8" />
