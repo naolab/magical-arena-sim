@@ -12,12 +12,13 @@ import type {
   EnemyState,
   PlayerState,
   TurnResult,
+  BattleParams,
 } from '@/lib/battle/types';
 
 type BattleAction =
-  | { type: 'START_BATTLE' }
-  | { type: 'EXECUTE_ACTION'; payload: ActionType }
-  | { type: 'RESET_BATTLE' };
+  | { type: 'START_BATTLE'; payload: Partial<BattleParams> }
+  | { type: 'EXECUTE_ACTION'; payload: { action: ActionType; params: BattleParams } }
+  | { type: 'RESET_BATTLE'; payload: Partial<BattleParams> };
 
 /**
  * バトル状態を管理するReducer
@@ -25,13 +26,13 @@ type BattleAction =
 function battleReducer(state: BattleState, action: BattleAction): BattleState {
   switch (action.type) {
     case 'START_BATTLE':
-      return initBattle();
+      return initBattle(action.payload);
 
     case 'EXECUTE_ACTION':
-      return executePlayerAction(state, action.payload);
+      return executePlayerAction(state, action.payload.action, action.payload.params);
 
     case 'RESET_BATTLE':
-      return resetBattle();
+      return resetBattle(action.payload);
 
     default:
       return state;
@@ -79,8 +80,8 @@ export function useBattle() {
    * バトル開始
    */
   const startBattle = useCallback(() => {
-    dispatch({ type: 'START_BATTLE' });
-  }, []);
+    dispatch({ type: 'START_BATTLE', payload: params });
+  }, [params]);
 
   /**
    * プレイヤーの行動を実行
@@ -106,9 +107,9 @@ export function useBattle() {
         audience: state.audience,
       };
       setPhase('resolving');
-      dispatch({ type: 'EXECUTE_ACTION', payload: action });
+      dispatch({ type: 'EXECUTE_ACTION', payload: { action, params } });
     },
-    [bubbleCount, phase, state.isActive, state.player, state.enemy, state.audience]
+    [bubbleCount, phase, state.isActive, state.player, state.enemy, state.audience, params]
   );
 
   /**
@@ -139,7 +140,7 @@ export function useBattle() {
     setShowdownStage('intro');
     pendingStateRef.current = null;
     setPhase('announcing');
-  }, []);
+  }, [params]);
 
   /**
    * 新しい観客指示を生成
