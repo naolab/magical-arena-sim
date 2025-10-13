@@ -11,7 +11,7 @@ import type { DamageParams } from './types';
  * 計算式: 基礎火力 × 技倍率 × ファン補正 × アンチ補正 × ガード軽減
  */
 export function calculateDamage(params: DamageParams): number {
-  const { action, basePower, fanRate, antiLevel, result, isDefending } = params;
+  const { action, basePower, fanRate, antiLevel, result, isDefending, fanPowerBonusRate } = params;
 
   // 敗北時はダメージなし
   if (result === 'lose') {
@@ -22,7 +22,7 @@ export function calculateDamage(params: DamageParams): number {
   const skillMultiplier = getSkillMultiplier(action);
 
   // ファン補正を取得
-  const fanBonus = getFanPowerBonus(fanRate);
+  const fanBonus = getFanPowerBonus(fanRate, fanPowerBonusRate);
 
   // アンチ補正を取得
   const antiPenalty = BATTLE_PARAMS.ANTI_EFFECTS[`LV${antiLevel}`].powerPenalty;
@@ -60,16 +60,16 @@ function getSkillMultiplier(action: 'attack' | 'appeal' | 'guard'): number {
  * 51-80%: ×1.5
  * 81-100%: ×2.0
  */
-export function getFanPowerBonus(fanRate: number): number {
+export function getFanPowerBonus(fanRate: number, fanPowerBonusRate = 1.0): number {
   const bonuses = BATTLE_PARAMS.FAN_POWER_BONUS;
 
   // 降順でチェックし、最初に該当する閾値の倍率を返す
   for (let i = bonuses.length - 1; i >= 0; i--) {
     if (fanRate >= bonuses[i].threshold) {
-      return bonuses[i].multiplier;
+      return bonuses[i].multiplier * fanPowerBonusRate;
     }
   }
 
   // デフォルト（通常ここには到達しない）
-  return 1.0;
+  return 1.0 * fanPowerBonusRate;
 }

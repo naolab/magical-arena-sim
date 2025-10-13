@@ -46,6 +46,7 @@ export function processTurn(
     antiLevel: 0, // 敵にはアンチゲージなし
     result: enemyJudgement,
     isDefending: playerAction === 'guard',
+    fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
   });
 
   // 4. アンチゲージ変動（3つの指示すべて）

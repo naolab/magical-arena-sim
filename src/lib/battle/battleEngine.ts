@@ -134,6 +134,6 @@ export function checkWinner(state: BattleState): 'player' | 'enemy' | 'draw' | n
 /**
  * バトルをリセット
  */
-export function resetBattle(): BattleState {
-  return initBattle();
+export function resetBattle(initialParams?: Partial<BattleParams>): BattleState {
+  return initBattle(initialParams);
 }

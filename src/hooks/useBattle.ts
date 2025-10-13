@@ -131,7 +131,7 @@ export function useBattle() {
       window.clearTimeout(showdownStageTimerRef.current);
       showdownStageTimerRef.current = null;
     }
-    dispatch({ type: 'RESET_BATTLE' });
+    dispatch({ type: 'RESET_BATTLE', payload: params });
     previousTurnCountRef.current = 0;
     setCommandBubbles([]);
     setVisibleBubbleCount(0);

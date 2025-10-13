@@ -88,6 +88,7 @@ export const BATTLE_PARAMS = {
   },
 
   // ファン率による火力補正
+  FAN_POWER_BONUS_RATE: 1.0, // ファン率火力ボーナスの全体倍率
   FAN_POWER_BONUS: [
     { threshold: 0.0, multiplier: 1.0 }, // 0-20%: ×1.0
     { threshold: 0.21, multiplier: 1.2 }, // 21-50%: ×1.2

@@ -120,6 +120,24 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
               <p className="text-sm text-white/60 mt-2">プレイヤーの初期ファン率。高いほど序盤が有利になります。</p>
             </section>
 
+            <section>
+              <h3 className="text-lg font-bold mb-3">ファン率火力ボーナス倍率</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={params.FAN_POWER_BONUS_RATE}
+                  onChange={(e) => setParams({ FAN_POWER_BONUS_RATE: Number(e.target.value) })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">
+                  x{params.FAN_POWER_BONUS_RATE.toFixed(1)}
+                </span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">ファン率が高い時のダメージボーナス全体に掛ける倍率です。</p>
+            </section>
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/10">
