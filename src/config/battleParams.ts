@@ -58,23 +58,26 @@ export const BATTLE_PARAMS = {
     },
     LV1: {
       fanPenalty: 0.2, // ファン獲得 -20%
-      powerPenalty: 0.9, // 火力 -10%
+      powerPenalty: 0.8, // 火力 -20%
     },
     LV2: {
       fanPenalty: 0.4, // ファン獲得 -40%
-      powerPenalty: 0.75, // 火力 -25%
+      powerPenalty: 0.6, // 火力 -40%
     },
     LV3: {
       fanPenalty: 0.6, // ファン獲得 -60%
-      powerPenalty: 0.6, // 火力 -40%
+      powerPenalty: 0.4, // 火力 -60%
     },
   },
 
   // 観客指示出現確率
   COMMAND_PROBABILITY: {
-    ATTACK: 0.4, // 40%
-    APPEAL: 0.3, // 30%
-    GUARD_FORBID: 0.3, // 30%
+    ATTACK: 0.2, // 20%
+    ATTACK_FORBID: 0.1, // 10%
+    APPEAL: 0.2, // 20%
+    APPEAL_FORBID: 0.1, // 10%
+    GUARD: 0.2, // 20%
+    GUARD_FORBID: 0.2, // 20%
   },
 
   // 初期観客構成

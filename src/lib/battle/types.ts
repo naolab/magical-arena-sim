@@ -14,7 +14,10 @@ export type AntiLevel = 0 | 1 | 2 | 3;
 // 観客指示
 export type AudienceCommand =
   | { type: 'attack'; message: '攻撃しろ！' }
+  | { type: 'attack_forbid'; message: '攻撃するな！' }
   | { type: 'appeal'; message: 'アピールして！' }
+  | { type: 'appeal_forbid'; message: 'アピールするな！' }
+  | { type: 'guard'; message: 'ガードしろ！' }
   | { type: 'guard_forbid'; message: 'ガードするな！' };
 
 // 戦闘者の基本状態
