@@ -13,10 +13,6 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
 
   if (!isOpen) return null;
 
-  const handleBasePowerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setParams({ BASE_POWER: Number(e.target.value) });
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
       <div className="relative max-h-[85vh] w-[min(600px,90vw)] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
@@ -31,7 +27,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
             </button>
           </div>
 
-          <div className="max-h-[calc(85vh-140px)] overflow-y-auto pr-2 space-y-6 text-white/90">
+          <div className="max-h-[calc(85vh-140px)] overflow-y-auto pr-2 space-y-8 text-white/90">
             <section>
               <h3 className="text-lg font-bold mb-3">基本ダメージ量</h3>
               <div className="flex items-center gap-4">
@@ -41,12 +37,29 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                   max="200"
                   step="10"
                   value={params.BASE_POWER}
-                  onChange={handleBasePowerChange}
+                  onChange={(e) => setParams({ BASE_POWER: Number(e.target.value) })}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
                 <span className="font-bold text-xl w-16 text-center">{params.BASE_POWER}</span>
               </div>
               <p className="text-sm text-white/60 mt-2">アタックの基礎となるダメージ量です。値が大きいほど戦闘が早く終わります。</p>
+            </section>
+
+            <section>
+              <h3 className="text-lg font-bold mb-3">初期HP</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="500"
+                  max="2000"
+                  step="100"
+                  value={params.INITIAL_HP}
+                  onChange={(e) => setParams({ INITIAL_HP: Number(e.target.value) })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">{params.INITIAL_HP}</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">プレイヤーと敵の初期HPです。高いほど戦闘が長引きます。</p>
             </section>
 
             {/* ここに他の設定項目を追加していく */}
