@@ -8,6 +8,7 @@ import { calculateDamage } from './damage';
 import { calculateMultipleFanChange, updateAudienceComposition } from './fanSystem';
 import { calculateMultipleAntiChange, getAntiLevel, clampAntiGauge } from './antiGauge';
 import { checkMultipleCommands } from './audienceCommand';
+import { BATTLE_PARAMS } from '@/config/battleParams';
 import type { BattleState, ActionType, TurnResult } from './types';
 
 /**
@@ -71,12 +72,24 @@ export function processTurn(
     newAntiLevel
   );
 
-  const enemyFanChange = calculateMultipleFanChange(
-    enemyJudgement,
-    enemyAction,
-    [true, true, true], // 敵は常に指示に従う
-    0
-  );
+  // 敵のファン変動計算（観客指示は常に±0）
+  let enemyFanChange = 0;
+  // 1. 勝敗補正
+  if (enemyJudgement === 'win') {
+    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.WIN;
+  } else if (enemyJudgement === 'draw') {
+    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.DRAW_WIN;
+  } else if (enemyJudgement === 'lose') {
+    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.LOSE;
+  }
+  // 2. 技成功ボーナス
+  if (enemyJudgement === 'win') {
+    if (enemyAction === 'appeal') {
+      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.APPEAL_SUCCESS;
+    } else if (enemyAction === 'guard') {
+      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.GUARD_SUCCESS;
+    }
+  }
 
   // 8. ファン率更新
   const newPlayerFanRate = Math.max(0, Math.min(1, state.player.fanRate + playerFanChange));
