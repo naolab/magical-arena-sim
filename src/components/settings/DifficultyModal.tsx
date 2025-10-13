@@ -44,109 +44,105 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
           </div>
 
           <div className="max-h-[calc(85vh-140px)] overflow-y-auto pr-2 space-y-8 text-white/90">
+            {/* --- 基本設定 --- */}
             <section>
               <h3 className="text-lg font-bold mb-3">基本ダメージ量</h3>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min="50"
-                  max="200"
-                  step="10"
+                  type="range" min="50" max="200" step="10"
                   value={params.BASE_POWER}
                   onChange={(e) => setParams({ BASE_POWER: Number(e.target.value) })}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
                 <span className="font-bold text-xl w-16 text-center">{params.BASE_POWER}</span>
               </div>
-              <p className="text-sm text-white/60 mt-2">アタックの基礎となるダメージ量です。</p>
             </section>
-
             <section>
               <h3 className="text-lg font-bold mb-3">初期HP</h3>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min="500"
-                  max="2000"
-                  step="100"
+                  type="range" min="500" max="2000" step="100"
                   value={params.INITIAL_HP}
                   onChange={(e) => setParams({ INITIAL_HP: Number(e.target.value) })}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
                 <span className="font-bold text-xl w-16 text-center">{params.INITIAL_HP}</span>
               </div>
-              <p className="text-sm text-white/60 mt-2">戦闘全体の長さを調整します。</p>
             </section>
 
+            {/* --- ファン関連 --- */}
             <section>
               <h3 className="text-lg font-bold mb-3">アピール成功ボーナス</h3>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min="0"
-                  max="0.3"
-                  step="0.01"
+                  type="range" min="0" max="0.3" step="0.01"
                   value={params.FAN_CHANGE.APPEAL_SUCCESS}
-                  onChange={(e) =>
-                    setParams({
-                      FAN_CHANGE: { ...params.FAN_CHANGE, APPEAL_SUCCESS: Number(e.target.value) },
-                    })
-                  }
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, APPEAL_SUCCESS: Number(e.target.value) } })}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="font-bold text-xl w-16 text-center">
-                  +{(params.FAN_CHANGE.APPEAL_SUCCESS * 100).toFixed(0)}%
-                </span>
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.APPEAL_SUCCESS * 100).toFixed(0)}%</span>
               </div>
-              <p className="text-sm text-white/60 mt-2">アピール成功時に獲得するファン率ボーナスです。</p>
             </section>
-
             <section>
               <h3 className="text-lg font-bold mb-3">プレイヤー初期ファン率</h3>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min="0.05"
-                  max={playerFansSliderMax}
-                  step="0.01"
+                  type="range" min="0.05" max={playerFansSliderMax} step="0.01"
                   value={params.INITIAL_AUDIENCE.PLAYER_FANS}
                   onChange={handlePlayerFansChange}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="font-bold text-xl w-16 text-center">
-                  {(params.INITIAL_AUDIENCE.PLAYER_FANS * 100).toFixed(0)}%
-                </span>
+                <span className="font-bold text-xl w-16 text-center">{(params.INITIAL_AUDIENCE.PLAYER_FANS * 100).toFixed(0)}%</span>
               </div>
-              <p className="text-sm text-white/60 mt-2">プレイヤーの初期ファン率。高いほど序盤が有利になります。</p>
             </section>
-
             <section>
               <h3 className="text-lg font-bold mb-3">ファン率火力ボーナス倍率</h3>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
-                  min="0.5"
-                  max="2.0"
-                  step="0.1"
+                  type="range" min="0.5" max="2.0" step="0.1"
                   value={params.FAN_POWER_BONUS_RATE}
                   onChange={(e) => setParams({ FAN_POWER_BONUS_RATE: Number(e.target.value) })}
                   className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="font-bold text-xl w-16 text-center">
-                  x{params.FAN_POWER_BONUS_RATE.toFixed(1)}
-                </span>
+                <span className="font-bold text-xl w-16 text-center">x{params.FAN_POWER_BONUS_RATE.toFixed(1)}</span>
               </div>
-              <p className="text-sm text-white/60 mt-2">ファン率が高い時のダメージボーナス全体に掛ける倍率です。</p>
             </section>
+
+            {/* --- アンチ関連 --- */}
+            <section>
+              <h3 className="text-lg font-bold mb-3">アタック時アンチ上昇量</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="20" step="1"
+                  value={params.ANTI_CHANGE.ATTACK}
+                  onChange={(e) => setParams({ ANTI_CHANGE: { ...params.ANTI_CHANGE, ATTACK: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{params.ANTI_CHANGE.ATTACK}</span>
+              </div>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">アンチレベル閾値</h3>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <label className="text-sm text-white/60">Lv1</label>
+                  <input type="number" value={params.ANTI_THRESHOLDS.LV1} onChange={(e) => setParams({ ANTI_THRESHOLDS: { ...params.ANTI_THRESHOLDS, LV1: Number(e.target.value) } })} className="w-full bg-white/5 rounded-md p-2 text-center mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm text-white/60">Lv2</label>
+                  <input type="number" value={params.ANTI_THRESHOLDS.LV2} onChange={(e) => setParams({ ANTI_THRESHOLDS: { ...params.ANTI_THRESHOLDS, LV2: Number(e.target.value) } })} className="w-full bg-white/5 rounded-md p-2 text-center mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm text-white/60">Lv3</label>
+                  <input type="number" value={params.ANTI_THRESHOLDS.LV3} onChange={(e) => setParams({ ANTI_THRESHOLDS: { ...params.ANTI_THRESHOLDS, LV3: Number(e.target.value) } })} className="w-full bg-white/5 rounded-md p-2 text-center mt-1" />
+                </div>
+              </div>
+            </section>
+
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/10">
-            <Button
-              onClick={onClose}
-              variant="primary"
-              size="lg"
-              className="w-full rounded-full"
-            >
+            <Button onClick={onClose} variant="primary" size="lg" className="w-full rounded-full">
               閉じる
             </Button>
           </div>

@@ -50,20 +50,18 @@ export function processTurn(
   });
 
   // 4. アンチゲージ変動（3つの指示すべて）
-  const antiChange = calculateMultipleAntiChange({
-    action: playerAction,
-    result: judgement,
-    commandsFollowed,
-    audienceCommands: commands,
-  });
+  const antiChange = calculateMultipleAntiChange(
+    {
+      action: playerAction,
+      result: judgement,
+      commandsFollowed,
+      audienceCommands: commands,
+    },
+    battleParams
+  );
 
-  // 5. HP更新
-  const newPlayerHp = Math.max(0, state.player.hp - damageToPlayer);
-  const newEnemyHp = Math.max(0, state.enemy.hp - damageToEnemy);
-
-  // 6. アンチゲージ更新とレベル判定
   const newAntiGauge = clampAntiGauge(state.player.antiGauge + antiChange);
-  const newAntiLevel = getAntiLevel(newAntiGauge);
+  const newAntiLevel = getAntiLevel(newAntiGauge, battleParams);
 
   // 7. ファン変動計算（3つの指示すべて）
   const playerFanChange = calculateMultipleFanChange(

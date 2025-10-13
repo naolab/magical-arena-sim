@@ -39,7 +39,7 @@ export function calculateAntiChange(params: AntiChangeParams): number {
       audienceCommand.type === 'guard' ||
       audienceCommand.type === 'guard_forbid'
     ) {
-      change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_GUARD;
+      change += battleParams.ANTI_CHANGE.COMMAND_BREAK_GUARD;
     }
   }
 
@@ -78,7 +78,7 @@ export function getAntiLevelName(level: AntiLevel): string {
 /**
  * 複数の観客指示に対するアンチゲージの変化量を計算（合計）
  */
-export function calculateMultipleAntiChange(params: MultipleAntiChangeParams): number {
+export function calculateMultipleAntiChange(params: MultipleAntiChangeParams, battleParams: BattleParams): number {
   const { action, result, commandsFollowed, audienceCommands } = params;
 
   let change = 0;
@@ -103,7 +103,7 @@ export function calculateMultipleAntiChange(params: MultipleAntiChangeParams): n
       } else if (command.type === 'appeal' || command.type === 'appeal_forbid') {
         change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_APPEAL;
       } else if (command.type === 'guard' || command.type === 'guard_forbid') {
-        change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_GUARD;
+        change += battleParams.ANTI_CHANGE.COMMAND_BREAK_GUARD;
       }
     }
   }
