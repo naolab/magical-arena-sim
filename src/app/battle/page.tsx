@@ -9,6 +9,8 @@ import { CommandBubbles } from '@/components/battle/CommandBubbles';
 import { ActionButtons } from '@/components/battle/ActionButtons';
 import { BattleResult } from '@/components/battle/BattleResult';
 import { ActionShowdown } from '@/components/battle/ActionShowdown';
+import { RulesModal } from '@/components/RulesModal';
+import { BookIcon } from '@/components/ui/BookIcon';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -33,6 +35,7 @@ export default function BattlePage() {
   } = useBattle();
 
   const [viewportSize, setViewportSize] = useState({ width: BASE_STAGE_WIDTH, height: BASE_STAGE_HEIGHT });
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -103,6 +106,14 @@ export default function BattlePage() {
             </div>
           </div>
 
+          <button
+            onClick={() => setIsRulesOpen(true)}
+            className="absolute left-36 top-9 z-10 text-white/80 transition-colors hover:text-white"
+            aria-label="ルールを表示"
+          >
+            <BookIcon className="h-8 w-8" />
+          </button>
+
           <div className="absolute left-6 bottom-6 w-[22%] max-w-sm">
             <PlayerStatus player={player} />
           </div>
@@ -132,6 +143,8 @@ export default function BattlePage() {
       </div>
 
       {phase === 'ended' && winner && <BattleResult winner={winner} onReset={reset} />}
+
+      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
     </main>
   );
 }
