@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { RulesModal } from '@/components/RulesModal';
+import { DifficultyModal } from '@/components/settings/DifficultyModal';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
 
 export default function Home() {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isDifficultyOpen, setIsDifficultyOpen] = useState(false);
   const [viewportSize, setViewportSize] = useState({
     width: BASE_STAGE_WIDTH,
     height: BASE_STAGE_HEIGHT,
@@ -80,9 +82,15 @@ export default function Home() {
                 variant="secondary"
                 size="lg"
                 onClick={() => setIsRulesOpen(true)}
-                className="rounded-full bg-gradient-to-br from-white/15 to-white/8 text-white/90 border border-white/25 shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition hover:from-white/25 hover:to-white/15 hover:text-white hover:border-white/35"
               >
                 ルール
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => setIsDifficultyOpen(true)}
+              >
+                難易度設定
               </Button>
             </div>
           </div>
@@ -90,6 +98,7 @@ export default function Home() {
       </div>
 
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+      <DifficultyModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />
     </main>
   );
 }

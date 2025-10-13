@@ -3,7 +3,7 @@
  * バトル初期化、勝敗判定、敵AI
  */
 
-import { BATTLE_PARAMS } from '@/config/battleParams';
+import { BATTLE_PARAMS, type BattleParams } from '@/config/battleParams';
 import { generateAudienceCommand } from './audienceCommand';
 import { processTurn } from './turnProcessor';
 import type { BattleState, ActionType } from './types';
@@ -11,8 +11,9 @@ import type { BattleState, ActionType } from './types';
 /**
  * バトルを初期化
  */
-export function initBattle(): BattleState {
-  const { INITIAL_HP, BASE_POWER, INITIAL_AUDIENCE } = BATTLE_PARAMS;
+export function initBattle(initialParams?: Partial<BattleParams>): BattleState {
+  const params = { ...BATTLE_PARAMS, ...initialParams };
+  const { INITIAL_HP, BASE_POWER, INITIAL_AUDIENCE } = params;
 
   return {
     isActive: true,

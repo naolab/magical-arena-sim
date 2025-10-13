@@ -3,6 +3,7 @@
 import { useReducer, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { initBattle, executePlayerAction, resetBattle } from '@/lib/battle/battleEngine';
 import { generateAudienceCommand } from '@/lib/battle/audienceCommand';
+import { useBattleParams } from '@/contexts/BattleParamsContext';
 import type {
   AudienceCommand,
   AudienceComposition,
@@ -52,7 +53,8 @@ type BattlePhase = 'announcing' | 'selecting' | 'resolving' | 'showdown' | 'ende
 type ShowdownStage = 'intro' | 'result';
 
 export function useBattle() {
-  const [state, dispatch] = useReducer(battleReducer, null as unknown as BattleState, initBattle);
+  const { params } = useBattleParams();
+  const [state, dispatch] = useReducer(battleReducer, params, initBattle);
   const [phase, setPhase] = useState<BattlePhase>('announcing');
   const [commandBubbles, setCommandBubbles] = useState<CommandBubble[]>([]);
   const [visibleBubbleCount, setVisibleBubbleCount] = useState(0);
