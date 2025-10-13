@@ -100,6 +100,32 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
 
             {/* --- ファン関連 --- */}
             <section>
+              <h3 className="text-lg font-bold mb-3">勝利ボーナス（ファン）</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="0.3" step="0.01"
+                  value={params.FAN_CHANGE.WIN}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, WIN: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.WIN * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">三すくみで勝利した時のファン獲得量。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">敗北ペナルティ（ファン）</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="-0.3" max="0" step="0.01"
+                  value={params.FAN_CHANGE.LOSE}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, LOSE: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">{(params.FAN_CHANGE.LOSE * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">三すくみで敗北した時のファン減少量。</p>
+            </section>
+            <section>
               <h3 className="text-lg font-bold mb-3">アピール成功ボーナス</h3>
               <div className="flex items-center gap-4">
                 <input
