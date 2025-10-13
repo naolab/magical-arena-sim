@@ -8,19 +8,39 @@ import type { AudienceCommand, ActionType } from './types';
 
 /**
  * 観客指示をランダムに生成
- * 確率: 攻撃40%, アピール30%, ガード禁止30%
+ * 確率は `BATTLE_PARAMS.COMMAND_PROBABILITY` に従う
  */
 export function generateAudienceCommand(): AudienceCommand {
   const rand = Math.random();
-  const { ATTACK, APPEAL, GUARD_FORBID } = BATTLE_PARAMS.COMMAND_PROBABILITY;
+  const {
+    ATTACK,
+    ATTACK_FORBID,
+    APPEAL,
+    APPEAL_FORBID,
+    GUARD,
+    GUARD_FORBID,
+  } = BATTLE_PARAMS.COMMAND_PROBABILITY;
 
   if (rand < ATTACK) {
     return { type: 'attack', message: '攻撃しろ！' };
-  } else if (rand < ATTACK + APPEAL) {
-    return { type: 'appeal', message: 'アピールして！' };
-  } else {
-    return { type: 'guard_forbid', message: 'ガードするな！' };
   }
+  if (rand < ATTACK + ATTACK_FORBID) {
+    return { type: 'attack_forbid', message: '攻撃するな！' };
+  }
+  if (rand < ATTACK + ATTACK_FORBID + APPEAL) {
+    return { type: 'appeal', message: 'アピールして！' };
+  }
+  if (rand < ATTACK + ATTACK_FORBID + APPEAL + APPEAL_FORBID) {
+    return { type: 'appeal_forbid', message: 'アピールするな！' };
+  }
+  if (
+    rand <
+    ATTACK + ATTACK_FORBID + APPEAL + APPEAL_FORBID + GUARD
+  ) {
+    return { type: 'guard', message: 'ガードしろ！' };
+  }
+
+  return { type: 'guard_forbid', message: 'ガードするな！' };
 }
 
 /**
@@ -33,8 +53,14 @@ export function isCommandFollowed(
   switch (command.type) {
     case 'attack':
       return playerAction === 'attack';
+    case 'attack_forbid':
+      return playerAction !== 'attack';
     case 'appeal':
       return playerAction === 'appeal';
+    case 'appeal_forbid':
+      return playerAction !== 'appeal';
+    case 'guard':
+      return playerAction === 'guard';
     case 'guard_forbid':
       return playerAction !== 'guard';
   }

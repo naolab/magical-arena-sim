@@ -25,11 +25,20 @@ export function calculateAntiChange(params: AntiChangeParams): number {
 
   // 2. 観客指示違反によるペナルティ
   if (!commandFollowed) {
-    if (audienceCommand.type === 'attack') {
+    if (
+      audienceCommand.type === 'attack' ||
+      audienceCommand.type === 'attack_forbid'
+    ) {
       change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_ATTACK;
-    } else if (audienceCommand.type === 'appeal') {
+    } else if (
+      audienceCommand.type === 'appeal' ||
+      audienceCommand.type === 'appeal_forbid'
+    ) {
       change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_APPEAL;
-    } else if (audienceCommand.type === 'guard_forbid') {
+    } else if (
+      audienceCommand.type === 'guard' ||
+      audienceCommand.type === 'guard_forbid'
+    ) {
       change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_GUARD;
     }
   }
@@ -89,11 +98,11 @@ export function calculateMultipleAntiChange(params: MultipleAntiChangeParams): n
     const command = audienceCommands[i];
 
     if (!followed) {
-      if (command.type === 'attack') {
+      if (command.type === 'attack' || command.type === 'attack_forbid') {
         change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_ATTACK;
-      } else if (command.type === 'appeal') {
+      } else if (command.type === 'appeal' || command.type === 'appeal_forbid') {
         change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_APPEAL;
-      } else if (command.type === 'guard_forbid') {
+      } else if (command.type === 'guard' || command.type === 'guard_forbid') {
         change += BATTLE_PARAMS.ANTI_CHANGE.COMMAND_BREAK_GUARD;
       }
     }

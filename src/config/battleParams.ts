@@ -72,9 +72,12 @@ export const BATTLE_PARAMS = {
 
   // 観客指示出現確率
   COMMAND_PROBABILITY: {
-    ATTACK: 0.4, // 40%
-    APPEAL: 0.3, // 30%
-    GUARD_FORBID: 0.3, // 30%
+    ATTACK: 0.2, // 20%
+    ATTACK_FORBID: 0.1, // 10%
+    APPEAL: 0.2, // 20%
+    APPEAL_FORBID: 0.1, // 10%
+    GUARD: 0.2, // 20%
+    GUARD_FORBID: 0.2, // 20%
   },
 
   // 初期観客構成
