@@ -21,8 +21,9 @@ export function calculateDamage(params: DamageParams, battleParams: BattleParams
     fanPowerBonusRate,
   } = params;
 
-  // 敗北時はダメージなし
-  if (result === 'lose') {
+  // 攻撃側がアタック以外で、かつ敗北している場合はダメージなし
+  // (例: アピールがアタックに負けた場合など)
+  if (action !== 'attack' && result === 'lose') {
     return 0;
   }
 
