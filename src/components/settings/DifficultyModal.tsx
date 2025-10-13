@@ -56,6 +56,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">{params.BASE_POWER}</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">アタックの基礎となるダメージ量。</p>
             </section>
             <section>
               <h3 className="text-lg font-bold mb-3">初期HP</h3>
@@ -68,6 +69,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">{params.INITIAL_HP}</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">プレイヤーと敵の初期HP。高いほど戦闘が長引きます。</p>
             </section>
 
             {/* --- ファン関連 --- */}
@@ -82,6 +84,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.APPEAL_SUCCESS * 100).toFixed(0)}%</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">アピールで勝利した際の、追加ファン獲得ボーナス。</p>
             </section>
             <section>
               <h3 className="text-lg font-bold mb-3">プレイヤー初期ファン率</h3>
@@ -94,6 +97,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">{(params.INITIAL_AUDIENCE.PLAYER_FANS * 100).toFixed(0)}%</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">プレイヤーの初期ファン率。高いほど序盤が有利になります。</p>
             </section>
             <section>
               <h3 className="text-lg font-bold mb-3">ファン率火力ボーナス倍率</h3>
@@ -106,6 +110,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">x{params.FAN_POWER_BONUS_RATE.toFixed(1)}</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">ファン率に応じた火力ボーナス全体に掛ける倍率。</p>
             </section>
 
             {/* --- アンチ関連 --- */}
@@ -120,6 +125,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 />
                 <span className="font-bold text-xl w-16 text-center">+{params.ANTI_CHANGE.ATTACK}</span>
               </div>
+              <p className="text-sm text-white/60 mt-2">アタックで勝利した時に上昇するアンチの値。大きいほどハイリスクになります。</p>
             </section>
             <section>
               <h3 className="text-lg font-bold mb-3">アンチレベル閾値</h3>
@@ -137,6 +143,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                   <input type="number" value={params.ANTI_THRESHOLDS.LV3} onChange={(e) => setParams({ ANTI_THRESHOLDS: { ...params.ANTI_THRESHOLDS, LV3: Number(e.target.value) } })} className="w-full bg-white/5 rounded-md p-2 text-center mt-1" />
                 </div>
               </div>
+              <p className="text-sm text-white/60 mt-2">アンチレベルが上昇する境界値。低いほどすぐにペナルティが発生します。</p>
             </section>
 
           </div>
@@ -151,3 +158,4 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
     </div>
   );
 }
+
