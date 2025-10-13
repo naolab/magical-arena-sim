@@ -3,45 +3,54 @@
  * ファン率の変動と観客構成の更新を管理
  */
 
-import { BATTLE_PARAMS } from '@/config/battleParams';
-import type { FanChangeParams, AudienceComposition, ActionType, BattleResult, AntiLevel, AudienceCommand } from './types';
+import type {
+  FanChangeParams,
+  AudienceComposition,
+  ActionType,
+  BattleResult,
+  AntiLevel,
+  BattleParams,
+} from './types';
 
 /**
  * ファン率の変化量を計算
  * 勝敗補正 + 指示補正 - アンチ補正
  */
-export function calculateFanChange(params: FanChangeParams): number {
+export function calculateFanChange(
+  params: FanChangeParams,
+  battleParams: BattleParams
+): number {
   const { result, action, commandFollowed, antiLevel } = params;
 
   let change = 0;
 
   // 1. 勝敗補正
   if (result === 'win') {
-    change += BATTLE_PARAMS.FAN_CHANGE.WIN;
+    change += battleParams.FAN_CHANGE.WIN;
   } else if (result === 'draw') {
-    change += BATTLE_PARAMS.FAN_CHANGE.DRAW_WIN;
+    change += battleParams.FAN_CHANGE.DRAW_WIN;
   } else if (result === 'lose') {
-    change += BATTLE_PARAMS.FAN_CHANGE.LOSE;
+    change += battleParams.FAN_CHANGE.LOSE;
   }
 
   // 2. 技成功時の追加ボーナス
   if (result === 'win') {
     if (action === 'appeal') {
-      change += BATTLE_PARAMS.FAN_CHANGE.APPEAL_SUCCESS;
+      change += battleParams.FAN_CHANGE.APPEAL_SUCCESS;
     } else if (action === 'guard') {
-      change += BATTLE_PARAMS.FAN_CHANGE.GUARD_SUCCESS;
+      change += battleParams.FAN_CHANGE.GUARD_SUCCESS;
     }
   }
 
   // 3. 観客指示補正
   if (commandFollowed) {
-    change += BATTLE_PARAMS.FAN_CHANGE.COMMAND_FOLLOW;
+    change += battleParams.FAN_CHANGE.COMMAND_FOLLOW;
   } else {
-    change += BATTLE_PARAMS.FAN_CHANGE.COMMAND_BREAK;
+    change += battleParams.FAN_CHANGE.COMMAND_BREAK;
   }
 
   // 4. アンチレベルによるペナルティ
-  const antiPenalty = BATTLE_PARAMS.ANTI_EFFECTS[`LV${antiLevel}`].fanPenalty;
+  const antiPenalty = battleParams.ANTI_EFFECTS[`LV${antiLevel}`].fanPenalty;
   change *= 1 - antiPenalty;
 
   return change;
@@ -126,16 +135,17 @@ export function calculateMultipleFanChange(
   result: BattleResult,
   action: ActionType,
   commandsFollowed: boolean[],
-  antiLevel: AntiLevel
+  antiLevel: AntiLevel,
+  battleParams: BattleParams
 ): number {
   let totalCommandChange = 0;
 
   // 各指示に対する従った/破った補正を合計
   for (const followed of commandsFollowed) {
     if (followed) {
-      totalCommandChange += BATTLE_PARAMS.FAN_CHANGE.COMMAND_FOLLOW;
+      totalCommandChange += battleParams.FAN_CHANGE.COMMAND_FOLLOW;
     } else {
-      totalCommandChange += BATTLE_PARAMS.FAN_CHANGE.COMMAND_BREAK;
+      totalCommandChange += battleParams.FAN_CHANGE.COMMAND_BREAK;
     }
   }
 
@@ -143,19 +153,19 @@ export function calculateMultipleFanChange(
 
   // 1. 勝敗補正
   if (result === 'win') {
-    change += BATTLE_PARAMS.FAN_CHANGE.WIN;
+    change += battleParams.FAN_CHANGE.WIN;
   } else if (result === 'draw') {
-    change += BATTLE_PARAMS.FAN_CHANGE.DRAW_WIN;
+    change += battleParams.FAN_CHANGE.DRAW_WIN;
   } else if (result === 'lose') {
-    change += BATTLE_PARAMS.FAN_CHANGE.LOSE;
+    change += battleParams.FAN_CHANGE.LOSE;
   }
 
   // 2. 技成功時の追加ボーナス
   if (result === 'win') {
     if (action === 'appeal') {
-      change += BATTLE_PARAMS.FAN_CHANGE.APPEAL_SUCCESS;
+      change += battleParams.FAN_CHANGE.APPEAL_SUCCESS;
     } else if (action === 'guard') {
-      change += BATTLE_PARAMS.FAN_CHANGE.GUARD_SUCCESS;
+      change += battleParams.FAN_CHANGE.GUARD_SUCCESS;
     }
   }
 
@@ -163,7 +173,7 @@ export function calculateMultipleFanChange(
   change += totalCommandChange;
 
   // 4. アンチレベルによるペナルティ
-  const antiPenalty = BATTLE_PARAMS.ANTI_EFFECTS[`LV${antiLevel}`].fanPenalty;
+  const antiPenalty = battleParams.ANTI_EFFECTS[`LV${antiLevel}`].fanPenalty;
   change *= 1 - antiPenalty;
 
   return change;

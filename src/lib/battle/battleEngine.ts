@@ -3,7 +3,7 @@
  * バトル初期化、勝敗判定、敵AI
  */
 
-import { BATTLE_PARAMS } from '@/config/battleParams';
+import { BATTLE_PARAMS, type BattleParams } from '@/config/battleParams';
 import { generateAudienceCommand } from './audienceCommand';
 import { processTurn } from './turnProcessor';
 import type { BattleState, ActionType } from './types';
@@ -11,8 +11,9 @@ import type { BattleState, ActionType } from './types';
 /**
  * バトルを初期化
  */
-export function initBattle(): BattleState {
-  const { INITIAL_HP, BASE_POWER, INITIAL_AUDIENCE } = BATTLE_PARAMS;
+export function initBattle(initialParams?: Partial<BattleParams>): BattleState {
+  const params = { ...BATTLE_PARAMS, ...initialParams };
+  const { INITIAL_HP, BASE_POWER, INITIAL_AUDIENCE } = params;
 
   return {
     isActive: true,
@@ -51,7 +52,8 @@ export function initBattle(): BattleState {
  */
 export function executePlayerAction(
   state: BattleState,
-  playerAction: ActionType
+  playerAction: ActionType,
+  battleParams: BattleParams
 ): BattleState {
   if (!state.isActive) {
     return state;
@@ -61,7 +63,7 @@ export function executePlayerAction(
   const enemyAction = decideEnemyAction(state);
 
   // ターン処理
-  const turnResult = processTurn(state, playerAction, enemyAction);
+  const turnResult = processTurn(state, playerAction, enemyAction, battleParams);
 
   // 新しい観客指示を生成（3つ）
   const nextCommands = [
@@ -84,7 +86,7 @@ export function executePlayerAction(
   };
 
   // 勝敗判定
-  const winner = checkWinner(newState);
+  const winner = checkWinner(newState, battleParams);
   if (winner) {
     newState.winner = winner;
     newState.isActive = false;
@@ -108,8 +110,11 @@ function decideEnemyAction(_state: BattleState): ActionType {
  * 勝利条件: 相手HP 0以下
  * 引き分け条件: 同じターンに両者HP 0以下
  */
-export function checkWinner(state: BattleState): 'player' | 'enemy' | 'draw' | null {
-  const { HP_THRESHOLD } = BATTLE_PARAMS.WIN_CONDITIONS;
+export function checkWinner(
+  state: BattleState,
+  battleParams: BattleParams
+): 'player' | 'enemy' | 'draw' | null {
+  const { HP_THRESHOLD } = battleParams.WIN_CONDITIONS;
 
   const playerDead = state.player.hp <= HP_THRESHOLD;
   const enemyDead = state.enemy.hp <= HP_THRESHOLD;
@@ -133,6 +138,6 @@ export function checkWinner(state: BattleState): 'player' | 'enemy' | 'draw' | n
 /**
  * バトルをリセット
  */
-export function resetBattle(): BattleState {
-  return initBattle();
+export function resetBattle(initialParams?: Partial<BattleParams>): BattleState {
+  return initBattle(initialParams);
 }

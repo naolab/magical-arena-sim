@@ -1,7 +1,9 @@
+'use client';
+
 import { Gauge } from '../ui/Gauge';
 import { Badge } from '../ui/Badge';
 import { getAntiLevel } from '@/lib/battle/antiGauge';
-import { BATTLE_PARAMS } from '@/config/battleParams';
+import { useBattleParams } from '@/contexts/BattleParamsContext';
 import type { PlayerState } from '@/types';
 
 interface PlayerStatusProps {
@@ -30,9 +32,10 @@ const antiLevelGaugeColor: Record<number, 'neutral' | 'anti-lv1' | 'anti-lv2' | 
 };
 
 export function PlayerStatus({ player }: PlayerStatusProps) {
-  const level = getAntiLevel(player.antiGauge);
-  const levelKey = `LV${level}` as keyof typeof BATTLE_PARAMS.ANTI_EFFECTS;
-  const { fanPenalty, powerPenalty } = BATTLE_PARAMS.ANTI_EFFECTS[levelKey];
+  const { params } = useBattleParams();
+  const level = getAntiLevel(player.antiGauge, params);
+  const levelKey = `LV${level}` as keyof typeof params.ANTI_EFFECTS;
+  const { fanPenalty, powerPenalty } = params.ANTI_EFFECTS[levelKey];
   const fanPenaltyPercent = Math.round(fanPenalty * 100);
   const powerMultiplierPercent = Math.round(powerPenalty * 100);
   const powerPenaltyPercent = 100 - powerMultiplierPercent;

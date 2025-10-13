@@ -89,6 +89,7 @@ export interface DamageParams {
   antiLevel: AntiLevel;
   result: BattleResult;
   isDefending: boolean; // 相手がガードしているか
+  fanPowerBonusRate?: number; // ファン率火力ボーナスの全体倍率
 }
 
 // ファン変動計算のパラメータ

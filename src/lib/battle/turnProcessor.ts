@@ -8,7 +8,7 @@ import { calculateDamage } from './damage';
 import { calculateMultipleFanChange, updateAudienceComposition } from './fanSystem';
 import { calculateMultipleAntiChange, getAntiLevel, clampAntiGauge } from './antiGauge';
 import { checkMultipleCommands } from './audienceCommand';
-import { BATTLE_PARAMS } from '@/config/battleParams';
+import type { BattleParams } from '@/config/battleParams';
 import type { BattleState, ActionType, TurnResult } from './types';
 
 /**
@@ -17,7 +17,8 @@ import type { BattleState, ActionType, TurnResult } from './types';
 export function processTurn(
   state: BattleState,
   playerAction: ActionType,
-  enemyAction: ActionType
+  enemyAction: ActionType,
+  battleParams: BattleParams
 ): TurnResult {
   const turnNumber = state.currentTurn + 1;
   const commands = state.currentCommands;
@@ -30,31 +31,42 @@ export function processTurn(
   const commandsFollowed = checkMultipleCommands(commands, playerAction);
 
   // 3. ダメージ計算
-  const damageToEnemy = calculateDamage({
-    action: playerAction,
-    basePower: state.player.basePower,
-    fanRate: state.player.fanRate,
-    antiLevel: state.player.antiLevel,
-    result: judgement,
-    isDefending: enemyAction === 'guard',
-  });
+  const damageToEnemy = calculateDamage(
+    {
+      action: playerAction,
+      basePower: state.player.basePower,
+      fanRate: state.player.fanRate,
+      antiLevel: state.player.antiLevel,
+      result: judgement,
+      isDefending: enemyAction === 'guard',
+      fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
+    },
+    battleParams
+  );
 
-  const damageToPlayer = calculateDamage({
-    action: enemyAction,
-    basePower: state.enemy.basePower,
-    fanRate: state.enemy.fanRate,
-    antiLevel: 0, // 敵にはアンチゲージなし
-    result: enemyJudgement,
-    isDefending: playerAction === 'guard',
-  });
+  const damageToPlayer = calculateDamage(
+    {
+      action: enemyAction,
+      basePower: state.enemy.basePower,
+      fanRate: state.enemy.fanRate,
+      antiLevel: 0, // 敵にはアンチゲージなし
+      result: enemyJudgement,
+      isDefending: playerAction === 'guard',
+      fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
+    },
+    battleParams
+  );
 
   // 4. アンチゲージ変動（3つの指示すべて）
-  const antiChange = calculateMultipleAntiChange({
-    action: playerAction,
-    result: judgement,
-    commandsFollowed,
-    audienceCommands: commands,
-  });
+  const antiChange = calculateMultipleAntiChange(
+    {
+      action: playerAction,
+      result: judgement,
+      commandsFollowed,
+      audienceCommands: commands,
+    },
+    battleParams
+  );
 
   // 5. HP更新
   const newPlayerHp = Math.max(0, state.player.hp - damageToPlayer);
@@ -62,32 +74,33 @@ export function processTurn(
 
   // 6. アンチゲージ更新とレベル判定
   const newAntiGauge = clampAntiGauge(state.player.antiGauge + antiChange);
-  const newAntiLevel = getAntiLevel(newAntiGauge);
+  const newAntiLevel = getAntiLevel(newAntiGauge, battleParams);
 
   // 7. ファン変動計算（3つの指示すべて）
   const playerFanChange = calculateMultipleFanChange(
     judgement,
     playerAction,
     commandsFollowed,
-    newAntiLevel
+    newAntiLevel,
+    battleParams
   );
 
   // 敵のファン変動計算（観客指示は常に±0）
   let enemyFanChange = 0;
   // 1. 勝敗補正
   if (enemyJudgement === 'win') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.WIN;
+    enemyFanChange += battleParams.FAN_CHANGE.WIN;
   } else if (enemyJudgement === 'draw') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.DRAW_WIN;
+    enemyFanChange += battleParams.FAN_CHANGE.DRAW_WIN;
   } else if (enemyJudgement === 'lose') {
-    enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.LOSE;
+    enemyFanChange += battleParams.FAN_CHANGE.LOSE;
   }
   // 2. 技成功ボーナス
   if (enemyJudgement === 'win') {
     if (enemyAction === 'appeal') {
-      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.APPEAL_SUCCESS;
+      enemyFanChange += battleParams.FAN_CHANGE.APPEAL_SUCCESS;
     } else if (enemyAction === 'guard') {
-      enemyFanChange += BATTLE_PARAMS.FAN_CHANGE.GUARD_SUCCESS;
+      enemyFanChange += battleParams.FAN_CHANGE.GUARD_SUCCESS;
     }
   }
 

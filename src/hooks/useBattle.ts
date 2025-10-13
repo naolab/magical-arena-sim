@@ -3,6 +3,7 @@
 import { useReducer, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { initBattle, executePlayerAction, resetBattle } from '@/lib/battle/battleEngine';
 import { generateAudienceCommand } from '@/lib/battle/audienceCommand';
+import { useBattleParams } from '@/contexts/BattleParamsContext';
 import type {
   AudienceCommand,
   AudienceComposition,
@@ -11,12 +12,13 @@ import type {
   EnemyState,
   PlayerState,
   TurnResult,
+  BattleParams,
 } from '@/lib/battle/types';
 
 type BattleAction =
-  | { type: 'START_BATTLE' }
-  | { type: 'EXECUTE_ACTION'; payload: ActionType }
-  | { type: 'RESET_BATTLE' };
+  | { type: 'START_BATTLE'; payload: Partial<BattleParams> }
+  | { type: 'EXECUTE_ACTION'; payload: { action: ActionType; params: BattleParams } }
+  | { type: 'RESET_BATTLE'; payload: Partial<BattleParams> };
 
 /**
  * バトル状態を管理するReducer
@@ -24,13 +26,13 @@ type BattleAction =
 function battleReducer(state: BattleState, action: BattleAction): BattleState {
   switch (action.type) {
     case 'START_BATTLE':
-      return initBattle();
+      return initBattle(action.payload);
 
     case 'EXECUTE_ACTION':
-      return executePlayerAction(state, action.payload);
+      return executePlayerAction(state, action.payload.action, action.payload.params);
 
     case 'RESET_BATTLE':
-      return resetBattle();
+      return resetBattle(action.payload);
 
     default:
       return state;
@@ -52,7 +54,8 @@ type BattlePhase = 'announcing' | 'selecting' | 'resolving' | 'showdown' | 'ende
 type ShowdownStage = 'intro' | 'result';
 
 export function useBattle() {
-  const [state, dispatch] = useReducer(battleReducer, null as unknown as BattleState, initBattle);
+  const { params } = useBattleParams();
+  const [state, dispatch] = useReducer(battleReducer, params, initBattle);
   const [phase, setPhase] = useState<BattlePhase>('announcing');
   const [commandBubbles, setCommandBubbles] = useState<CommandBubble[]>([]);
   const [visibleBubbleCount, setVisibleBubbleCount] = useState(0);
@@ -77,8 +80,8 @@ export function useBattle() {
    * バトル開始
    */
   const startBattle = useCallback(() => {
-    dispatch({ type: 'START_BATTLE' });
-  }, []);
+    dispatch({ type: 'START_BATTLE', payload: params });
+  }, [params]);
 
   /**
    * プレイヤーの行動を実行
@@ -104,9 +107,9 @@ export function useBattle() {
         audience: state.audience,
       };
       setPhase('resolving');
-      dispatch({ type: 'EXECUTE_ACTION', payload: action });
+      dispatch({ type: 'EXECUTE_ACTION', payload: { action, params } });
     },
-    [bubbleCount, phase, state.isActive, state.player, state.enemy, state.audience]
+    [bubbleCount, phase, state.isActive, state.player, state.enemy, state.audience, params]
   );
 
   /**
@@ -129,7 +132,7 @@ export function useBattle() {
       window.clearTimeout(showdownStageTimerRef.current);
       showdownStageTimerRef.current = null;
     }
-    dispatch({ type: 'RESET_BATTLE' });
+    dispatch({ type: 'RESET_BATTLE', payload: params });
     previousTurnCountRef.current = 0;
     setCommandBubbles([]);
     setVisibleBubbleCount(0);
@@ -137,7 +140,7 @@ export function useBattle() {
     setShowdownStage('intro');
     pendingStateRef.current = null;
     setPhase('announcing');
-  }, []);
+  }, [params]);
 
   /**
    * 新しい観客指示を生成

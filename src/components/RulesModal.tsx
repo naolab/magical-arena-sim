@@ -89,7 +89,7 @@ export function RulesModal({ isOpen, onClose }: RulesModalProps) {
               <ul className="space-y-2 text-sm leading-relaxed">
                 <li>• 観客の期待を裏切るとアンチゲージが上昇</li>
                 <li>• アンチレベルが上がると<strong>ファン獲得と火力にペナルティ</strong></li>
-                <li>• Lv3（炎上期）: ファン獲得-60%、火力-40%</li>
+                <li>• Lv3（炎上期）: ファン獲得-60%、火力-60%</li>
                 <li>• アピールやガード成功でアンチを減らせる</li>
               </ul>
             </section>
