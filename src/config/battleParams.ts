@@ -3,7 +3,87 @@
  * battle-system-spec.md に基づく数値設定
  */
 
-export const BATTLE_PARAMS = {
+export interface FanChangeConfig {
+  WIN: number;
+  DRAW_WIN: number;
+  LOSE: number;
+  COMMAND_FOLLOW: number;
+  COMMAND_BREAK: number;
+  APPEAL_SUCCESS: number;
+  GUARD_SUCCESS: number;
+}
+
+export interface AntiChangeConfig {
+  ATTACK: number;
+  APPEAL_SUCCESS: number;
+  GUARD_SUCCESS: number;
+  COMMAND_BREAK_ATTACK: number;
+  COMMAND_BREAK_APPEAL: number;
+  COMMAND_BREAK_GUARD: number;
+}
+
+export interface AntiThresholdConfig {
+  LV1: number;
+  LV2: number;
+  LV3: number;
+}
+
+export interface AntiEffectsLevel {
+  fanPenalty: number;
+  powerPenalty: number;
+}
+
+export interface AntiEffectsConfig {
+  LV0: AntiEffectsLevel;
+  LV1: AntiEffectsLevel;
+  LV2: AntiEffectsLevel;
+  LV3: AntiEffectsLevel;
+}
+
+export interface CommandProbabilityConfig {
+  ATTACK: number;
+  ATTACK_FORBID: number;
+  APPEAL: number;
+  APPEAL_FORBID: number;
+  GUARD: number;
+  GUARD_FORBID: number;
+}
+
+export interface AudienceCompositionParams {
+  ENEMY_FANS: number;
+  NEUTRAL_FANS: number;
+  PLAYER_FANS: number;
+}
+
+export interface FanPowerBonusConfig {
+  threshold: number;
+  multiplier: number;
+}
+
+export interface WinConditionsConfig {
+  HP_THRESHOLD: number;
+  FAN_THRESHOLD: number;
+}
+
+export interface BattleParams {
+  INITIAL_HP: number;
+  BASE_POWER: number;
+  ATTACK_MULTIPLIER: number;
+  APPEAL_MULTIPLIER: number;
+  GUARD_MULTIPLIER: number;
+  GUARD_DAMAGE_REDUCTION: number;
+  FAN_CHANGE: FanChangeConfig;
+  ANTI_CHANGE: AntiChangeConfig;
+  ANTI_THRESHOLDS: AntiThresholdConfig;
+  ANTI_EFFECTS: AntiEffectsConfig;
+  COMMAND_PROBABILITY: CommandProbabilityConfig;
+  INITIAL_AUDIENCE: AudienceCompositionParams;
+  FAN_POWER_BONUS_RATE: number;
+  FAN_POWER_BONUS: FanPowerBonusConfig[];
+  WIN_CONDITIONS: WinConditionsConfig;
+}
+
+export const BATTLE_PARAMS: BattleParams = {
   // 基本パラメータ
   INITIAL_HP: 1000,
   BASE_POWER: 100,
@@ -101,7 +181,4 @@ export const BATTLE_PARAMS = {
     HP_THRESHOLD: 0, // HP 0以下
     FAN_THRESHOLD: 0.8, // ファン率 80%以上
   },
-} as const;
-
-// 型エクスポート（型推論用）
-export type BattleParams = typeof BATTLE_PARAMS;
+};

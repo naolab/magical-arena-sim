@@ -9,8 +9,8 @@ import type {
   ActionType,
   BattleResult,
   AntiLevel,
-  BattleParams,
 } from './types';
+import type { BattleParams } from '@/config/battleParams';
 
 /**
  * ファン率の変化量を計算

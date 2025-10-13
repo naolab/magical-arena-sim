@@ -3,7 +3,8 @@
  * ファン補正、アンチ補正、ガード軽減を含む
  */
 
-import type { BattleParams, DamageParams } from './types';
+import type { BattleParams } from '@/config/battleParams';
+import type { DamageParams } from './types';
 import type { ActionType } from './types';
 
 /**

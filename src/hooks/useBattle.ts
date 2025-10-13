@@ -12,8 +12,8 @@ import type {
   EnemyState,
   PlayerState,
   TurnResult,
-  BattleParams,
 } from '@/lib/battle/types';
+import type { BattleParams } from '@/config/battleParams';
 
 type BattleAction =
   | { type: 'START_BATTLE'; payload: Partial<BattleParams> }
