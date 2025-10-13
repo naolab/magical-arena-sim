@@ -17,7 +17,8 @@ import type { BattleState, ActionType, TurnResult } from './types';
 export function processTurn(
   state: BattleState,
   playerAction: ActionType,
-  enemyAction: ActionType
+  enemyAction: ActionType,
+  battleParams: BattleParams,
 ): TurnResult {
   const turnNumber = state.currentTurn + 1;
   const commands = state.currentCommands;
@@ -43,15 +44,18 @@ export function processTurn(
     battleParams
   );
 
-  const damageToPlayer = calculateDamage({
-    action: enemyAction,
-    basePower: state.enemy.basePower,
-    fanRate: state.enemy.fanRate,
-    antiLevel: 0, // 敵にはアンチゲージなし
-    result: enemyJudgement,
-    isDefending: playerAction === 'guard',
-    fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
-  });
+  const damageToPlayer = calculateDamage(
+    {
+      action: enemyAction,
+      basePower: state.enemy.basePower,
+      fanRate: state.enemy.fanRate,
+      antiLevel: 0, // 敵にはアンチゲージなし
+      result: enemyJudgement,
+      isDefending: playerAction === 'guard',
+      fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
+    },
+    battleParams
+  );
 
   // 4. アンチゲージ変動（3つの指示すべて）
   const antiChange = calculateMultipleAntiChange(
