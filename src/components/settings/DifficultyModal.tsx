@@ -100,6 +100,32 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
 
             {/* --- ファン関連 --- */}
             <section>
+              <h3 className="text-lg font-bold mb-3">勝利ボーナス（ファン）</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="0.3" step="0.01"
+                  value={params.FAN_CHANGE.WIN}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, WIN: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.WIN * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">三すくみで勝利した時のファン獲得量。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">敗北ペナルティ（ファン）</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="-0.3" max="0" step="0.01"
+                  value={params.FAN_CHANGE.LOSE}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, LOSE: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">{(params.FAN_CHANGE.LOSE * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">三すくみで敗北した時のファン減少量。</p>
+            </section>
+            <section>
               <h3 className="text-lg font-bold mb-3">アピール成功ボーナス</h3>
               <div className="flex items-center gap-4">
                 <input
@@ -111,6 +137,45 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
                 <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.APPEAL_SUCCESS * 100).toFixed(0)}%</span>
               </div>
               <p className="text-sm text-white/60 mt-2">アピールで勝利した際の、追加ファン獲得ボーナス。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">ガード成功ボーナス</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="0.2" step="0.01"
+                  value={params.FAN_CHANGE.GUARD_SUCCESS}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, GUARD_SUCCESS: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.GUARD_SUCCESS * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">ガードで勝利した際の、追加ファン獲得ボーナス。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">指示成功ボーナス</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0" max="0.2" step="0.01"
+                  value={params.FAN_CHANGE.COMMAND_FOLLOW}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, COMMAND_FOLLOW: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">+{(params.FAN_CHANGE.COMMAND_FOLLOW * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">観客の指示に1つ従うごとのファン獲得量。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">指示失敗ペナルティ</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="-0.2" max="0" step="0.01"
+                  value={params.FAN_CHANGE.COMMAND_BREAK}
+                  onChange={(e) => setParams({ FAN_CHANGE: { ...params.FAN_CHANGE, COMMAND_BREAK: Number(e.target.value) } })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">{(params.FAN_CHANGE.COMMAND_BREAK * 100).toFixed(0)}%</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">観客の指示に1つ反するごとのファン減少量。</p>
             </section>
             <section>
               <h3 className="text-lg font-bold mb-3">プレイヤー初期ファン率</h3>
