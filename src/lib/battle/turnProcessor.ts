@@ -30,14 +30,18 @@ export function processTurn(
   const commandsFollowed = checkMultipleCommands(commands, playerAction);
 
   // 3. ダメージ計算
-  const damageToEnemy = calculateDamage({
-    action: playerAction,
-    basePower: state.player.basePower,
-    fanRate: state.player.fanRate,
-    antiLevel: state.player.antiLevel,
-    result: judgement,
-    isDefending: enemyAction === 'guard',
-  });
+  const damageToEnemy = calculateDamage(
+    {
+      action: playerAction,
+      basePower: state.player.basePower,
+      fanRate: state.player.fanRate,
+      antiLevel: state.player.antiLevel,
+      result: judgement,
+      isDefending: enemyAction === 'guard',
+      fanPowerBonusRate: battleParams.FAN_POWER_BONUS_RATE,
+    },
+    battleParams
+  );
 
   const damageToPlayer = calculateDamage({
     action: enemyAction,

@@ -71,6 +71,32 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
               </div>
               <p className="text-sm text-white/60 mt-2">プレイヤーと敵の初期HP。高いほど戦闘が長引きます。</p>
             </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">アタック倍率</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="1.0" max="2.0" step="0.1"
+                  value={params.ATTACK_MULTIPLIER}
+                  onChange={(e) => setParams({ ATTACK_MULTIPLIER: Number(e.target.value) })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-16 text-center">x{params.ATTACK_MULTIPLIER.toFixed(1)}</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">アタックで勝利した時のダメージ倍率。</p>
+            </section>
+            <section>
+              <h3 className="text-lg font-bold mb-3">ガード軽減率</h3>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range" min="0.0" max="0.9" step="0.05"
+                  value={params.GUARD_DAMAGE_REDUCTION}
+                  onChange={(e) => setParams({ GUARD_DAMAGE_REDUCTION: Number(e.target.value) })}
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="font-bold text-xl w-24 text-center">{( (1 - params.GUARD_DAMAGE_REDUCTION) * 100 ).toFixed(0)}%カット</span>
+              </div>
+              <p className="text-sm text-white/60 mt-2">ガードで防御した時のダメージ軽減率。</p>
+            </section>
 
             {/* --- ファン関連 --- */}
             <section>

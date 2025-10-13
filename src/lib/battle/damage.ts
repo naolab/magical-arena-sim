@@ -25,7 +25,7 @@ export function calculateDamage(params: DamageParams): number {
   const fanBonus = getFanPowerBonus(fanRate, fanPowerBonusRate);
 
   // アンチ補正を取得
-  const antiPenalty = BATTLE_PARAMS.ANTI_EFFECTS[`LV${antiLevel}`].powerPenalty;
+  const antiPenalty = battleParams.ANTI_EFFECTS[`LV${antiLevel}`].powerPenalty;
 
   // 基礎ダメージ計算
   let damage = basePower * skillMultiplier * fanBonus * antiPenalty;
