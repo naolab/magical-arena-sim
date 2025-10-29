@@ -145,6 +145,26 @@ export function BattleContainer() {
                     }}
                   />
                 </div>
+
+                {/* 左上：プレイヤーHPゲージ */}
+                <div className="absolute top-8 left-12 w-[300px]">
+                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-lime-500 rounded"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                {/* 右下：敵HPゲージ */}
+                <div className="absolute bottom-8 right-12 w-[300px]">
+                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-lime-500 rounded"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* 上部：テキストボックス */}
