@@ -128,8 +128,27 @@ export function BattleContainer() {
           <div className="relative w-full h-full bg-gray-900">
             {/* バトルエリア */}
             <div className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white">
+              {/* 中央：バトル画面 */}
+              <div className="absolute top-[80px] left-0 right-0 bottom-[80px] z-0">
+                {/* バトル画面 */}
+
+                {/* 中央ファンゲージ（仮） */}
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
+                  <div
+                    style={{
+                      width: '50px',
+                      height: '115%',
+                      transform: 'rotate(-15deg)',
+                      background: 'linear-gradient(to bottom, #ec4899 0%, #ec4899 50%, #22d3ee 50%, #22d3ee 100%)',
+                      border: '2px solid white',
+                      borderRadius: '4px',
+                    }}
+                  />
+                </div>
+              </div>
+
               {/* 上部：テキストボックス */}
-              <div className="absolute top-0 left-0 right-0 h-[80px] bg-black border-b-4 border-pink-500">
+              <div className="absolute top-0 left-0 right-0 h-[80px] bg-black border-b-4 border-pink-500 z-10">
                 <div className="p-3">
                   <input
                     type="text"
@@ -139,13 +158,8 @@ export function BattleContainer() {
                 </div>
               </div>
 
-              {/* 中央：バトル画面 */}
-              <div className="absolute top-[80px] left-0 right-0 bottom-[80px]">
-                {/* バトル画面 */}
-              </div>
-
               {/* 下部：テキストボックス */}
-              <div className="absolute bottom-0 left-0 right-0 h-[80px] bg-black border-t-4 border-cyan-400">
+              <div className="absolute bottom-0 left-0 right-0 h-[80px] bg-black border-t-4 border-cyan-400 z-10">
                 <div className="p-3">
                   <input
                     type="text"
