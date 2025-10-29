@@ -126,13 +126,38 @@ export function BattleContainer() {
         <div style={stageStyle}>
           {/* 16:9固定レイアウト */}
           <div className="relative w-full h-full bg-gray-900">
-            {/* 左上：バトルエリア */}
-            <div className="absolute top-[-4px] left-0 w-[1200px] h-[730px] border-4 border-white">
-              {/* バトル画面 */}
+            {/* バトルエリア */}
+            <div className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white">
+              {/* 上部：テキストボックス */}
+              <div className="absolute top-0 left-0 right-0 h-[80px] bg-black border-b-4 border-pink-500">
+                <div className="p-3">
+                  <input
+                    type="text"
+                    className="w-full h-full bg-gray-800 text-white px-3 text-lg"
+                    placeholder="上部テキスト"
+                  />
+                </div>
+              </div>
+
+              {/* 中央：バトル画面 */}
+              <div className="absolute top-[80px] left-0 right-0 bottom-[80px]">
+                {/* バトル画面 */}
+              </div>
+
+              {/* 下部：テキストボックス */}
+              <div className="absolute bottom-0 left-0 right-0 h-[80px] bg-black border-t-4 border-cyan-400">
+                <div className="p-3">
+                  <input
+                    type="text"
+                    className="w-full h-full bg-gray-800 text-white px-3 text-lg"
+                    placeholder="下部テキスト"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 右上：コメントエリア */}
-            <div className="absolute top-8 left-[1220px] right-8 h-[750px] bg-black border-4 border-white">
+            <div className="absolute top-8 left-[1220px] right-8 h-[720px] bg-black border-4 border-white">
               <div className="p-4">
                 <h3 className="text-blue-400 text-xl font-bold">コメント</h3>
               </div>
