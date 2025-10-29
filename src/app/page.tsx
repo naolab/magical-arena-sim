@@ -74,7 +74,9 @@ export default function Home() {
         >
           <div className="flex h-full w-full flex-col items-center justify-center gap-12 px-16 text-center">
             <div>
-              <h1 className="text-6xl font-bold text-arena-text">Magical Arena Sim</h1>
+              <h1 className="text-6xl font-bold text-arena-text">
+                Magical Arena Sim{selectedVersion === 'v2' ? ' (v2)' : ''}
+              </h1>
               <p className="mt-6 text-xl text-arena-subtext">バトルシステムシミュレータ</p>
             </div>
 
@@ -95,6 +97,7 @@ export default function Home() {
                 variant="secondary"
                 size="lg"
                 onClick={() => setIsDifficultyOpen(true)}
+                disabled={selectedVersion === 'v2'}
               >
                 難易度設定
               </Button>
