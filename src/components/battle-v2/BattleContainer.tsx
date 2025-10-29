@@ -127,8 +127,15 @@ export function BattleContainer() {
           {/* 16:9固定レイアウト */}
           <div className="relative w-full h-full bg-gray-900">
             {/* 左上：バトルエリア */}
-            <div className="absolute top-0 left-0 w-[1200px] h-[730px] border-4 border-white">
+            <div className="absolute top-[-4px] left-0 w-[1200px] h-[730px] border-4 border-white">
               {/* バトル画面 */}
+            </div>
+
+            {/* 右上：コメントエリア */}
+            <div className="absolute top-8 left-[1220px] right-8 h-[750px] bg-black border-4 border-white">
+              <div className="p-4">
+                <h3 className="text-blue-400 text-xl font-bold">コメント</h3>
+              </div>
             </div>
           </div>
         </div>
