@@ -129,7 +129,7 @@ export function BattleContainer() {
             {/* バトルエリア */}
             <div className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white">
               {/* 中央：バトル画面 */}
-              <div className="absolute top-[80px] left-0 right-0 bottom-[80px] z-0">
+              <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-0">
                 {/* バトル画面 */}
 
                 {/* 中央ファンゲージ（仮） */}
@@ -137,7 +137,7 @@ export function BattleContainer() {
                   <div
                     style={{
                       width: '50px',
-                      height: '115%',
+                      height: '130%',
                       transform: 'rotate(-15deg)',
                       background: 'linear-gradient(to bottom, #ec4899 0%, #ec4899 50%, #22d3ee 50%, #22d3ee 100%)',
                       border: '2px solid white',
@@ -147,7 +147,7 @@ export function BattleContainer() {
                 </div>
 
                 {/* 左上：プレイヤーHPゲージ */}
-                <div className="absolute top-8 left-12 w-[300px]">
+                <div className="absolute top-0 left-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
                       className="absolute top-0 left-0 h-full bg-lime-500 rounded"
@@ -157,7 +157,7 @@ export function BattleContainer() {
                 </div>
 
                 {/* 右下：敵HPゲージ */}
-                <div className="absolute bottom-8 right-12 w-[300px]">
+                <div className="absolute bottom-0 right-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
                       className="absolute top-0 left-0 h-full bg-lime-500 rounded"
@@ -168,24 +168,44 @@ export function BattleContainer() {
               </div>
 
               {/* 上部：テキストボックス */}
-              <div className="absolute top-0 left-0 right-0 h-[80px] bg-black border-b-4 border-pink-500 z-10">
-                <div className="p-3">
-                  <input
-                    type="text"
-                    className="w-full h-full bg-gray-800 text-white px-3 text-lg"
-                    placeholder="上部テキスト"
-                  />
+              <div className="absolute top-0 left-0 right-0 h-[120px] z-10">
+                <div className="relative w-full h-full">
+                  <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path
+                      d="M 0 0 L 1200 0 L 1200 80 L 1050 80 L 1020 120 L 990 80 L 0 80 Z"
+                      fill="black"
+                      stroke="#ec4899"
+                      strokeWidth="4"
+                    />
+                  </svg>
+                  <div className="absolute top-0 left-0 w-full h-full p-3">
+                    <input
+                      type="text"
+                      className="w-full h-full bg-transparent text-white px-3 text-lg"
+                      placeholder="上部テキスト"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* 下部：テキストボックス */}
-              <div className="absolute bottom-0 left-0 right-0 h-[80px] bg-black border-t-4 border-cyan-400 z-10">
-                <div className="p-3">
-                  <input
-                    type="text"
-                    className="w-full h-full bg-gray-800 text-white px-3 text-lg"
-                    placeholder="下部テキスト"
-                  />
+              <div className="absolute bottom-0 left-0 right-0 h-[120px] z-10">
+                <div className="relative w-full h-full">
+                  <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path
+                      d="M 0 40 L 150 40 L 180 0 L 210 40 L 1200 40 L 1200 120 L 0 120 Z"
+                      fill="black"
+                      stroke="#22d3ee"
+                      strokeWidth="4"
+                    />
+                  </svg>
+                  <div className="absolute top-0 left-0 w-full h-full p-3">
+                    <input
+                      type="text"
+                      className="w-full h-full bg-transparent text-white px-3 text-lg"
+                      placeholder="下部テキスト"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
