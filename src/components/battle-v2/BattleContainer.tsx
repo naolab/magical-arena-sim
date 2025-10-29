@@ -120,8 +120,19 @@ export function BattleContainer() {
   const latestTurnResult = battleState.turnHistory[battleState.turnHistory.length - 1];
 
   return (
-    <main className="h-screen w-screen bg-black">
-      {/* UI削除：処理のみ保持 */}
+    <main className="h-screen w-screen bg-black flex items-center justify-center">
+      {/* スケーリングコンテナ */}
+      <div style={stageWrapperStyle}>
+        <div style={stageStyle}>
+          {/* 16:9固定レイアウト */}
+          <div className="relative w-full h-full bg-gray-900">
+            {/* 左上：バトルエリア */}
+            <div className="absolute top-0 left-0 w-[1200px] h-[730px] border-4 border-white">
+              {/* バトル画面 */}
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
