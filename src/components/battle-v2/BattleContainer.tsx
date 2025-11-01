@@ -7,6 +7,7 @@ import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
+import { BattleResult } from './BattleResult';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -180,6 +181,8 @@ export function BattleContainer() {
     setRecentCommentIds([]);
     setShowActionButtons(false);
     setSelectedEmotion(null);
+    setEnemyDialogueComplete(false);
+    selectRandomDialogue();
   };
 
   // 初期化中はローディング表示
@@ -333,6 +336,14 @@ export function BattleContainer() {
                 </div>
               </div>
             </div>
+
+            {/* リザルト画面 */}
+            {isBattleOver(battleState) && battleState.winner && (
+              <BattleResult
+                winner={battleState.winner}
+                onRestart={handleRestart}
+              />
+            )}
           </div>
         </div>
       </div>
