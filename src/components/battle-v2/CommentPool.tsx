@@ -12,9 +12,9 @@ interface CommentPoolProps {
 
 export function CommentPool({ comments, recentCommentIds = [], highlightEmotion = null }: CommentPoolProps) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-gradient-to-b from-black/60 to-black/80 p-4 backdrop-blur-sm h-full">
+    <div className="flex flex-col gap-2 rounded-xl bg-gradient-to-b from-black/60 to-black/80 p-2 backdrop-blur-sm h-full">
       {/* コメントリスト */}
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto scrollbar-hide px-2 py-2">
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto scrollbar-hide px-3 py-2">
         {comments.length === 0 ? (
           <div className="py-4 text-center text-sm text-white/40">
             コメントがありません
