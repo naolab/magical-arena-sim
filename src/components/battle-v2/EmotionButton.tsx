@@ -36,13 +36,6 @@ export function EmotionButton({
       {/* 感情名 */}
       <div className="text-2xl font-bold text-white mb-2">{name}</div>
 
-      {/* コメント数バッジ */}
-      {commentCount > 0 && (
-        <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold shadow-lg">
-          <span style={{ color }}>{commentCount}</span>
-        </div>
-      )}
-
       {/* 説明テキスト */}
       <div className="text-xs text-white/80">
         {getEmotionDescription(emotion)}

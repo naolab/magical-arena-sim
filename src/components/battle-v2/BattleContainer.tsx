@@ -6,6 +6,7 @@ import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/b
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
+import { TypewriterText } from './TypewriterText';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -38,6 +39,7 @@ export function BattleContainer() {
   const [enemyDialogue, setEnemyDialogue] = useState('');
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionType | null>(null);
+  const [enemyDialogueComplete, setEnemyDialogueComplete] = useState(false);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -45,12 +47,20 @@ export function BattleContainer() {
     height: BASE_STAGE_HEIGHT,
   });
 
+  // HPゲージの色を計算
+  const getHpColor = (hpRatio: number): string => {
+    if (hpRatio > 0.7) return '#84cc16'; // 緑
+    if (hpRatio > 0.2) return '#eab308'; // 黄色
+    return '#ef4444'; // 赤
+  };
+
   // セリフをランダムに選択
   const selectRandomDialogue = () => {
     const randomEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
     const randomPlayer = PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)];
     setEnemyDialogue(randomEnemy);
     setPlayerDialogue(randomPlayer);
+    setEnemyDialogueComplete(false);
   };
 
   // クライアントサイドでバトルを初期化
@@ -215,8 +225,11 @@ export function BattleContainer() {
                 <div className="absolute top-0 left-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
-                      className="absolute top-0 left-0 h-full bg-lime-500 rounded"
-                      style={{ width: '100%' }}
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      style={{
+                        width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
+                        backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
+                      }}
                     />
                   </div>
                 </div>
@@ -225,8 +238,11 @@ export function BattleContainer() {
                 <div className="absolute bottom-0 right-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
-                      className="absolute top-0 left-0 h-full bg-lime-500 rounded"
-                      style={{ width: '100%' }}
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      style={{
+                        width: `${(battleState.enemy.hp / battleState.enemy.maxHp) * 100}%`,
+                        backgroundColor: getHpColor(battleState.enemy.hp / battleState.enemy.maxHp)
+                      }}
                     />
                   </div>
                 </div>
@@ -244,9 +260,11 @@ export function BattleContainer() {
                     />
                   </svg>
                   <div className="absolute top-0 left-0 w-full h-full pt-6 px-6 flex items-start justify-center">
-                    <div className="text-white text-2xl text-center">
-                      {enemyDialogue}
-                    </div>
+                    <TypewriterText
+                      text={enemyDialogue}
+                      className="text-white text-2xl text-center"
+                      onComplete={() => setEnemyDialogueComplete(true)}
+                    />
                   </div>
                 </div>
               </div>
@@ -263,9 +281,10 @@ export function BattleContainer() {
                     />
                   </svg>
                   <div className="absolute top-0 left-0 w-full h-full pb-6 px-6 flex items-end justify-center">
-                    <div className="text-white text-2xl text-center">
-                      {playerDialogue}
-                    </div>
+                    <TypewriterText
+                      text={enemyDialogueComplete ? playerDialogue : ''}
+                      className="text-white text-2xl text-center"
+                    />
                   </div>
                   {/* 次へ進むアイコン */}
                   {!showActionButtons && (
