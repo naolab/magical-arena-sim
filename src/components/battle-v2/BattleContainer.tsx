@@ -37,6 +37,7 @@ export function BattleContainer() {
   const [playerDialogue, setPlayerDialogue] = useState('');
   const [enemyDialogue, setEnemyDialogue] = useState('');
   const [showActionButtons, setShowActionButtons] = useState(false);
+  const [selectedEmotion, setSelectedEmotion] = useState<EmotionType | null>(null);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -99,11 +100,19 @@ export function BattleContainer() {
   );
 
   // プレイヤーアクション処理
-  const handlePlayerAction = async (emotion: EmotionType) => {
+  const handleEmotionClick = async (emotion: EmotionType) => {
     if (!battleState || isProcessing || isBattleOver(battleState)) return;
 
+    // まだ選択されていない場合は選択のみ
+    if (selectedEmotion !== emotion) {
+      setSelectedEmotion(emotion);
+      return;
+    }
+
+    // すでに選択されている感情を再度クリックした場合は攻撃実行
     setIsProcessing(true);
     setShowActionButtons(false);
+    setSelectedEmotion(null);
 
     try {
       // 敵のアクションを決定
@@ -153,6 +162,7 @@ export function BattleContainer() {
     setShowShowdown(false);
     setRecentCommentIds([]);
     setShowActionButtons(false);
+    setSelectedEmotion(null);
   };
 
   // 初期化中はローディング表示
@@ -265,9 +275,10 @@ export function BattleContainer() {
               {showActionButtons && (
                 <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
                   <EmotionActionButtons
-                    onAction={handlePlayerAction}
+                    onAction={handleEmotionClick}
                     disabled={isProcessing}
                     comments={battleState.comments}
+                    selectedEmotion={selectedEmotion}
                   />
                 </div>
               )}
