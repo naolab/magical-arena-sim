@@ -20,14 +20,18 @@ export function CommentPool({ comments, recentCommentIds = [], highlightEmotion 
             コメントがありません
           </div>
         ) : (
-          comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              isNew={recentCommentIds.includes(comment.id)}
-              isHighlighted={highlightEmotion ? comment.emotion === highlightEmotion : false}
-            />
-          ))
+          comments.map((comment) => {
+            const newCommentIndex = recentCommentIds.indexOf(comment.id);
+            return (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                isNew={newCommentIndex !== -1}
+                animationDelay={newCommentIndex !== -1 ? newCommentIndex * 300 : 0}
+                isHighlighted={highlightEmotion ? comment.emotion === highlightEmotion : false}
+              />
+            );
+          })
         )}
       </div>
     </div>

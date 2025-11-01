@@ -6,10 +6,11 @@ import { getEmotionColor } from '@/lib/battle-v2/emotionSystem';
 interface CommentItemProps {
   comment: Comment;
   isNew?: boolean; // 新しいコメントかどうか（アニメーション用）
+  animationDelay?: number; // アニメーション遅延（ミリ秒）
   isHighlighted?: boolean; // ハイライト表示するか
 }
 
-export function CommentItem({ comment, isNew = false, isHighlighted = false }: CommentItemProps) {
+export function CommentItem({ comment, isNew = false, animationDelay = 0, isHighlighted = false }: CommentItemProps) {
   const color = getEmotionColor(comment.emotion);
 
   return (
@@ -22,6 +23,10 @@ export function CommentItem({ comment, isNew = false, isHighlighted = false }: C
       style={{
         backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
         borderLeft: `4px solid ${color}`,
+        ...(isNew && {
+          opacity: 0,
+          animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
+        }),
       }}
     >
       {/* 上部：感情アイコン */}
