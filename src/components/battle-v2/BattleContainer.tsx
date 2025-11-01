@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
+import { judgeEmotion } from '@/lib/battle-v2/emotionSystem';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
 import { BattleResult } from './BattleResult';
+import { ActionShowdown } from './ActionShowdown';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -41,6 +43,7 @@ export function BattleContainer() {
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionType | null>(null);
   const [enemyDialogueComplete, setEnemyDialogueComplete] = useState(false);
+  const [showdownActions, setShowdownActions] = useState<{ player: EmotionType; enemy: EmotionType } | null>(null);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -137,6 +140,7 @@ export function BattleContainer() {
       const enemyEmotion = decideEnemyAction(battleState, 'normal');
 
       // Showdownを表示
+      setShowdownActions({ player: emotion, enemy: enemyEmotion });
       setShowShowdown(true);
 
       // 少し待ってからターン処理
@@ -160,6 +164,7 @@ export function BattleContainer() {
       // Showdownを隠す
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowShowdown(false);
+      setShowdownActions(null);
     } catch (error) {
       console.error('Turn processing error:', error);
     } finally {
@@ -182,6 +187,7 @@ export function BattleContainer() {
     setShowActionButtons(false);
     setSelectedEmotion(null);
     setEnemyDialogueComplete(false);
+    setShowdownActions(null);
     selectRandomDialogue();
   };
 
@@ -310,6 +316,15 @@ export function BattleContainer() {
                     selectedEmotion={selectedEmotion}
                   />
                 </div>
+              )}
+
+              {/* アクションショーダウン */}
+              {showShowdown && showdownActions && (
+                <ActionShowdown
+                  playerAction={showdownActions.player}
+                  enemyAction={showdownActions.enemy}
+                  result={judgeEmotion(showdownActions.player, showdownActions.enemy)}
+                />
               )}
             </div>
 
