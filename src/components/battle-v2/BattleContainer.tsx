@@ -4,16 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
-import { EmotionActionButtons } from './EmotionActionButtons';
 import { CommentPool } from './CommentPool';
-import { CommentIndicator } from './CommentIndicator';
-import { PlayerStatus } from './PlayerStatus';
-import { EnemyStatus } from './EnemyStatus';
-import { SpecialEffectDisplay } from './SpecialEffectDisplay';
-import { AudienceDisplay } from './AudienceDisplay';
-import { DialogueBox } from './DialogueBox';
-import { ActionShowdown } from './ActionShowdown';
-import { BattleResult } from './BattleResult';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -211,9 +202,9 @@ export function BattleContainer() {
             </div>
 
             {/* 右上：コメントエリア */}
-            <div className="absolute top-8 left-[1220px] right-8 h-[720px] bg-black border-4 border-white">
-              <div className="p-4">
-                <h3 className="text-blue-400 text-xl font-bold">コメント</h3>
+            <div className="absolute top-8 left-[1220px] right-8 h-[720px] bg-black border-4 border-white overflow-hidden">
+              <div className="p-4 h-full">
+                <CommentPool comments={battleState.comments} recentCommentIds={recentCommentIds} />
               </div>
             </div>
 
