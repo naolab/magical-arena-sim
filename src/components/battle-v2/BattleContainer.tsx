@@ -5,6 +5,7 @@ import { BattleState, EmotionType } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { CommentPool } from './CommentPool';
+import { EmotionActionButtons } from './EmotionActionButtons';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -35,6 +36,7 @@ export function BattleContainer() {
   const [recentCommentIds, setRecentCommentIds] = useState<string[]>([]);
   const [playerDialogue, setPlayerDialogue] = useState('');
   const [enemyDialogue, setEnemyDialogue] = useState('');
+  const [showActionButtons, setShowActionButtons] = useState(false);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -101,6 +103,7 @@ export function BattleContainer() {
     if (!battleState || isProcessing || isBattleOver(battleState)) return;
 
     setIsProcessing(true);
+    setShowActionButtons(false);
 
     try {
       // 敵のアクションを決定
@@ -137,11 +140,19 @@ export function BattleContainer() {
     }
   };
 
+  // バトルエリアクリックで攻撃選択表示
+  const handleBattleAreaClick = () => {
+    if (!isProcessing && !isBattleOver(battleState!) && !showActionButtons) {
+      setShowActionButtons(true);
+    }
+  };
+
   // バトルリスタート
   const handleRestart = () => {
     setBattleState(initBattle());
     setShowShowdown(false);
     setRecentCommentIds([]);
+    setShowActionButtons(false);
   };
 
   // 初期化中はローディング表示
@@ -161,7 +172,10 @@ export function BattleContainer() {
           {/* 16:9固定レイアウト */}
           <div className="relative w-full h-full bg-gray-900">
             {/* バトルエリア */}
-            <div className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white">
+            <div
+              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer"
+              onClick={handleBattleAreaClick}
+            >
               {/* 中央：バトル画面 */}
               <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-0">
                 {/* バトル画面 */}
@@ -236,8 +250,27 @@ export function BattleContainer() {
                       {playerDialogue}
                     </div>
                   </div>
+                  {/* 次へ進むアイコン */}
+                  {!showActionButtons && (
+                    <div className="absolute bottom-4 right-8 animate-bounce">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 10L12 15L17 10" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* 攻撃選択ボタン */}
+              {showActionButtons && (
+                <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                  <EmotionActionButtons
+                    onAction={handlePlayerAction}
+                    disabled={isProcessing}
+                    comments={battleState.comments}
+                  />
+                </div>
+              )}
             </div>
 
             {/* 右上：コメントエリア */}

@@ -13,7 +13,7 @@ export function CommentItem({ comment, isNew = false }: CommentItemProps) {
 
   return (
     <div
-      className={`rounded-lg p-3 text-white transition-all ${
+      className={`rounded-lg p-2.5 text-white transition-all ${
         isNew ? 'animate-slide-in' : ''
       }`}
       style={{
@@ -22,9 +22,9 @@ export function CommentItem({ comment, isNew = false }: CommentItemProps) {
       }}
     >
       {/* 上部：感情アイコン */}
-      <div className="mb-1 flex items-center gap-2">
+      <div className="mb-0.5 flex items-center gap-2">
         <div
-          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-bold text-white"
+          className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold text-white"
           style={{ backgroundColor: color }}
         >
           {getEmotionIcon(comment.emotion)}
@@ -35,7 +35,7 @@ export function CommentItem({ comment, isNew = false }: CommentItemProps) {
       </div>
 
       {/* コメントテキスト */}
-      <div className="text-sm font-medium leading-relaxed">{comment.text}</div>
+      <div className="text-sm font-medium leading-tight">{comment.text}</div>
     </div>
   );
 }
