@@ -15,9 +15,6 @@ export function CommentPool({ comments, recentCommentIds = [] }: CommentPoolProp
       {/* ヘッダー */}
       <div className="flex items-center justify-between text-white">
         <div className="text-lg font-bold">コメント欄</div>
-        <div className="text-sm opacity-60">
-          {comments.length}/{MAX_COMMENT_POOL_SIZE}
-        </div>
       </div>
 
       {/* コメントリスト */}
@@ -35,11 +32,6 @@ export function CommentPool({ comments, recentCommentIds = [] }: CommentPoolProp
             />
           ))
         )}
-      </div>
-
-      {/* 説明 */}
-      <div className="text-xs text-white/40">
-        選択した感情のコメントが消費されます
       </div>
     </div>
   );

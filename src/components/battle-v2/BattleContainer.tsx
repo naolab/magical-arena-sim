@@ -11,7 +11,7 @@ const BASE_STAGE_HEIGHT = 900;
 
 export function BattleContainer() {
   // バトル状態
-  const [battleState, setBattleState] = useState<BattleState>(() => initBattle());
+  const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showShowdown, setShowShowdown] = useState(false);
   const [recentCommentIds, setRecentCommentIds] = useState<string[]>([]);
@@ -21,6 +21,11 @@ export function BattleContainer() {
     width: BASE_STAGE_WIDTH,
     height: BASE_STAGE_HEIGHT,
   });
+
+  // クライアントサイドでバトルを初期化
+  useEffect(() => {
+    setBattleState(initBattle());
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -64,7 +69,7 @@ export function BattleContainer() {
 
   // プレイヤーアクション処理
   const handlePlayerAction = async (emotion: EmotionType) => {
-    if (isProcessing || isBattleOver(battleState)) return;
+    if (!battleState || isProcessing || isBattleOver(battleState)) return;
 
     setIsProcessing(true);
 
@@ -107,8 +112,14 @@ export function BattleContainer() {
     setRecentCommentIds([]);
   };
 
-  // 最新のターン結果
-  const latestTurnResult = battleState.turnHistory[battleState.turnHistory.length - 1];
+  // 初期化中はローディング表示
+  if (!battleState) {
+    return (
+      <main className="h-screen w-screen bg-black flex items-center justify-center">
+        <div className="text-white text-2xl">Loading...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="h-screen w-screen bg-black flex items-center justify-center">
