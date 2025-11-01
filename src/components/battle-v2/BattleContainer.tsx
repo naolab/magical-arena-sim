@@ -287,7 +287,11 @@ export function BattleContainer() {
             {/* 右上：コメントエリア */}
             <div className="absolute top-8 left-[1220px] right-8 h-[720px] bg-black border-4 border-white overflow-hidden">
               <div className="p-4 h-full">
-                <CommentPool comments={battleState.comments} recentCommentIds={recentCommentIds} />
+                <CommentPool
+                  comments={battleState.comments}
+                  recentCommentIds={recentCommentIds}
+                  highlightEmotion={selectedEmotion}
+                />
               </div>
             </div>
 

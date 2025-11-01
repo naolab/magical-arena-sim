@@ -6,18 +6,21 @@ import { getEmotionColor } from '@/lib/battle-v2/emotionSystem';
 interface CommentItemProps {
   comment: Comment;
   isNew?: boolean; // 新しいコメントかどうか（アニメーション用）
+  isHighlighted?: boolean; // ハイライト表示するか
 }
 
-export function CommentItem({ comment, isNew = false }: CommentItemProps) {
+export function CommentItem({ comment, isNew = false, isHighlighted = false }: CommentItemProps) {
   const color = getEmotionColor(comment.emotion);
 
   return (
     <div
       className={`rounded-lg p-2.5 text-white transition-all ${
         isNew ? 'animate-slide-in' : ''
+      } ${
+        isHighlighted ? 'ring-2 ring-white shadow-lg scale-105' : ''
       }`}
       style={{
-        backgroundColor: `${color}40`,
+        backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
         borderLeft: `4px solid ${color}`,
       }}
     >
