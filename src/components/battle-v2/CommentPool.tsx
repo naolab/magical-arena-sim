@@ -12,11 +12,6 @@ interface CommentPoolProps {
 export function CommentPool({ comments, recentCommentIds = [] }: CommentPoolProps) {
   return (
     <div className="flex flex-col gap-2 rounded-xl bg-gradient-to-b from-black/60 to-black/80 p-4 backdrop-blur-sm">
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between text-white">
-        <div className="text-lg font-bold">コメント欄</div>
-      </div>
-
       {/* コメントリスト */}
       <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
         {comments.length === 0 ? (

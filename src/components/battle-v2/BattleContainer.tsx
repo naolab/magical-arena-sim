@@ -9,12 +9,32 @@ import { CommentPool } from './CommentPool';
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
 
+// 敵キャラのセリフ
+const ENEMY_DIALOGUES = [
+  'ちゃんと言うことを聞かないと飼い犬に手を噛まれちゃうよ？',
+  'あら、構ってもらえるのがそんなに嬉しかった？',
+  'その程度の力で私に勝てると思ってるの？',
+  'もっと本気を出してくれないと、つまらないわ',
+  'いい調子ね、でもまだまだ甘いわよ',
+];
+
+// プレイヤーのセリフ
+const PLAYER_DIALOGUES = [
+  'その挑発、私には効かないわよ？',
+  'あら、もう息切れ？まだまだこれからなのに',
+  '少し本気を出してあげようかしら',
+  'もっと楽しませてくれると思ったのに、残念ね',
+  'あなたの動き、全部読めてるわよ？',
+];
+
 export function BattleContainer() {
   // バトル状態
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showShowdown, setShowShowdown] = useState(false);
   const [recentCommentIds, setRecentCommentIds] = useState<string[]>([]);
+  const [playerDialogue, setPlayerDialogue] = useState('');
+  const [enemyDialogue, setEnemyDialogue] = useState('');
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -22,9 +42,18 @@ export function BattleContainer() {
     height: BASE_STAGE_HEIGHT,
   });
 
+  // セリフをランダムに選択
+  const selectRandomDialogue = () => {
+    const randomEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
+    const randomPlayer = PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)];
+    setEnemyDialogue(randomEnemy);
+    setPlayerDialogue(randomPlayer);
+  };
+
   // クライアントサイドでバトルを初期化
   useEffect(() => {
     setBattleState(initBattle());
+    selectRandomDialogue();
   }, []);
 
   useEffect(() => {
@@ -94,6 +123,9 @@ export function BattleContainer() {
       setRecentCommentIds(newCommentIds);
 
       setBattleState(newState);
+
+      // 新しいセリフを選択
+      selectRandomDialogue();
 
       // Showdownを隠す
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -169,7 +201,7 @@ export function BattleContainer() {
                 </div>
               </div>
 
-              {/* 上部：テキストボックス */}
+              {/* 上部：テキストボックス（敵） */}
               <div className="absolute top-0 left-0 right-0 h-[120px] z-10">
                 <div className="relative w-full h-full">
                   <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 120" preserveAspectRatio="none">
@@ -180,17 +212,15 @@ export function BattleContainer() {
                       strokeWidth="4"
                     />
                   </svg>
-                  <div className="absolute top-0 left-0 w-full h-full p-3">
-                    <input
-                      type="text"
-                      className="w-full h-full bg-transparent text-white px-3 text-lg"
-                      placeholder="上部テキスト"
-                    />
+                  <div className="absolute top-0 left-0 w-full h-full pt-6 px-6 flex items-start justify-center">
+                    <div className="text-white text-2xl text-center">
+                      {enemyDialogue}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* 下部：テキストボックス */}
+              {/* 下部：テキストボックス（プレイヤー） */}
               <div className="absolute bottom-0 left-0 right-0 h-[120px] z-10">
                 <div className="relative w-full h-full">
                   <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 1200 120" preserveAspectRatio="none">
@@ -201,12 +231,10 @@ export function BattleContainer() {
                       strokeWidth="4"
                     />
                   </svg>
-                  <div className="absolute top-0 left-0 w-full h-full p-3">
-                    <input
-                      type="text"
-                      className="w-full h-full bg-transparent text-white px-3 text-lg"
-                      placeholder="下部テキスト"
-                    />
+                  <div className="absolute top-0 left-0 w-full h-full pb-6 px-6 flex items-end justify-center">
+                    <div className="text-white text-2xl text-center">
+                      {playerDialogue}
+                    </div>
                   </div>
                 </div>
               </div>

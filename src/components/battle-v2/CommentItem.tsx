@@ -13,23 +13,29 @@ export function CommentItem({ comment, isNew = false }: CommentItemProps) {
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg bg-black/40 p-2 text-sm text-white transition-all ${
+      className={`rounded-lg p-3 text-white transition-all ${
         isNew ? 'animate-slide-in' : ''
       }`}
       style={{
+        backgroundColor: `${color}40`,
         borderLeft: `4px solid ${color}`,
       }}
     >
-      {/* 感情アイコン */}
-      <div
-        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-        style={{ backgroundColor: color }}
-      >
-        {getEmotionIcon(comment.emotion)}
+      {/* 上部：感情アイコン */}
+      <div className="mb-1 flex items-center gap-2">
+        <div
+          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-bold text-white"
+          style={{ backgroundColor: color }}
+        >
+          {getEmotionIcon(comment.emotion)}
+        </div>
+        <div className="text-xs font-semibold opacity-80">
+          {getEmotionName(comment.emotion)}
+        </div>
       </div>
 
       {/* コメントテキスト */}
-      <div className="flex-1 truncate">{comment.text}</div>
+      <div className="text-sm font-medium leading-relaxed">{comment.text}</div>
     </div>
   );
 }
@@ -49,5 +55,23 @@ function getEmotionIcon(emotion: string): string {
       return '喜';
     default:
       return '？';
+  }
+}
+
+/**
+ * 感情の名前を取得
+ */
+function getEmotionName(emotion: string): string {
+  switch (emotion) {
+    case 'rage':
+      return 'RAGE';
+    case 'terror':
+      return 'TERROR';
+    case 'grief':
+      return 'GRIEF';
+    case 'ecstasy':
+      return 'ECSTASY';
+    default:
+      return 'UNKNOWN';
   }
 }
