@@ -114,6 +114,13 @@ export function BattleContainer() {
     setShowActionButtons(false);
     setSelectedEmotion(null);
 
+    // 選択した感情のコメントを即座に消費（UI更新）
+    const updatedComments = battleState.comments.filter(c => c.emotion !== emotion);
+    setBattleState({
+      ...battleState,
+      comments: updatedComments,
+    });
+
     try {
       // 敵のアクションを決定
       const enemyEmotion = decideEnemyAction(battleState, 'normal');
