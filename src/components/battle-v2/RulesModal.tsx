@@ -34,16 +34,18 @@ export function RulesModal() {
             >
               <h2 className="text-3xl font-bold text-white mb-6">ルール</h2>
 
-              <div className="flex-1 overflow-y-auto pr-1 pb-1">
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-3">
                 <RulesContent />
               </div>
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="mt-6 w-full px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-lg transition-colors"
-              >
-                閉じる
-              </button>
+              <div className="mt-4 pt-4 border-t border-white/10 shrink-0">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-full px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-lg transition-colors"
+                >
+                  閉じる
+                </button>
+              </div>
             </div>
           </div>
         </>

@@ -15,13 +15,13 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
-      <div className="relative max-h-[85vh] w-[min(800px,90vw)] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
+      <div className="relative flex max-h-[80vh] w-[min(90vw,32rem)] flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
         </div>
 
-        <div className="relative flex max-h-[85vh] flex-col">
-          <div className="mb-6 flex items-center justify-between">
+        <div className="relative z-10 flex h-full min-h-0 flex-col">
+          <div className="mb-6 flex shrink-0 items-center justify-between">
             <h2 className="text-3xl font-black text-white">ルール</h2>
             <button
               onClick={onClose}
@@ -31,11 +31,11 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 pb-1">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-6">
             {version === 'v2' ? <RulesContentV2 /> : <RulesContentV1 />}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/10">
+          <div className="mt-4 border-t border-white/10 pt-4 shrink-0">
             <Button
               onClick={onClose}
               variant="primary"
