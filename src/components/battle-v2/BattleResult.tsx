@@ -28,13 +28,11 @@ export function BattleResult({ winner, onRestart }: BattleResultProps) {
           <div className="text-6xl font-black text-white">
             {isWin ? 'VICTORY!' : isDraw ? 'DRAW' : 'DEFEAT...'}
           </div>
-          <div className="mt-4 text-2xl text-white/80">
-            {isWin
-              ? 'あなたの勝利です！'
-              : isDraw
-              ? '引き分けです'
-              : '敗北しました…'}
-          </div>
+          {!isDraw && (
+            <div className="mt-4 text-2xl text-white/80">
+              {isWin ? 'あなたの勝利です！' : '敗北しました…'}
+            </div>
+          )}
         </div>
 
         {/* ボタン */}

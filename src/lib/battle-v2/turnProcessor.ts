@@ -104,7 +104,7 @@ export function processTurn(
     activeEffects: [...updatedEnemy.activeEffects, ...playerSpecialEffects.enemyEffects],
   };
 
-  // 6. ファン率を更新
+  // 6. ファン率の変化量を計算
   const fanChanges = calculateFanChanges({
     judgement,
     consumedCommentCount: consumedPlayerComments.length,
@@ -112,25 +112,25 @@ export function processTurn(
     enemyFanRate: updatedEnemy.fanRate,
   });
 
+  // 7. 観客構成を更新（中立ファンから獲得）
+  const updatedAudience = updateAudienceComposition(
+    state.audience,
+    fanChanges.playerChange,
+    fanChanges.enemyChange
+  );
+
+  // 8. ファン率を観客構成から設定
   updatedPlayer = {
     ...updatedPlayer,
-    fanRate: Math.max(0, Math.min(1, updatedPlayer.fanRate + fanChanges.playerChange)),
+    fanRate: updatedAudience.playerFans,
   };
 
   updatedEnemy = {
     ...updatedEnemy,
-    fanRate: Math.max(0, Math.min(1, updatedEnemy.fanRate + fanChanges.enemyChange)),
+    fanRate: updatedAudience.enemyFans,
   };
 
-  // 7. 観客構成を更新
-  const updatedAudience = updateAudienceComposition(
-    state.audience,
-    judgement,
-    updatedPlayer.fanRate,
-    updatedEnemy.fanRate
-  );
-
-  // 8. 特殊効果の持続ターンを更新
+  // 9. 特殊効果の持続ターンを更新
   updatedPlayer = {
     ...updatedPlayer,
     activeEffects: removeExpiredEffects(updateEffectDurations(updatedPlayer.activeEffects)),
@@ -141,7 +141,7 @@ export function processTurn(
     activeEffects: removeExpiredEffects(updateEffectDurations(updatedEnemy.activeEffects)),
   };
 
-  // 9. ターン結果を作成
+  // 10. ターン結果を作成
   const turnResult: TurnResult = {
     turnNumber,
     playerAction,
@@ -166,7 +166,7 @@ export function processTurn(
     message: generateTurnMessage(judgement, playerAction, enemyAction),
   };
 
-  // 10. 状態を更新して返す
+  // 11. 状態を更新して返す
   return {
     ...state,
     currentTurn: turnNumber,
@@ -281,6 +281,8 @@ function triggerSpecialEffects(params: {
 
 /**
  * ファン率の変動を計算
+ * プレイヤー: 消費コメント数 × 3%
+ * 敵: 毎ターン固定で5%
  */
 function calculateFanChanges(params: {
   judgement: 'win' | 'draw' | 'lose';
@@ -288,40 +290,70 @@ function calculateFanChanges(params: {
   playerFanRate: number;
   enemyFanRate: number;
 }): { playerChange: number; enemyChange: number } {
-  const { judgement, consumedCommentCount } = params;
+  const { consumedCommentCount } = params;
 
-  let playerChange = 0;
-  let enemyChange = 0;
+  // プレイヤー: 消費コメント1個につき+3%
+  const playerChange = consumedCommentCount * 0.03;
 
-  // 基本変動: 勝利で+10%, 敗北で-10%
-  if (judgement === 'win') {
-    playerChange = 0.1;
-    enemyChange = -0.05;
-  } else if (judgement === 'lose') {
-    playerChange = -0.05;
-    enemyChange = 0.1;
-  }
-
-  // コメントボーナス: 1コメントにつき+2%
-  playerChange += consumedCommentCount * 0.02;
+  // 敵: 毎ターン固定で+5%
+  const enemyChange = 0.05;
 
   return { playerChange, enemyChange };
 }
 
 /**
  * 観客構成を更新
+ * まず中立ファンから獲得、足りなければ相手のファンを奪う
  */
 function updateAudienceComposition(
   current: { playerFans: number; enemyFans: number; neutralFans: number },
-  judgement: 'win' | 'draw' | 'lose',
-  playerFanRate: number,
-  enemyFanRate: number
+  playerFanChange: number,
+  enemyFanChange: number
 ): { playerFans: number; enemyFans: number; neutralFans: number } {
-  // 簡易実装: ファン率に基づいて観客構成を更新
-  const totalFans = 1.0;
-  const playerFans = playerFanRate * 0.5;
-  const enemyFans = enemyFanRate * 0.5;
-  const neutralFans = Math.max(0, totalFans - playerFans - enemyFans);
+  // 現在の構成をコピー
+  let playerFans = current.playerFans;
+  let enemyFans = current.enemyFans;
+  let neutralFans = current.neutralFans;
+
+  // プレイヤーの獲得処理
+  if (playerFanChange > 0) {
+    // まず中立ファンから獲得
+    const fromNeutral = Math.min(playerFanChange, neutralFans);
+    playerFans += fromNeutral;
+    neutralFans -= fromNeutral;
+
+    // 不足分は敵ファンから奪う
+    const remaining = playerFanChange - fromNeutral;
+    if (remaining > 0) {
+      const fromEnemy = Math.min(remaining, enemyFans);
+      playerFans += fromEnemy;
+      enemyFans -= fromEnemy;
+    }
+  }
+
+  // 敵の獲得処理
+  if (enemyFanChange > 0) {
+    // まず中立ファンから獲得
+    const fromNeutral = Math.min(enemyFanChange, neutralFans);
+    enemyFans += fromNeutral;
+    neutralFans -= fromNeutral;
+
+    // 不足分はプレイヤーファンから奪う
+    const remaining = enemyFanChange - fromNeutral;
+    if (remaining > 0) {
+      const fromPlayer = Math.min(remaining, playerFans);
+      enemyFans += fromPlayer;
+      playerFans -= fromPlayer;
+    }
+  }
+
+  // 合計が1.0になるように正規化
+  const total = playerFans + enemyFans + neutralFans;
+  if (total > 0) {
+    playerFans /= total;
+    enemyFans /= total;
+    neutralFans /= total;
+  }
 
   return {
     playerFans: Math.max(0, Math.min(1, playerFans)),
