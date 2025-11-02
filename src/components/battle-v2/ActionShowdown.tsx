@@ -20,7 +20,7 @@ export function ActionShowdown({
   const enemyName = getEmotionName(enemyAction);
 
   return (
-    <div className="flex items-center justify-center gap-8 p-8">
+    <div className="absolute inset-0 z-40 flex items-center justify-center gap-8 p-8 bg-black/70 backdrop-blur-sm">
       {/* プレイヤー側 */}
       <div className="flex flex-col items-center gap-2">
         <div

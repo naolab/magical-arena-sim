@@ -6,30 +6,44 @@ import { getEmotionColor } from '@/lib/battle-v2/emotionSystem';
 interface CommentItemProps {
   comment: Comment;
   isNew?: boolean; // 新しいコメントかどうか（アニメーション用）
+  animationDelay?: number; // アニメーション遅延（ミリ秒）
+  isHighlighted?: boolean; // ハイライト表示するか
 }
 
-export function CommentItem({ comment, isNew = false }: CommentItemProps) {
+export function CommentItem({ comment, isNew = false, animationDelay = 0, isHighlighted = false }: CommentItemProps) {
   const color = getEmotionColor(comment.emotion);
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg bg-black/40 p-2 text-sm text-white transition-all ${
+      className={`rounded-lg p-2.5 text-white transition-all ${
         isNew ? 'animate-slide-in' : ''
+      } ${
+        isHighlighted ? 'ring-2 ring-white shadow-lg scale-105' : ''
       }`}
       style={{
+        backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
         borderLeft: `4px solid ${color}`,
+        ...(isNew && {
+          opacity: 0,
+          animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
+        }),
       }}
     >
-      {/* 感情アイコン */}
-      <div
-        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-        style={{ backgroundColor: color }}
-      >
-        {getEmotionIcon(comment.emotion)}
+      {/* 上部：感情アイコン */}
+      <div className="mb-0.5 flex items-center gap-2">
+        <div
+          className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold text-white"
+          style={{ backgroundColor: color }}
+        >
+          {getEmotionIcon(comment.emotion)}
+        </div>
+        <div className="text-xs font-semibold opacity-80">
+          {getEmotionName(comment.emotion)}
+        </div>
       </div>
 
       {/* コメントテキスト */}
-      <div className="flex-1 truncate">{comment.text}</div>
+      <div className="text-sm font-medium leading-tight">{comment.text}</div>
     </div>
   );
 }
@@ -49,5 +63,23 @@ function getEmotionIcon(emotion: string): string {
       return '喜';
     default:
       return '？';
+  }
+}
+
+/**
+ * 感情の名前を取得
+ */
+function getEmotionName(emotion: string): string {
+  switch (emotion) {
+    case 'rage':
+      return 'RAGE';
+    case 'terror':
+      return 'TERROR';
+    case 'grief':
+      return 'GRIEF';
+    case 'ecstasy':
+      return 'ECSTASY';
+    default:
+      return 'UNKNOWN';
   }
 }

@@ -9,38 +9,30 @@ interface EmotionActionButtonsProps {
   onAction: (emotion: EmotionType) => void;
   disabled?: boolean;
   comments: Comment[];
+  selectedEmotion?: EmotionType | null;
 }
 
 export function EmotionActionButtons({
   onAction,
   disabled = false,
   comments,
+  selectedEmotion = null,
 }: EmotionActionButtonsProps) {
   const emotions = getAllEmotions();
   const commentCounts = getCommentCountByEmotion(comments);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-center text-lg font-bold text-white">
-        感情を選択
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {emotions.map((emotion) => (
-          <EmotionButton
-            key={emotion}
-            emotion={emotion}
-            onClick={() => onAction(emotion)}
-            disabled={disabled}
-            commentCount={commentCounts[emotion]}
-          />
-        ))}
-      </div>
-
-      {/* 説明 */}
-      <div className="text-center text-sm text-white/60">
-        コメント数が多い感情ほど威力UP
-      </div>
+    <div className="grid grid-cols-2 gap-4">
+      {emotions.map((emotion) => (
+        <EmotionButton
+          key={emotion}
+          emotion={emotion}
+          onClick={() => onAction(emotion)}
+          disabled={disabled}
+          commentCount={commentCounts[emotion]}
+          isSelected={selectedEmotion === emotion}
+        />
+      ))}
     </div>
   );
 }
