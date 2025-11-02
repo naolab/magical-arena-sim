@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType, TurnResult, SpecialEffect } from '@/lib/battle-v2/types';
-import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
+import { initBattle, executePlayerAction, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
@@ -307,7 +307,9 @@ export function BattleContainer() {
           setBattleState((prev) => {
             if (!finalState) return prev;
             if (!prev) return finalState;
-            return {
+
+            // UI側のHP（apply関数で更新済み）をそのまま使用
+            const updatedState = {
               ...finalState,
               player: {
                 ...finalState.player,
@@ -318,16 +320,41 @@ export function BattleContainer() {
                 hp: prev.enemy.hp,
               },
             };
-          });
-          pendingStateRef.current = null;
-          setIsProcessing(false);
 
-          if (pendingWinnerRef.current) {
-            setShowResult(true);
-          } else {
-            setShowResult(false);
+            // メッセージキュー完了後、UI側のHPで勝敗判定
+            const winner = checkWinner(updatedState);
+            if (winner) {
+              // 勝者が決まった場合、結果メッセージを追加
+              const resultMessages = [
+                createMessage('system', WINNER_MESSAGE[winner]),
+                createMessage('system', RESULT_NARRATION[winner]),
+              ];
+              setMessageQueue((prevQueue) => [...prevQueue, ...resultMessages]);
+              pendingWinnerRef.current = winner;
+
+              // 勝敗確定した状態を保存
+              return {
+                ...updatedState,
+                isActive: false,
+                winner,
+              };
+            }
+
+            return updatedState;
+          });
+
+          pendingStateRef.current = null;
+
+          // 勝敗メッセージがある場合、まだメッセージキューに残っているので処理は継続
+          // 勝敗メッセージが完了したら、次回のpendingAutoAdvanceでshowResultを表示
+          if (!pendingWinnerRef.current) {
+            setIsProcessing(false);
             selectRandomDialogue();
           }
+        } else if (pendingWinnerRef.current) {
+          // 勝敗メッセージも全て完了したので、結果画面を表示
+          setIsProcessing(false);
+          setShowResult(true);
           pendingWinnerRef.current = null;
         } else {
           setIsProcessing(false);
@@ -518,35 +545,11 @@ export function BattleContainer() {
         onPlayerEffect: applyEffect,
         onEnemyEffect: applyEffect,
       });
-      const winner = newState.winner;
-      let resultMessages: BattleMessage[] = [];
-      if (winner) {
-        // 勝敗メッセージ表示前にHPを最終状態に更新（UIとロジックの同期）
-        setBattleState((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            player: { ...prev.player, hp: newState.player.hp },
-            enemy: { ...prev.enemy, hp: newState.enemy.hp },
-          };
-        });
+      // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
+      // 勝敗判定はメッセージキュー完了後に実行
+      pendingWinnerRef.current = null;
 
-        resultMessages = [
-          createMessage('system', WINNER_MESSAGE[winner]),
-          createMessage('system', RESULT_NARRATION[winner]),
-        ];
-        pendingWinnerRef.current = winner;
-        setShowResult(false);
-      } else {
-        pendingWinnerRef.current = null;
-        setShowResult(false);
-      }
-
-      enqueueMessages([...turnMessages, ...resultMessages]);
-
-      if (isBattleOver(newState)) {
-        setShowActionButtons(false);
-      }
+      enqueueMessages([...turnMessages]);
     } catch (error) {
       console.error('Turn processing error:', error);
       setIsProcessing(false);
