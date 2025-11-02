@@ -73,20 +73,6 @@ export function processTurn(
   let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
   let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
 
-  // 既存の特殊効果を1ターン進める（新規付与分はこの後に追加）
-  const tickedPlayerEffects = removeExpiredEffects(updateEffectDurations(updatedPlayer.activeEffects));
-  const tickedEnemyEffects = removeExpiredEffects(updateEffectDurations(updatedEnemy.activeEffects));
-
-  updatedPlayer = {
-    ...updatedPlayer,
-    activeEffects: tickedPlayerEffects,
-  };
-
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: tickedEnemyEffects,
-  };
-
   // 5. プレイヤーの特殊効果を発動
   const playerSpecialEffects = triggerSpecialEffects({
     emotion: playerAction,
@@ -188,7 +174,21 @@ export function processTurn(
     fanRate: updatedAudience.enemyFans,
   };
 
-  // 9. ターン結果を作成
+  // 9. 特殊効果の持続ターンを更新
+  const playerEffectsAfterTick = removeExpiredEffects(updateEffectDurations(updatedPlayer.activeEffects));
+  const enemyEffectsAfterTick = removeExpiredEffects(updateEffectDurations(updatedEnemy.activeEffects));
+
+  updatedPlayer = {
+    ...updatedPlayer,
+    activeEffects: playerEffectsAfterTick,
+  };
+
+  updatedEnemy = {
+    ...updatedEnemy,
+    activeEffects: enemyEffectsAfterTick,
+  };
+
+  // 10. ターン結果を作成
   const turnResult: TurnResult = {
     turnNumber,
     playerAction,
