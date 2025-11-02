@@ -1,23 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType } from '@/lib/battle-v2/types';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { BattleState, EmotionType, TurnResult, SpecialEffect } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
-import { judgeEmotion } from '@/lib/battle-v2/emotionSystem';
+import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
 import { BattleResult } from './BattleResult';
-import { ActionShowdown } from './ActionShowdown';
 import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
+import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
 
-// 敵キャラのセリフ
 const ENEMY_DIALOGUES = [
   'ちゃんと言うことを聞かないと飼い犬に手を噛まれちゃうよ？',
   'あら、構ってもらえるのがそんなに嬉しかった？',
@@ -26,7 +25,6 @@ const ENEMY_DIALOGUES = [
   'いい調子ね、でもまだまだ甘いわよ',
 ];
 
-// プレイヤーのセリフ
 const PLAYER_DIALOGUES = [
   'その挑発、私には効かないわよ？',
   'あら、もう息切れ？まだまだこれからなのに',
@@ -35,26 +33,223 @@ const PLAYER_DIALOGUES = [
   'あなたの動き、全部読めてるわよ？',
 ];
 
+type BattleMessageSpeaker = 'player' | 'enemy' | 'system';
+
+interface BattleMessage {
+  id: string;
+  speaker: BattleMessageSpeaker;
+  text: string;
+  apply?: () => void;
+}
+
+const JUDGEMENT_MESSAGE: Record<'win' | 'draw' | 'lose', string> = {
+  win: '有利を取った！',
+  draw: '互角のぶつかり合いだ！',
+  lose: '不利を取られてしまった…',
+};
+
+const WINNER_MESSAGE: Record<'player' | 'enemy' | 'draw', string> = {
+  player: '敵を倒した！',
+  enemy: '倒れてしまった…',
+  draw: '相打ちになった！',
+};
+
+const RESULT_NARRATION: Record<'player' | 'enemy' | 'draw', string> = {
+  player: '歓声がこだまする。勝利の光が視界を包んだ！',
+  enemy: '視界が真っ暗になった…。力尽きて膝をつく。',
+  draw: '互いに倒れ伏し、静寂だけが残った…。',
+};
+
+function createMessage(speaker: BattleMessageSpeaker, text: string, apply?: () => void): BattleMessage {
+  const id =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  return { id, speaker, text, apply };
+}
+
+function formatDamageText(amount: number, target: 'enemy' | 'player'): string {
+  if (amount <= 0) {
+    return target === 'enemy'
+      ? 'しかし敵にダメージは通らなかった！'
+      : 'しかしダメージは受けなかった！';
+  }
+
+  return target === 'enemy'
+    ? `敵に ${amount} のダメージ！`
+    : `あなたは ${amount} のダメージを受けた！`;
+}
+
+function buildEffectMessages(
+  effects: TurnResult['specialEffects']['player'],
+  target: 'player' | 'enemy',
+  applyEffect?: (effect: SpecialEffect) => void
+): BattleMessage[] {
+  if (effects.length === 0) return [];
+
+  const targetLabel = target === 'player' ? 'あなた' : '敵';
+
+  return effects.map((effect) =>
+    createMessage('system', `${targetLabel}に効果「${getEffectDescription(effect)}」が付与された！`, () => {
+      applyEffect?.(effect);
+    })
+  );
+}
+
+function buildTurnMessages(
+  result: TurnResult,
+  handlers: {
+    onPlayerBase: (amount: number) => void;
+    onPlayerExtra: (amount: number) => void;
+    onPlayerHeal: (amount: number) => void;
+    onEnemyBase: (amount: number) => void;
+    onEnemyExtra: (amount: number) => void;
+    onEnemyHeal: (amount: number) => void;
+    onPlayerEffect: (effect: SpecialEffect) => void;
+    onEnemyEffect: (effect: SpecialEffect) => void;
+  }
+): BattleMessage[] {
+  const messages: BattleMessage[] = [];
+
+  const playerEmotionName = getEmotionName(result.playerAction);
+  const enemyEmotionName = getEmotionName(result.enemyAction);
+  const { damage, secondaryEffects, specialEffects } = result;
+  const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
+  const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
+
+  messages.push(createMessage('system', JUDGEMENT_MESSAGE[result.judgement]));
+
+  messages.push(
+    createMessage(
+      'player',
+      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`,
+      () => handlers.onPlayerBase(baseDamageToEnemy)
+    )
+  );
+
+  if (damage.extraToEnemy > 0) {
+    messages.push(
+      createMessage(
+        'player',
+        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy')}`,
+        () => handlers.onPlayerExtra(damage.extraToEnemy)
+      )
+    );
+  }
+
+  if (secondaryEffects.player.healing > 0) {
+    messages.push(
+      createMessage(
+        'player',
+        `あなたは ${secondaryEffects.player.healing} 回復した！`,
+        () => handlers.onPlayerHeal(secondaryEffects.player.healing)
+      )
+    );
+  }
+
+  messages.push(
+    createMessage(
+      'enemy',
+      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`,
+      () => handlers.onEnemyBase(baseDamageToPlayer)
+    )
+  );
+
+  if (damage.extraToPlayer > 0) {
+    messages.push(
+      createMessage(
+        'enemy',
+        `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
+        () => handlers.onEnemyExtra(damage.extraToPlayer)
+      )
+    );
+  }
+
+  if (secondaryEffects.enemy.healing > 0) {
+    messages.push(
+      createMessage(
+        'enemy',
+        `敵は ${secondaryEffects.enemy.healing} 回復した！`,
+        () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
+      )
+    );
+  }
+
+  messages.push(
+    ...buildEffectMessages(specialEffects.player, 'player', handlers.onPlayerEffect)
+  );
+  messages.push(
+    ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
+  );
+
+  return messages;
+}
+
 export function BattleContainer() {
   const { params } = useBattleParamsV2();
 
   // バトル状態
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showShowdown, setShowShowdown] = useState(false);
   const [recentCommentIds, setRecentCommentIds] = useState<string[]>([]);
-  const [playerDialogue, setPlayerDialogue] = useState('');
-  const [enemyDialogue, setEnemyDialogue] = useState('');
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionType | null>(null);
-  const [enemyDialogueComplete, setEnemyDialogueComplete] = useState(false);
-  const [showdownActions, setShowdownActions] = useState<{ player: EmotionType; enemy: EmotionType } | null>(null);
+  const [playerDialogue, setPlayerDialogue] = useState(() => PLAYER_DIALOGUES[0]);
+  const [enemyDialogue, setEnemyDialogue] = useState(() => ENEMY_DIALOGUES[0]);
+  const [messageQueue, setMessageQueue] = useState<BattleMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState<BattleMessage | null>(null);
+  const [isMessageAnimating, setIsMessageAnimating] = useState(false);
+  const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
     width: BASE_STAGE_WIDTH,
     height: BASE_STAGE_HEIGHT,
   });
+
+  const initialMessageShownRef = useRef(false);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingStateRef = useRef<BattleState | null>(null);
+  const pendingWinnerRef = useRef<'player' | 'enemy' | 'draw' | null>(null);
+
+  const selectRandomDialogue = useCallback(() => {
+    const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
+    const nextPlayer = PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)];
+    setEnemyDialogue(nextEnemy);
+    setPlayerDialogue(nextPlayer);
+  }, []);
+
+  const enqueueMessages = useCallback((messages: BattleMessage[]) => {
+    if (messages.length === 0) {
+      return;
+    }
+    setMessageQueue((prev) => [...prev, ...messages]);
+  }, []);
+
+  const handleMessageComplete = useCallback(() => {
+    if (currentMessage?.apply) {
+      currentMessage.apply();
+    }
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+    }
+
+    advanceTimerRef.current = setTimeout(() => {
+      setIsMessageAnimating(false);
+      setCurrentMessage(null);
+      setPendingAutoAdvance(true);
+    }, 400);
+  }, [currentMessage]);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current);
+      }
+    };
+  }, []);
 
   // HPゲージの色を計算
   const getHpColor = (hpRatio: number): string => {
@@ -63,19 +258,9 @@ export function BattleContainer() {
     return '#ef4444'; // 赤
   };
 
-  // セリフをランダムに選択
-  const selectRandomDialogue = () => {
-    const randomEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
-    const randomPlayer = PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)];
-    setEnemyDialogue(randomEnemy);
-    setPlayerDialogue(randomPlayer);
-    setEnemyDialogueComplete(false);
-  };
-
   // クライアントサイドでバトルを初期化（最初の1回のみ）
   useEffect(() => {
     setBattleState(initBattle(params));
-    selectRandomDialogue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -92,6 +277,71 @@ export function BattleContainer() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (battleState && !initialMessageShownRef.current) {
+      enqueueMessages([createMessage('system', 'バトルスタート！')]);
+      initialMessageShownRef.current = true;
+      selectRandomDialogue();
+    }
+  }, [battleState, enqueueMessages, selectRandomDialogue]);
+
+  useEffect(() => {
+    if (!isMessageAnimating && currentMessage === null) {
+      if (messageQueue.length > 0) {
+        if (advanceTimerRef.current) {
+          clearTimeout(advanceTimerRef.current);
+          advanceTimerRef.current = null;
+        }
+        const [next, ...rest] = messageQueue;
+        setCurrentMessage(next);
+        setMessageQueue(rest);
+        setIsMessageAnimating(true);
+        setPendingAutoAdvance(false);
+      } else if (pendingAutoAdvance) {
+        setPendingAutoAdvance(false);
+      if (pendingStateRef.current) {
+        const finalState = pendingStateRef.current;
+        setBattleState((prev) => {
+          if (!finalState) return prev;
+          if (!prev) return finalState;
+          return {
+            ...finalState,
+            player: {
+              ...finalState.player,
+              hp: prev.player.hp,
+            },
+            enemy: {
+              ...finalState.enemy,
+              hp: prev.enemy.hp,
+            },
+          };
+        });
+        pendingStateRef.current = null;
+        setIsProcessing(false);
+        if (pendingWinnerRef.current) {
+          setShowResult(true);
+        } else {
+            setShowResult(false);
+            selectRandomDialogue();
+          }
+          pendingWinnerRef.current = null;
+        } else {
+          setIsProcessing(false);
+          if (!showResult) {
+            selectRandomDialogue();
+          }
+        }
+      }
+    }
+  }, [
+    messageQueue,
+    isMessageAnimating,
+    currentMessage,
+    pendingAutoAdvance,
+    selectRandomDialogue,
+    showResult,
+  ]);
 
   const scale = useMemo(() => {
     const ratio = Math.min(
@@ -135,22 +385,17 @@ export function BattleContainer() {
     setSelectedEmotion(null);
 
     // 選択した感情のコメントを即座に消費（UI更新）
-    const updatedComments = battleState.comments.filter(c => c.emotion !== emotion);
-    setBattleState({
-      ...battleState,
-      comments: updatedComments,
+    setBattleState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        comments: prev.comments.filter((c) => c.emotion !== emotion),
+      };
     });
 
     try {
       // 敵のアクションを決定
       const enemyEmotion = decideEnemyAction(battleState, 'normal');
-
-      // Showdownを表示
-      setShowdownActions({ player: emotion, enemy: enemyEmotion });
-      setShowShowdown(true);
-
-      // 少し待ってからターン処理
-      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // ターン処理を実行
       const newState = executePlayerAction(battleState, emotion, enemyEmotion);
@@ -162,40 +407,202 @@ export function BattleContainer() {
         .map(c => c.id);
       setRecentCommentIds(newCommentIds);
 
-      setBattleState(newState);
+      pendingStateRef.current = newState;
 
-      // 新しいセリフを選択
-      selectRandomDialogue();
+      const turnResult = newState.turnHistory[newState.turnHistory.length - 1];
 
-      // Showdownを隠す
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setShowShowdown(false);
-      setShowdownActions(null);
+      const applyPlayerBaseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerExtraDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyBaseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyExtraDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEffect = (effect: SpecialEffect) => {
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          if (effect.target === 'player') {
+            return {
+              ...prev,
+              player: {
+                ...prev.player,
+                activeEffects: [...prev.player.activeEffects, effect],
+              },
+            };
+          }
+          return {
+            ...prev,
+            enemy: {
+              ...prev.enemy,
+              activeEffects: [...prev.enemy.activeEffects, effect],
+            },
+          };
+        });
+      };
+
+      const turnMessages = buildTurnMessages(turnResult, {
+        onPlayerBase: applyPlayerBaseDamage,
+        onPlayerExtra: applyPlayerExtraDamage,
+        onPlayerHeal: applyPlayerHealing,
+        onEnemyBase: applyEnemyBaseDamage,
+        onEnemyExtra: applyEnemyExtraDamage,
+        onEnemyHeal: applyEnemyHealing,
+        onPlayerEffect: applyEffect,
+        onEnemyEffect: applyEffect,
+      });
+      const winner = newState.winner;
+      let resultMessages: BattleMessage[] = [];
+      if (winner) {
+        resultMessages = [
+          createMessage('system', WINNER_MESSAGE[winner]),
+          createMessage('system', RESULT_NARRATION[winner]),
+        ];
+        pendingWinnerRef.current = winner;
+        setShowResult(false);
+      } else {
+        pendingWinnerRef.current = null;
+        setShowResult(false);
+      }
+
+      enqueueMessages([...turnMessages, ...resultMessages]);
+
+      if (isBattleOver(newState)) {
+        setShowActionButtons(false);
+      }
     } catch (error) {
       console.error('Turn processing error:', error);
-    } finally {
       setIsProcessing(false);
+      pendingStateRef.current = null;
+      pendingWinnerRef.current = null;
     }
   };
 
   // バトルエリアクリックで攻撃選択表示
   const handleBattleAreaClick = () => {
-    if (!isProcessing && !isBattleOver(battleState!) && !showActionButtons) {
-      setShowActionButtons(true);
+    if (
+      !battleState ||
+      isProcessing ||
+      currentMessage !== null ||
+      messageQueue.length > 0 ||
+      showActionButtons ||
+      isBattleOver(battleState)
+    ) {
+      return;
     }
+
+    setShowActionButtons(true);
   };
 
   // バトルリスタート
   const handleRestart = () => {
     setBattleState(initBattle(params));
-    setShowShowdown(false);
     setRecentCommentIds([]);
     setShowActionButtons(false);
     setSelectedEmotion(null);
-    setEnemyDialogueComplete(false);
-    setShowdownActions(null);
+    setMessageQueue([]);
+    setCurrentMessage(null);
+    setIsMessageAnimating(false);
+    setPendingAutoAdvance(false);
+    setIsProcessing(false);
+    pendingWinnerRef.current = null;
+    pendingStateRef.current = null;
+    setShowResult(false);
+    initialMessageShownRef.current = false;
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
     selectRandomDialogue();
   };
+
+  const isTurnIdle =
+    currentMessage === null && messageQueue.length === 0 && !isProcessing;
+
+  const currentEnemyText =
+    currentMessage?.speaker === 'enemy'
+      ? currentMessage.text
+      : isTurnIdle
+      ? enemyDialogue
+      : '';
+
+  const currentPlayerText =
+    currentMessage && currentMessage.speaker !== 'enemy'
+      ? currentMessage.text
+      : isTurnIdle
+      ? playerDialogue
+      : '';
+  const isAwaitingNextAction =
+    !!battleState &&
+    !isProcessing &&
+    !showActionButtons &&
+    currentMessage === null &&
+    messageQueue.length === 0 &&
+    !isBattleOver(battleState);
 
   // 初期化中はローディング表示
   if (!battleState) {
@@ -243,27 +650,27 @@ export function BattleContainer() {
                   />
                 </div>
 
-                {/* 左上：プレイヤーHPゲージ */}
-                <div className="absolute top-0 left-12 w-[300px]">
-                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
-                    <div
-                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
-                      style={{
-                        width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
-                        backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 右下：敵HPゲージ */}
-                <div className="absolute bottom-0 right-12 w-[300px]">
+                {/* 右上：敵HPゲージ */}
+                <div className="absolute top-3 right-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
                       className="absolute top-0 left-0 h-full rounded transition-all duration-300"
                       style={{
                         width: `${(battleState.enemy.hp / battleState.enemy.maxHp) * 100}%`,
                         backgroundColor: getHpColor(battleState.enemy.hp / battleState.enemy.maxHp)
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 左下：プレイヤーHPゲージ */}
+                <div className="absolute bottom-3 left-12 w-[300px]">
+                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                    <div
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      style={{
+                        width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
+                        backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
                       }}
                     />
                   </div>
@@ -283,9 +690,14 @@ export function BattleContainer() {
                   </svg>
                   <div className="absolute top-0 left-0 w-full h-full pt-6 px-6 flex items-start justify-center">
                     <TypewriterText
-                      text={enemyDialogue}
+                      key={
+                        currentMessage?.speaker === 'enemy'
+                          ? `enemy-${currentMessage.id}`
+                          : `enemy-idle-${enemyDialogue}`
+                      }
+                      text={currentEnemyText}
                       className="text-white text-2xl text-center"
-                      onComplete={() => setEnemyDialogueComplete(true)}
+                      onComplete={currentMessage?.speaker === 'enemy' ? handleMessageComplete : undefined}
                     />
                   </div>
                 </div>
@@ -304,12 +716,22 @@ export function BattleContainer() {
                   </svg>
                   <div className="absolute top-0 left-0 w-full h-full pb-6 px-6 flex items-end justify-center">
                     <TypewriterText
-                      text={enemyDialogueComplete ? playerDialogue : ''}
+                      key={
+                        currentMessage && currentMessage.speaker !== 'enemy'
+                          ? `player-${currentMessage.id}`
+                          : `player-idle-${playerDialogue}`
+                      }
+                      text={currentPlayerText}
                       className="text-white text-2xl text-center"
+                      onComplete={
+                        currentMessage && currentMessage.speaker !== 'enemy'
+                          ? handleMessageComplete
+                          : undefined
+                      }
                     />
                   </div>
                   {/* 次へ進むアイコン */}
-                  {!showActionButtons && (
+                  {isAwaitingNextAction && (
                     <div className="absolute bottom-4 right-8 animate-bounce">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path d="M7 10L12 15L17 10" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -331,14 +753,6 @@ export function BattleContainer() {
                 </div>
               )}
 
-              {/* アクションショーダウン */}
-              {showShowdown && showdownActions && (
-                <ActionShowdown
-                  playerAction={showdownActions.player}
-                  enemyAction={showdownActions.enemy}
-                  result={judgeEmotion(showdownActions.player, showdownActions.enemy)}
-                />
-              )}
             </div>
 
             {/* 右上：コメントエリア */}
@@ -372,7 +786,7 @@ export function BattleContainer() {
             </div>
 
             {/* リザルト画面 */}
-            {isBattleOver(battleState) && battleState.winner && (
+            {showResult && battleState.winner && (
               <BattleResult
                 winner={battleState.winner}
                 onRestart={handleRestart}

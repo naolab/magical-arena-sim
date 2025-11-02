@@ -101,10 +101,22 @@ export interface TurnResult {
   damage: {
     toEnemy: number;
     toPlayer: number;
+    extraToEnemy: number;
+    extraToPlayer: number;
   };
   specialEffects: {
     player: SpecialEffect[]; // プレイヤーに発動した効果
     enemy: SpecialEffect[]; // 敵に発動した効果
+  };
+  secondaryEffects: {
+    player: {
+      extraDamage: number;
+      healing: number;
+    };
+    enemy: {
+      extraDamage: number;
+      healing: number;
+    };
   };
   fanChange: {
     player: number; // ファン率の変化量
