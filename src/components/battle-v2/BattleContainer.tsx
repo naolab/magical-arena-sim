@@ -72,11 +72,12 @@ export function BattleContainer() {
     setEnemyDialogueComplete(false);
   };
 
-  // クライアントサイドでバトルを初期化
+  // クライアントサイドでバトルを初期化（最初の1回のみ）
   useEffect(() => {
     setBattleState(initBattle(params));
     selectRandomDialogue();
-  }, [params]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
