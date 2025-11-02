@@ -503,27 +503,27 @@ export function BattleContainer() {
                   />
                 </div>
 
-                {/* 左上：プレイヤーHPゲージ */}
-                <div className="absolute top-0 left-12 w-[300px]">
-                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
-                    <div
-                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
-                      style={{
-                        width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
-                        backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 右下：敵HPゲージ */}
-                <div className="absolute bottom-0 right-12 w-[300px]">
+                {/* 右上：敵HPゲージ */}
+                <div className="absolute top-3 right-12 w-[300px]">
                   <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
                     <div
                       className="absolute top-0 left-0 h-full rounded transition-all duration-300"
                       style={{
                         width: `${(battleState.enemy.hp / battleState.enemy.maxHp) * 100}%`,
                         backgroundColor: getHpColor(battleState.enemy.hp / battleState.enemy.maxHp)
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 左下：プレイヤーHPゲージ */}
+                <div className="absolute bottom-3 left-12 w-[300px]">
+                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                    <div
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      style={{
+                        width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
+                        backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
                       }}
                     />
                   </div>
