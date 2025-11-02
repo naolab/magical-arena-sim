@@ -39,6 +39,13 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
             </button>
           </div>
 
+          {/* 注意書き */}
+          <div className="mb-4 rounded-lg bg-cyan-500/10 border border-cyan-500/30 p-3">
+            <p className="text-sm text-cyan-300 text-center">
+              ⓘ 設定は次のバトル（リトライ）から反映されます
+            </p>
+          </div>
+
           <div className="max-h-[calc(85vh-200px)] overflow-y-auto pr-2 space-y-6 text-white/90">
             {/* 基本設定 */}
             <section>
