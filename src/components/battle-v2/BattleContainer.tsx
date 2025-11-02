@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType, TurnResult } from '@/lib/battle-v2/types';
+import { BattleState, EmotionType, TurnResult, SpecialEffect } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
@@ -39,6 +39,7 @@ interface BattleMessage {
   id: string;
   speaker: BattleMessageSpeaker;
   text: string;
+  apply?: () => void;
 }
 
 const JUDGEMENT_MESSAGE: Record<'win' | 'draw' | 'lose', string> = {
@@ -59,13 +60,13 @@ const RESULT_NARRATION: Record<'player' | 'enemy' | 'draw', string> = {
   draw: '互いに倒れ伏し、静寂だけが残った…。',
 };
 
-function createMessage(speaker: BattleMessageSpeaker, text: string): BattleMessage {
+function createMessage(speaker: BattleMessageSpeaker, text: string, apply?: () => void): BattleMessage {
   const id =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-  return { id, speaker, text };
+  return { id, speaker, text, apply };
 }
 
 function formatDamageText(amount: number, target: 'enemy' | 'player'): string {
@@ -80,17 +81,35 @@ function formatDamageText(amount: number, target: 'enemy' | 'player'): string {
     : `あなたは ${amount} のダメージを受けた！`;
 }
 
-function buildEffectMessages(effects: TurnResult['specialEffects']['player'], target: 'player' | 'enemy'): BattleMessage[] {
+function buildEffectMessages(
+  effects: TurnResult['specialEffects']['player'],
+  target: 'player' | 'enemy',
+  applyEffect?: (effect: SpecialEffect) => void
+): BattleMessage[] {
   if (effects.length === 0) return [];
 
   const targetLabel = target === 'player' ? 'あなた' : '敵';
 
   return effects.map((effect) =>
-    createMessage('system', `${targetLabel}に効果「${getEffectDescription(effect)}」が付与された！`)
+    createMessage('system', `${targetLabel}に効果「${getEffectDescription(effect)}」が付与された！`, () => {
+      applyEffect?.(effect);
+    })
   );
 }
 
-function buildTurnMessages(result: TurnResult): BattleMessage[] {
+function buildTurnMessages(
+  result: TurnResult,
+  handlers: {
+    onPlayerBase: (amount: number) => void;
+    onPlayerExtra: (amount: number) => void;
+    onPlayerHeal: (amount: number) => void;
+    onEnemyBase: (amount: number) => void;
+    onEnemyExtra: (amount: number) => void;
+    onEnemyHeal: (amount: number) => void;
+    onPlayerEffect: (effect: SpecialEffect) => void;
+    onEnemyEffect: (effect: SpecialEffect) => void;
+  }
+): BattleMessage[] {
   const messages: BattleMessage[] = [];
 
   const playerEmotionName = getEmotionName(result.playerAction);
@@ -104,7 +123,8 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
   messages.push(
     createMessage(
       'player',
-      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`
+      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`,
+      () => handlers.onPlayerBase(baseDamageToEnemy)
     )
   );
 
@@ -112,7 +132,8 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
     messages.push(
       createMessage(
         'player',
-        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy')}`
+        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy')}`,
+        () => handlers.onPlayerExtra(damage.extraToEnemy)
       )
     );
   }
@@ -121,7 +142,8 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
     messages.push(
       createMessage(
         'player',
-        `あなたは ${secondaryEffects.player.healing} 回復した！`
+        `あなたは ${secondaryEffects.player.healing} 回復した！`,
+        () => handlers.onPlayerHeal(secondaryEffects.player.healing)
       )
     );
   }
@@ -129,7 +151,8 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
   messages.push(
     createMessage(
       'enemy',
-      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`
+      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`,
+      () => handlers.onEnemyBase(baseDamageToPlayer)
     )
   );
 
@@ -137,7 +160,8 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
     messages.push(
       createMessage(
         'enemy',
-        `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`
+        `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
+        () => handlers.onEnemyExtra(damage.extraToPlayer)
       )
     );
   }
@@ -146,13 +170,18 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
     messages.push(
       createMessage(
         'enemy',
-        `敵は ${secondaryEffects.enemy.healing} 回復した！`
+        `敵は ${secondaryEffects.enemy.healing} 回復した！`,
+        () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
       )
     );
   }
 
-  messages.push(...buildEffectMessages(specialEffects.player, 'player'));
-  messages.push(...buildEffectMessages(specialEffects.enemy, 'enemy'));
+  messages.push(
+    ...buildEffectMessages(specialEffects.player, 'player', handlers.onPlayerEffect)
+  );
+  messages.push(
+    ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
+  );
 
   return messages;
 }
@@ -172,7 +201,6 @@ export function BattleContainer() {
   const [currentMessage, setCurrentMessage] = useState<BattleMessage | null>(null);
   const [isMessageAnimating, setIsMessageAnimating] = useState(false);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
-  const [pendingWinner, setPendingWinner] = useState<'player' | 'enemy' | 'draw' | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   // 画面スケーリング
@@ -183,6 +211,8 @@ export function BattleContainer() {
 
   const initialMessageShownRef = useRef(false);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingStateRef = useRef<BattleState | null>(null);
+  const pendingWinnerRef = useRef<'player' | 'enemy' | 'draw' | null>(null);
 
   const selectRandomDialogue = useCallback(() => {
     const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
@@ -199,6 +229,9 @@ export function BattleContainer() {
   }, []);
 
   const handleMessageComplete = useCallback(() => {
+    if (currentMessage?.apply) {
+      currentMessage.apply();
+    }
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
     }
@@ -208,7 +241,7 @@ export function BattleContainer() {
       setCurrentMessage(null);
       setPendingAutoAdvance(true);
     }, 400);
-  }, []);
+  }, [currentMessage]);
 
   useEffect(() => {
     return () => {
@@ -267,11 +300,37 @@ export function BattleContainer() {
         setPendingAutoAdvance(false);
       } else if (pendingAutoAdvance) {
         setPendingAutoAdvance(false);
-        if (isProcessing) {
+      if (pendingStateRef.current) {
+        const finalState = pendingStateRef.current;
+        setBattleState((prev) => {
+          if (!finalState) return prev;
+          if (!prev) return finalState;
+          return {
+            ...finalState,
+            player: {
+              ...finalState.player,
+              hp: prev.player.hp,
+            },
+            enemy: {
+              ...finalState.enemy,
+              hp: prev.enemy.hp,
+            },
+          };
+        });
+        pendingStateRef.current = null;
+        setIsProcessing(false);
+        if (pendingWinnerRef.current) {
+          setShowResult(true);
+        } else {
+            setShowResult(false);
+            selectRandomDialogue();
+          }
+          pendingWinnerRef.current = null;
+        } else {
           setIsProcessing(false);
-        }
-        if (messageQueue.length === 0 && !pendingWinner) {
-          selectRandomDialogue();
+          if (!showResult) {
+            selectRandomDialogue();
+          }
         }
       }
     }
@@ -280,29 +339,8 @@ export function BattleContainer() {
     isMessageAnimating,
     currentMessage,
     pendingAutoAdvance,
-    isProcessing,
     selectRandomDialogue,
-    pendingWinner,
-  ]);
-
-  useEffect(() => {
-    if (
-      pendingWinner &&
-      !showResult &&
-      !isProcessing &&
-      !isMessageAnimating &&
-      currentMessage === null &&
-      messageQueue.length === 0
-    ) {
-      setShowResult(true);
-    }
-  }, [
-    pendingWinner,
     showResult,
-    isProcessing,
-    isMessageAnimating,
-    currentMessage,
-    messageQueue.length,
   ]);
 
   const scale = useMemo(() => {
@@ -347,10 +385,12 @@ export function BattleContainer() {
     setSelectedEmotion(null);
 
     // 選択した感情のコメントを即座に消費（UI更新）
-    const updatedComments = battleState.comments.filter(c => c.emotion !== emotion);
-    setBattleState({
-      ...battleState,
-      comments: updatedComments,
+    setBattleState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        comments: prev.comments.filter((c) => c.emotion !== emotion),
+      };
     });
 
     try {
@@ -367,10 +407,114 @@ export function BattleContainer() {
         .map(c => c.id);
       setRecentCommentIds(newCommentIds);
 
-      setBattleState(newState);
+      pendingStateRef.current = newState;
 
       const turnResult = newState.turnHistory[newState.turnHistory.length - 1];
-      const turnMessages = buildTurnMessages(turnResult);
+
+      const applyPlayerBaseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerExtraDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyBaseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyExtraDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEffect = (effect: SpecialEffect) => {
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          if (effect.target === 'player') {
+            return {
+              ...prev,
+              player: {
+                ...prev.player,
+                activeEffects: [...prev.player.activeEffects, effect],
+              },
+            };
+          }
+          return {
+            ...prev,
+            enemy: {
+              ...prev.enemy,
+              activeEffects: [...prev.enemy.activeEffects, effect],
+            },
+          };
+        });
+      };
+
+      const turnMessages = buildTurnMessages(turnResult, {
+        onPlayerBase: applyPlayerBaseDamage,
+        onPlayerExtra: applyPlayerExtraDamage,
+        onPlayerHeal: applyPlayerHealing,
+        onEnemyBase: applyEnemyBaseDamage,
+        onEnemyExtra: applyEnemyExtraDamage,
+        onEnemyHeal: applyEnemyHealing,
+        onPlayerEffect: applyEffect,
+        onEnemyEffect: applyEffect,
+      });
       const winner = newState.winner;
       let resultMessages: BattleMessage[] = [];
       if (winner) {
@@ -378,10 +522,10 @@ export function BattleContainer() {
           createMessage('system', WINNER_MESSAGE[winner]),
           createMessage('system', RESULT_NARRATION[winner]),
         ];
-        setPendingWinner(winner);
+        pendingWinnerRef.current = winner;
         setShowResult(false);
       } else {
-        setPendingWinner(null);
+        pendingWinnerRef.current = null;
         setShowResult(false);
       }
 
@@ -393,6 +537,8 @@ export function BattleContainer() {
     } catch (error) {
       console.error('Turn processing error:', error);
       setIsProcessing(false);
+      pendingStateRef.current = null;
+      pendingWinnerRef.current = null;
     }
   };
 
@@ -423,7 +569,8 @@ export function BattleContainer() {
     setIsMessageAnimating(false);
     setPendingAutoAdvance(false);
     setIsProcessing(false);
-    setPendingWinner(null);
+    pendingWinnerRef.current = null;
+    pendingStateRef.current = null;
     setShowResult(false);
     initialMessageShownRef.current = false;
     if (advanceTimerRef.current) {
