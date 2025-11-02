@@ -73,7 +73,11 @@ export function SettingsMenu({ onRestart }: SettingsMenuProps) {
       )}
 
       {/* 難易度設定モーダル */}
-      <DifficultyModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />
+      <DifficultyModal
+        isOpen={isDifficultyOpen}
+        onClose={() => setIsDifficultyOpen(false)}
+        onRestart={onRestart}
+      />
     </div>
   );
 }

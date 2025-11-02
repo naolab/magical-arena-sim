@@ -5,9 +5,10 @@ import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 interface DifficultyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onRestart: () => void;
 }
 
-export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
+export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalProps) {
   const { params, setParams, resetParams } = useBattleParamsV2();
 
   if (!isOpen) return null;
@@ -232,16 +233,25 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
             </section>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/10 flex gap-4 flex-shrink-0">
+          <div className="mt-6 pt-4 border-t border-white/10 flex gap-3 flex-shrink-0">
             <button
               onClick={resetParams}
-              className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-colors"
+              className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-colors"
             >
               リセット
             </button>
             <button
+              onClick={() => {
+                onRestart();
+                onClose();
+              }}
+              className="flex-1 px-5 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-bold rounded-full transition-colors shadow-lg"
+            >
+              リトライ
+            </button>
+            <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-full transition-colors"
+              className="px-5 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-full transition-colors"
             >
               閉じる
             </button>
