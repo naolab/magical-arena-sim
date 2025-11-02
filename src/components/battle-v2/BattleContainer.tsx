@@ -10,6 +10,8 @@ import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
 import { BattleResult } from './BattleResult';
 import { ActionShowdown } from './ActionShowdown';
+import { SettingsMenu } from './SettingsMenu';
+import { RulesModal } from './RulesModal';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -350,6 +352,12 @@ export function BattleContainer() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* 左下：設定メニューとルール */}
+            <div className="absolute bottom-6 left-8 flex gap-4">
+              <SettingsMenu onRestart={handleRestart} />
+              <RulesModal />
             </div>
 
             {/* リザルト画面 */}
