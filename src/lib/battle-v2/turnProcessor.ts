@@ -70,13 +70,13 @@ export function processTurn(
     config: state.config,
   });
 
-  let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
-  let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
-
   type ActiveEffectExtended = SpecialEffect & { appliedTurn?: number };
 
-  const previousPlayerEffects = updatedPlayer.activeEffects as ActiveEffectExtended[];
-  const previousEnemyEffects = updatedEnemy.activeEffects as ActiveEffectExtended[];
+  const playerEffectsBeforeTurn = state.player.activeEffects as ActiveEffectExtended[];
+  const enemyEffectsBeforeTurn = state.enemy.activeEffects as ActiveEffectExtended[];
+
+  let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
+  let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
 
   // 5. プレイヤーの特殊効果を発動
   const playerSpecialEffects = triggerSpecialEffects({
@@ -151,8 +151,8 @@ export function processTurn(
   const annotateNewEffects = (effects: SpecialEffect[]): ActiveEffectExtended[] =>
     effects.map((effect) => ({ ...effect, appliedTurn: turnNumber }));
 
-  const playerEffectsAfterTick = tickExistingEffects(previousPlayerEffects);
-  const enemyEffectsAfterTick = tickExistingEffects(previousEnemyEffects);
+  const playerEffectsAfterTick = tickExistingEffects(playerEffectsBeforeTurn);
+  const enemyEffectsAfterTick = tickExistingEffects(enemyEffectsBeforeTurn);
 
   const finalPlayerEffects: ActiveEffectExtended[] = [
     ...playerEffectsAfterTick,
