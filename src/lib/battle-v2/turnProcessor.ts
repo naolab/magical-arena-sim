@@ -73,8 +73,10 @@ export function processTurn(
   let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
   let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
 
-  const previousPlayerEffects = updatedPlayer.activeEffects;
-  const previousEnemyEffects = updatedEnemy.activeEffects;
+  type ActiveEffectExtended = SpecialEffect & { appliedTurn?: number };
+
+  const previousPlayerEffects = updatedPlayer.activeEffects as ActiveEffectExtended[];
+  const previousEnemyEffects = updatedEnemy.activeEffects as ActiveEffectExtended[];
 
   // 5. プレイヤーの特殊効果を発動
   const playerSpecialEffects = triggerSpecialEffects({
@@ -133,19 +135,35 @@ export function processTurn(
   }
 
   // 6. 既存効果の更新と新規効果の追加
-  const playerEffectsAfterTick = removeExpiredEffects(updateEffectDurations(previousPlayerEffects));
-  const enemyEffectsAfterTick = removeExpiredEffects(updateEffectDurations(previousEnemyEffects));
+  const tickExistingEffects = (effects: ActiveEffectExtended[]) =>
+    removeExpiredEffects(
+      effects.map((effect) => {
+        const appliedTurn = effect.appliedTurn ?? state.currentTurn;
+        const shouldTick = appliedTurn < turnNumber;
+        return {
+          ...effect,
+          duration: shouldTick ? effect.duration - 1 : effect.duration,
+          appliedTurn,
+        };
+      })
+    ) as ActiveEffectExtended[];
 
-  const finalPlayerEffects = [
+  const annotateNewEffects = (effects: SpecialEffect[]): ActiveEffectExtended[] =>
+    effects.map((effect) => ({ ...effect, appliedTurn: turnNumber }));
+
+  const playerEffectsAfterTick = tickExistingEffects(previousPlayerEffects);
+  const enemyEffectsAfterTick = tickExistingEffects(previousEnemyEffects);
+
+  const finalPlayerEffects: ActiveEffectExtended[] = [
     ...playerEffectsAfterTick,
-    ...playerSpecialEffects.playerEffects,
-    ...enemySpecialEffects.playerEffects,
+    ...annotateNewEffects(playerSpecialEffects.playerEffects),
+    ...annotateNewEffects(enemySpecialEffects.playerEffects),
   ];
 
-  const finalEnemyEffects = [
+  const finalEnemyEffects: ActiveEffectExtended[] = [
     ...enemyEffectsAfterTick,
-    ...playerSpecialEffects.enemyEffects,
-    ...enemySpecialEffects.enemyEffects,
+    ...annotateNewEffects(playerSpecialEffects.enemyEffects),
+    ...annotateNewEffects(enemySpecialEffects.enemyEffects),
   ];
 
   updatedPlayer = {
