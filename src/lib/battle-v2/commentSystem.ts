@@ -138,17 +138,19 @@ function generateCommentId(turn: number, index: number): string {
  * 最大サイズを超える場合は古いものから削除
  * @param pool 現在のコメントプール
  * @param newComments 追加するコメント
+ * @param maxSize 最大サイズ（省略時はデフォルト値）
  * @returns 更新されたコメントプール
  */
 export function addCommentsToPool(
   pool: Comment[],
-  newComments: Comment[]
+  newComments: Comment[],
+  maxSize: number = MAX_COMMENT_POOL_SIZE
 ): Comment[] {
   const updated = [...pool, ...newComments];
 
   // 最大サイズを超えたら古いものから削除
-  if (updated.length > MAX_COMMENT_POOL_SIZE) {
-    return updated.slice(updated.length - MAX_COMMENT_POOL_SIZE);
+  if (updated.length > maxSize) {
+    return updated.slice(updated.length - maxSize);
   }
 
   return updated;

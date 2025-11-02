@@ -4,11 +4,11 @@
  */
 
 import { BattleState, PlayerState, EnemyState, EmotionType } from './types';
+import { BattleParamsV2, DEFAULT_BATTLE_PARAMS_V2 } from '@/contexts/BattleParamsV2Context';
 import { processTurn } from './turnProcessor';
 import {
   generateComments,
   addCommentsToPool,
-  COMMENTS_PER_TURN,
 } from './commentSystem';
 import { initializeAudienceComposition } from './fanSystem';
 
@@ -18,43 +18,33 @@ import { initializeAudienceComposition } from './fanSystem';
 
 /**
  * バトルを初期化
- * @param config バトル設定
+ * @param params バトル設定パラメータ
  * @returns 初期バトル状態
  */
-export function initBattle(config?: {
-  playerMaxHp?: number;
-  enemyMaxHp?: number;
-  playerBasePower?: number;
-  enemyBasePower?: number;
-}): BattleState {
-  const {
-    playerMaxHp = 1000,
-    enemyMaxHp = 1000,
-    playerBasePower = 100,
-    enemyBasePower = 100,
-  } = config || {};
+export function initBattle(params?: BattleParamsV2): BattleState {
+  const config = params || DEFAULT_BATTLE_PARAMS_V2;
 
   const player: PlayerState = {
-    hp: playerMaxHp,
-    maxHp: playerMaxHp,
-    basePower: playerBasePower,
-    fanRate: 0.2, // 初期ファン率20%
+    hp: config.playerMaxHp,
+    maxHp: config.playerMaxHp,
+    basePower: config.playerBasePower,
+    fanRate: config.initialFanRate,
     activeEffects: [],
   };
 
   const enemy: EnemyState = {
-    hp: enemyMaxHp,
-    maxHp: enemyMaxHp,
-    basePower: enemyBasePower,
-    fanRate: 0.2, // 初期ファン率20%
+    hp: config.enemyMaxHp,
+    maxHp: config.enemyMaxHp,
+    basePower: config.enemyBasePower,
+    fanRate: config.initialFanRate,
     activeEffects: [],
   };
 
-  const audience = initializeAudienceComposition();
+  const audience = initializeAudienceComposition(config);
 
-  // 初期コメントを生成（3個）
+  // 初期コメントを生成
   const initialComments = generateComments(
-    { count: COMMENTS_PER_TURN },
+    { count: config.commentsPerTurn },
     0
   );
 
@@ -67,6 +57,7 @@ export function initBattle(config?: {
     comments: initialComments,
     turnHistory: [],
     winner: null,
+    config,
   };
 }
 
@@ -96,12 +87,12 @@ export function executePlayerAction(
 
   // 2. 新しいコメントを生成して追加
   const newComments = generateComments(
-    { count: COMMENTS_PER_TURN },
+    { count: updatedState.config.commentsPerTurn },
     updatedState.currentTurn
   );
   updatedState = {
     ...updatedState,
-    comments: addCommentsToPool(updatedState.comments, newComments),
+    comments: addCommentsToPool(updatedState.comments, newComments, updatedState.config.maxCommentPoolSize),
   };
 
   // 3. 勝敗判定
@@ -161,16 +152,11 @@ export function checkWinner(
 
 /**
  * バトルをリセット
- * @param config バトル設定（省略時は前回と同じ設定）
+ * @param params バトル設定パラメータ
  * @returns 新しいバトル状態
  */
-export function resetBattle(config?: {
-  playerMaxHp?: number;
-  enemyMaxHp?: number;
-  playerBasePower?: number;
-  enemyBasePower?: number;
-}): BattleState {
-  return initBattle(config);
+export function resetBattle(params?: BattleParamsV2): BattleState {
+  return initBattle(params);
 }
 
 // ========================================

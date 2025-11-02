@@ -3,6 +3,8 @@
  * 4-way emotion-based battle system with comment mechanics
  */
 
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
+
 // ========================================
 // Emotion System
 // ========================================
@@ -128,6 +130,7 @@ export interface BattleState {
   comments: Comment[]; // 現在のコメントプール（最大10件）
   turnHistory: TurnResult[]; // 過去のターン履歴
   winner: 'player' | 'enemy' | 'draw' | null; // 勝者
+  config: BattleParamsV2; // バトル設定パラメータ
 }
 
 // ========================================
