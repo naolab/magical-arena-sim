@@ -4,6 +4,7 @@
  */
 
 import { AudienceComposition, BattleResult } from './types';
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 
 // ========================================
 // Constants
@@ -55,25 +56,27 @@ export function getFanRateRank(fanRate: number): string {
  * 勝敗に応じたファン率の変化量を計算
  * @param result 勝敗結果
  * @param commentCount 消費したコメント数
+ * @param config バトル設定パラメータ
  * @returns ファン率の変化量
  */
 export function calculateFanRateChange(
   result: BattleResult,
-  commentCount: number
+  commentCount: number,
+  config: BattleParamsV2
 ): number {
   let change = 0;
 
   // 基本変動
   if (result === 'win') {
-    change = 0.1; // +10%
+    change = config.fanRateChangeOnWin;
   } else if (result === 'lose') {
-    change = -0.05; // -5%
+    change = config.fanRateChangeOnLose;
   } else {
     change = 0; // 引き分けは変化なし
   }
 
-  // コメントボーナス: 1コメントにつき+2%
-  change += commentCount * 0.02;
+  // コメントボーナス
+  change += commentCount * config.fanRateBonusPerComment;
 
   return change;
 }
@@ -84,13 +87,14 @@ export function calculateFanRateChange(
 
 /**
  * 初期の観客構成を生成
+ * @param config バトル設定パラメータ
  * @returns 初期観客構成
  */
-export function initializeAudienceComposition(): AudienceComposition {
+export function initializeAudienceComposition(config: BattleParamsV2): AudienceComposition {
   return {
-    playerFans: 0.2,    // プレイヤーファン 20%
-    enemyFans: 0.2,     // 敵ファン 20%
-    neutralFans: 0.6,   // 中立ファン 60%
+    playerFans: config.initialPlayerFans,
+    enemyFans: config.initialEnemyFans,
+    neutralFans: config.initialNeutralFans,
   };
 }
 
@@ -100,15 +104,17 @@ export function initializeAudienceComposition(): AudienceComposition {
  * @param result プレイヤー視点での勝敗
  * @param playerFanRate プレイヤーのファン率
  * @param enemyFanRate 敵のファン率
+ * @param config バトル設定パラメータ
  * @returns 更新された観客構成
  */
 export function updateAudienceComposition(
   current: AudienceComposition,
   result: BattleResult,
   playerFanRate: number,
-  enemyFanRate: number
+  enemyFanRate: number,
+  config: BattleParamsV2
 ): AudienceComposition {
-  const fanStealAmount = 0.05; // 1回の勝利で5%のファンを奪う
+  const fanStealAmount = config.fanStealAmountOnWin;
 
   let playerFans = current.playerFans;
   let enemyFans = current.enemyFans;

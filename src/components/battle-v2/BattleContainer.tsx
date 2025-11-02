@@ -5,6 +5,7 @@ import { BattleState, EmotionType } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { judgeEmotion } from '@/lib/battle-v2/emotionSystem';
+import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
@@ -35,6 +36,8 @@ const PLAYER_DIALOGUES = [
 ];
 
 export function BattleContainer() {
+  const { params } = useBattleParamsV2();
+
   // バトル状態
   const [battleState, setBattleState] = useState<BattleState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,10 +72,11 @@ export function BattleContainer() {
     setEnemyDialogueComplete(false);
   };
 
-  // クライアントサイドでバトルを初期化
+  // クライアントサイドでバトルを初期化（最初の1回のみ）
   useEffect(() => {
-    setBattleState(initBattle());
+    setBattleState(initBattle(params));
     selectRandomDialogue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -183,7 +187,7 @@ export function BattleContainer() {
 
   // バトルリスタート
   const handleRestart = () => {
-    setBattleState(initBattle());
+    setBattleState(initBattle(params));
     setShowShowdown(false);
     setRecentCommentIds([]);
     setShowActionButtons(false);

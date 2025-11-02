@@ -4,6 +4,7 @@
  */
 
 import { SpecialEffect, SpecialEffectTriggerParams, EmotionType } from './types';
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 
 // ========================================
 // Constants
@@ -34,21 +35,24 @@ const ECSTASY_BUFF_DURATION = 2;
 /**
  * Rage（激怒）の特殊効果: 追加ダメージ
  * @param params トリガーパラメータ
+ * @param config バトル設定パラメータ
  * @returns 追加ダメージ量
  */
-export function applyRageEffect(params: SpecialEffectTriggerParams): number {
+export function applyRageEffect(params: SpecialEffectTriggerParams, config: BattleParamsV2): number {
   const { damage } = params;
-  // 与えたダメージの50%を追加ダメージとして返す
-  return Math.round(damage * RAGE_EXTRA_DAMAGE_RATIO);
+  // 与えたダメージの指定割合を追加ダメージとして返す
+  return Math.round(damage * config.rageExtraDamageRatio);
 }
 
 /**
  * Terror（恐怖）の特殊効果: 相手にデバフ付与
  * @param params トリガーパラメータ
+ * @param config バトル設定パラメータ
  * @returns デバフ効果
  */
 export function applyTerrorEffect(
-  params: SpecialEffectTriggerParams
+  params: SpecialEffectTriggerParams,
+  config: BattleParamsV2
 ): SpecialEffect {
   const { emotion, target } = params;
 
@@ -56,8 +60,8 @@ export function applyTerrorEffect(
   return {
     type: 'debuff',
     emotion,
-    duration: TERROR_DEBUFF_DURATION,
-    magnitude: TERROR_DEBUFF_MAGNITUDE,
+    duration: config.terrorDebuffDuration,
+    magnitude: config.terrorDebuffMagnitude,
     target: target === 'player' ? 'enemy' : 'player', // 相手に付与
   };
 }
@@ -65,21 +69,24 @@ export function applyTerrorEffect(
 /**
  * Grief（悲嘆）の特殊効果: HP吸収
  * @param params トリガーパラメータ
+ * @param config バトル設定パラメータ
  * @returns 回復HP量
  */
-export function applyGriefEffect(params: SpecialEffectTriggerParams): number {
+export function applyGriefEffect(params: SpecialEffectTriggerParams, config: BattleParamsV2): number {
   const { damage } = params;
-  // 与えたダメージの40%をHPとして回復
-  return Math.round(damage * GRIEF_DRAIN_RATIO);
+  // 与えたダメージの指定割合をHPとして回復
+  return Math.round(damage * config.griefDrainRatio);
 }
 
 /**
  * Ecstasy（恍惚）の特殊効果: 自分にバフ付与
  * @param params トリガーパラメータ
+ * @param config バトル設定パラメータ
  * @returns バフ効果
  */
 export function applyEcstasyEffect(
-  params: SpecialEffectTriggerParams
+  params: SpecialEffectTriggerParams,
+  config: BattleParamsV2
 ): SpecialEffect {
   const { emotion, target } = params;
 
@@ -87,8 +94,8 @@ export function applyEcstasyEffect(
   return {
     type: 'buff',
     emotion,
-    duration: ECSTASY_BUFF_DURATION,
-    magnitude: ECSTASY_BUFF_MAGNITUDE,
+    duration: config.ecstasyBuffDuration,
+    magnitude: config.ecstasyBuffMagnitude,
     target, // 自分に付与
   };
 }

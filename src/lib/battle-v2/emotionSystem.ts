@@ -4,6 +4,7 @@
  */
 
 import { EmotionType, BattleResult } from './types';
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 
 // ========================================
 // Emotion Matchup Configuration
@@ -79,10 +80,17 @@ export function judgeEmotion(
 /**
  * 相性による補正倍率を取得
  * @param result 勝敗結果
+ * @param config バトル設定パラメータ（省略時はデフォルト値）
  * @returns 補正倍率
  */
-export function getMatchupBonus(result: BattleResult): number {
-  return MATCHUP_BONUS[result];
+export function getMatchupBonus(result: BattleResult, config?: BattleParamsV2): number {
+  if (!config) {
+    return MATCHUP_BONUS[result];
+  }
+
+  if (result === 'win') return config.matchupBonusWin;
+  if (result === 'lose') return config.matchupBonusLose;
+  return config.matchupBonusDraw;
 }
 
 // ========================================

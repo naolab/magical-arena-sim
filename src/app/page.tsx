@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { VersionSelector } from '@/components/ui/VersionSelector';
 import { RulesModal } from '@/components/RulesModal';
-import { DifficultyModal } from '@/components/settings/DifficultyModal';
+import { DifficultyModal as V1DifficultyModal } from '@/components/settings/DifficultyModal';
+import { V2DifficultyInfoModal } from '@/components/settings/V2DifficultyInfoModal';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -97,7 +98,6 @@ export default function Home() {
                 variant="secondary"
                 size="lg"
                 onClick={() => setIsDifficultyOpen(true)}
-                disabled={selectedVersion === 'v2'}
               >
                 難易度設定
               </Button>
@@ -106,8 +106,17 @@ export default function Home() {
         </div>
       </div>
 
-      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
-      <DifficultyModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />
+      <RulesModal
+        isOpen={isRulesOpen}
+        onClose={() => setIsRulesOpen(false)}
+        version={selectedVersion}
+      />
+
+      {selectedVersion === 'v1' ? (
+        <V1DifficultyModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />
+      ) : (
+        <V2DifficultyInfoModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />
+      )}
     </main>
   );
 }

@@ -5,6 +5,7 @@
 
 import { DamageParams, SpecialEffect } from './types';
 import { getMatchupBonus } from './emotionSystem';
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 
 // ========================================
 // Constants
@@ -23,9 +24,10 @@ const FAN_RATE_MAX_BONUS = 1.0;
 /**
  * ダメージを計算
  * @param params ダメージ計算パラメータ
+ * @param config バトル設定パラメータ
  * @returns 最終ダメージ
  */
-export function calculateDamage(params: DamageParams): number {
+export function calculateDamage(params: DamageParams, config: BattleParamsV2): number {
   const {
     basePower,
     fanRate,
@@ -38,13 +40,13 @@ export function calculateDamage(params: DamageParams): number {
   const baseDamage = basePower;
 
   // 2. ファン率補正
-  const fanRateMultiplier = calculateFanRateBonus(fanRate);
+  const fanRateMultiplier = calculateFanRateBonus(fanRate, config);
 
   // 3. コメント補正
-  const commentMultiplier = calculateCommentBonus(consumedCommentCount);
+  const commentMultiplier = calculateCommentBonus(consumedCommentCount, config);
 
   // 4. 相性補正
-  const matchupMultiplier = getMatchupBonus(matchupResult);
+  const matchupMultiplier = getMatchupBonus(matchupResult, config);
 
   // 5. 特殊効果補正（バフ・デバフ）
   const effectMultiplier = calculateEffectBonus(activeEffects);
@@ -64,25 +66,24 @@ export function calculateDamage(params: DamageParams): number {
 /**
  * ファン率による補正を計算
  * @param fanRate ファン率 (0.0 ~ 1.0)
+ * @param config バトル設定パラメータ
  * @returns 補正倍率
  */
-export function calculateFanRateBonus(fanRate: number): number {
+export function calculateFanRateBonus(fanRate: number, config: BattleParamsV2): number {
   // ファン率0%: 1.0倍
-  // ファン率100%: 2.0倍
-  return 1.0 + fanRate * FAN_RATE_MAX_BONUS;
+  // ファン率100%: 1.0 + fanRateMaxBonus
+  return 1.0 + fanRate * config.fanRateMaxBonus;
 }
 
 /**
  * コメント数による補正を計算
  * @param consumedCount 消費したコメント数
+ * @param config バトル設定パラメータ
  * @returns 補正倍率
  */
-export function calculateCommentBonus(consumedCount: number): number {
-  // 1コメントにつき+20%
-  // 0コメント: 1.0倍
-  // 1コメント: 1.2倍
-  // 5コメント: 2.0倍
-  return 1.0 + consumedCount * COMMENT_BONUS_PER_COUNT;
+export function calculateCommentBonus(consumedCount: number, config: BattleParamsV2): number {
+  // 1コメントにつき commentBonusPerCount 分上昇
+  return 1.0 + consumedCount * config.commentBonusPerCount;
 }
 
 /**
@@ -113,9 +114,10 @@ export function calculateEffectBonus(activeEffects: SpecialEffect[]): number {
 /**
  * ダメージの詳細情報を文字列で取得
  * @param params ダメージ計算パラメータ
+ * @param config バトル設定パラメータ
  * @returns ダメージの詳細説明
  */
-export function getDamageBreakdown(params: DamageParams): string {
+export function getDamageBreakdown(params: DamageParams, config: BattleParamsV2): string {
   const {
     basePower,
     fanRate,
@@ -124,11 +126,11 @@ export function getDamageBreakdown(params: DamageParams): string {
     activeEffects,
   } = params;
 
-  const fanRateMultiplier = calculateFanRateBonus(fanRate);
-  const commentMultiplier = calculateCommentBonus(consumedCommentCount);
-  const matchupMultiplier = getMatchupBonus(matchupResult);
+  const fanRateMultiplier = calculateFanRateBonus(fanRate, config);
+  const commentMultiplier = calculateCommentBonus(consumedCommentCount, config);
+  const matchupMultiplier = getMatchupBonus(matchupResult, config);
   const effectMultiplier = calculateEffectBonus(activeEffects);
-  const finalDamage = calculateDamage(params);
+  const finalDamage = calculateDamage(params, config);
 
   return `
 基本攻撃力: ${basePower}
@@ -144,8 +146,9 @@ export function getDamageBreakdown(params: DamageParams): string {
 /**
  * ダメージ予測を計算（実際に与える前の予測用）
  * @param params ダメージ計算パラメータ
+ * @param config バトル設定パラメータ
  * @returns 予測ダメージ
  */
-export function predictDamage(params: DamageParams): number {
-  return calculateDamage(params);
+export function predictDamage(params: DamageParams, config: BattleParamsV2): number {
+  return calculateDamage(params, config);
 }

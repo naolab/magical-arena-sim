@@ -12,6 +12,7 @@ import {
   SpecialEffect,
   Comment,
 } from './types';
+import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { judgeEmotion } from './emotionSystem';
 import { consumeComments } from './commentSystem';
 import { calculateDamage } from './damageCalculation';
@@ -56,6 +57,7 @@ export function processTurn(
     action: playerAction,
     judgement,
     consumedComments: consumedPlayerComments,
+    config: state.config,
   });
 
   // 4. 敵のダメージ計算と適用
@@ -65,6 +67,7 @@ export function processTurn(
     action: enemyAction,
     judgement: judgement === 'win' ? 'lose' : judgement === 'lose' ? 'win' : 'draw',
     consumedComments: [], // 敵はコメントを消費しない
+    config: state.config,
   });
 
   let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
@@ -76,6 +79,7 @@ export function processTurn(
     target: 'player',
     damage: playerDamageResult.damage,
     defender: updatedEnemy,
+    config: state.config,
   });
 
   // Rage: 追加ダメージを適用
@@ -188,6 +192,7 @@ interface DamageCalculationParams {
   action: EmotionType;
   judgement: 'win' | 'draw' | 'lose';
   consumedComments: Comment[];
+  config: BattleParamsV2;
 }
 
 interface DamageResult {
@@ -199,7 +204,7 @@ interface DamageResult {
  * ダメージを計算して適用
  */
 function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult {
-  const { attacker, defender, action, judgement, consumedComments } = params;
+  const { attacker, defender, action, judgement, consumedComments, config } = params;
 
   const damage = calculateDamage({
     action,
@@ -208,7 +213,7 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     consumedCommentCount: consumedComments.length,
     matchupResult: judgement,
     activeEffects: attacker.activeEffects,
-  });
+  }, config);
 
   const updatedDefender = {
     ...defender,
@@ -236,8 +241,9 @@ function triggerSpecialEffects(params: {
   target: 'player' | 'enemy';
   damage: number;
   defender: PlayerState | EnemyState;
+  config: BattleParamsV2;
 }): SpecialEffectResult {
-  const { emotion, target, damage } = params;
+  const { emotion, target, damage, config } = params;
 
   const result: SpecialEffectResult = {
     extraDamage: 0,
@@ -248,11 +254,11 @@ function triggerSpecialEffects(params: {
 
   switch (emotion) {
     case 'rage':
-      result.extraDamage = applyRageEffect({ emotion, target, damage });
+      result.extraDamage = applyRageEffect({ emotion, target, damage }, config);
       break;
 
     case 'terror': {
-      const debuff = applyTerrorEffect({ emotion, target, damage });
+      const debuff = applyTerrorEffect({ emotion, target, damage }, config);
       if (debuff.target === 'player') {
         result.playerEffects.push(debuff);
       } else {
@@ -262,11 +268,11 @@ function triggerSpecialEffects(params: {
     }
 
     case 'grief':
-      result.healing = applyGriefEffect({ emotion, target, damage });
+      result.healing = applyGriefEffect({ emotion, target, damage }, config);
       break;
 
     case 'ecstasy': {
-      const buff = applyEcstasyEffect({ emotion, target, damage });
+      const buff = applyEcstasyEffect({ emotion, target, damage }, config);
       if (buff.target === 'player') {
         result.playerEffects.push(buff);
       } else {

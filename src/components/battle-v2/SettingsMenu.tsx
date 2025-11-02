@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { DifficultyModal } from './DifficultyModal';
 
 interface SettingsMenuProps {
   onRestart: () => void;
@@ -9,6 +10,7 @@ interface SettingsMenuProps {
 
 export function SettingsMenu({ onRestart }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDifficultyOpen, setIsDifficultyOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -35,6 +37,17 @@ export function SettingsMenu({ onRestart }: SettingsMenuProps) {
           {/* メニュー内容 */}
           <div className="absolute bottom-14 left-0 z-50 w-48 rounded-lg bg-gray-900/95 backdrop-blur-sm border-2 border-white/20 shadow-xl">
             <div className="flex flex-col p-2 gap-2">
+              {/* 難易度設定ボタン */}
+              <button
+                onClick={() => {
+                  setIsDifficultyOpen(true);
+                  setIsOpen(false);
+                }}
+                className="px-4 py-3 text-center text-white font-bold hover:bg-white/10 rounded-md transition-colors"
+              >
+                難易度設定
+              </button>
+
               {/* リトライボタン */}
               <button
                 onClick={() => {
@@ -58,6 +71,13 @@ export function SettingsMenu({ onRestart }: SettingsMenuProps) {
           </div>
         </>
       )}
+
+      {/* 難易度設定モーダル */}
+      <DifficultyModal
+        isOpen={isDifficultyOpen}
+        onClose={() => setIsDifficultyOpen(false)}
+        onRestart={onRestart}
+      />
     </div>
   );
 }
