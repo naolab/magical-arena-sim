@@ -304,7 +304,21 @@ export function BattleContainer() {
 
         if (pendingStateRef.current) {
           const finalState = pendingStateRef.current;
-          setBattleState((prev) => finalState ?? prev);
+          setBattleState((prev) => {
+            if (!finalState) return prev;
+            if (!prev) return finalState;
+            return {
+              ...finalState,
+              player: {
+                ...finalState.player,
+                hp: prev.player.hp,
+              },
+              enemy: {
+                ...finalState.enemy,
+                hp: prev.enemy.hp,
+              },
+            };
+          });
           pendingStateRef.current = null;
           setIsProcessing(false);
 
