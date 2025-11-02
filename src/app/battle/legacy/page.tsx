@@ -11,6 +11,7 @@ import { BattleResult } from '@/components/battle/BattleResult';
 import { ActionShowdown } from '@/components/battle/ActionShowdown';
 import { RulesModal } from '@/components/RulesModal';
 import { BookIcon } from '@/components/ui/BookIcon';
+import { SettingsMenu } from '@/components/SettingsMenu';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -94,7 +95,16 @@ export default function BattlePage() {
             />
           )}
 
-          <div className="absolute left-36 top-8">
+          {/* 左上：設定、ルール、ターン表示 */}
+          <div className="absolute left-8 top-8 z-10 flex gap-4">
+            <SettingsMenu onRestart={reset} />
+            <button
+              onClick={() => setIsRulesOpen(true)}
+              className="flex h-24 w-24 items-center justify-center text-white/80 transition-colors hover:text-white"
+              aria-label="ルールを表示"
+            >
+              <BookIcon className="h-8 w-8" />
+            </button>
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
               <div className="absolute inset-2.5 rounded-full border border-white/10" />
               <div className="text-center">
@@ -105,14 +115,6 @@ export default function BattlePage() {
               </div>
             </div>
           </div>
-
-          <button
-            onClick={() => setIsRulesOpen(true)}
-            className="absolute left-8 top-8 z-10 flex h-24 w-24 items-center justify-center text-white/80 transition-colors hover:text-white"
-            aria-label="ルールを表示"
-          >
-            <BookIcon className="h-8 w-8" />
-          </button>
 
           <div className="absolute left-6 bottom-6 w-[22%] max-w-sm">
             <PlayerStatus player={player} />
