@@ -106,7 +106,11 @@ export default function Home() {
         </div>
       </div>
 
-      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+      <RulesModal
+        isOpen={isRulesOpen}
+        onClose={() => setIsRulesOpen(false)}
+        version={selectedVersion}
+      />
 
       {selectedVersion === 'v1' ? (
         <V1DifficultyModal isOpen={isDifficultyOpen} onClose={() => setIsDifficultyOpen(false)} />

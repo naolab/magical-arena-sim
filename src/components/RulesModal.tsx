@@ -1,14 +1,16 @@
 'use client';
 
-import { RulesContent } from '@/components/battle-v2/RulesContent';
+import { RulesContent as RulesContentV2 } from '@/components/battle-v2/RulesContent';
+import { RulesContentV1 } from '@/components/rules/RulesContentV1';
 import { Button } from './ui/Button';
 
 interface RulesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  version?: 'v1' | 'v2';
 }
 
-export function RulesModal({ isOpen, onClose }: RulesModalProps) {
+export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -30,7 +32,7 @@ export function RulesModal({ isOpen, onClose }: RulesModalProps) {
           </div>
 
           <div className="max-h-[calc(85vh-140px)] overflow-y-auto pr-2">
-            <RulesContent />
+            {version === 'v2' ? <RulesContentV2 /> : <RulesContentV1 />}
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/10">

@@ -146,7 +146,7 @@ export default function BattlePage() {
 
       {phase === 'ended' && winner && <BattleResult winner={winner} onReset={reset} />}
 
-      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} version="v1" />
     </main>
   );
 }

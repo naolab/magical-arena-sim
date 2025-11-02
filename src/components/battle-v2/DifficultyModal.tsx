@@ -5,7 +5,7 @@ import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 interface DifficultyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRestart: () => void;
+  onRestart?: () => void; // オプショナルに変更
 }
 
 export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalProps) {
