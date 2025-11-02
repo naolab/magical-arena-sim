@@ -12,6 +12,7 @@ import { TypewriterText } from './TypewriterText';
 import { BattleResult } from './BattleResult';
 import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
+import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 
 const BASE_STAGE_WIDTH = 1600;
@@ -661,11 +662,15 @@ export function BattleContainer() {
                       }}
                     />
                   </div>
+                  <div className="mt-1">
+                    <ActiveEffectIcons effects={battleState.enemy.activeEffects} />
+                  </div>
                 </div>
 
                 {/* 左下：プレイヤーHPゲージ */}
                 <div className="absolute bottom-3 left-12 w-[300px]">
-                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                  <ActiveEffectIcons effects={battleState.player.activeEffects} />
+                  <div className="relative mt-1 h-7 bg-gray-800 border-2 border-white rounded">
                     <div
                       className="absolute top-0 left-0 h-full rounded transition-all duration-300"
                       style={{
