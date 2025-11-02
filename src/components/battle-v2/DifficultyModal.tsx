@@ -27,8 +27,8 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
-      <div className="relative max-h-[85vh] w-[min(600px,90vw)] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
-        <div className="relative">
+      <div className="relative max-h-[85vh] w-[min(600px,90vw)] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
+        <div className="relative flex flex-col flex-1 min-h-0">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-3xl font-black text-white">難易度設定</h2>
             <button
@@ -46,7 +46,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
             </p>
           </div>
 
-          <div className="max-h-[calc(85vh-200px)] overflow-y-auto pr-2 space-y-6 text-white/90">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-6 text-white/90 min-h-0">
             {/* 基本設定 */}
             <section>
               <h3 className="text-lg font-bold mb-3 text-cyan-400">基本設定</h3>
@@ -232,7 +232,7 @@ export function DifficultyModal({ isOpen, onClose }: DifficultyModalProps) {
             </section>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/10 flex gap-4">
+          <div className="mt-6 pt-4 border-t border-white/10 flex gap-4 flex-shrink-0">
             <button
               onClick={resetParams}
               className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-full transition-colors"
