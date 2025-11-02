@@ -53,6 +53,12 @@ const WINNER_MESSAGE: Record<'player' | 'enemy' | 'draw', string> = {
   draw: '相打ちになった！',
 };
 
+const RESULT_NARRATION: Record<'player' | 'enemy' | 'draw', string> = {
+  player: '歓声がこだまする。勝利の光が視界を包んだ！',
+  enemy: '視界が真っ暗になった…。力尽きて膝をつく。',
+  draw: '互いに倒れ伏し、静寂だけが残った…。',
+};
+
 function createMessage(speaker: BattleMessageSpeaker, text: string): BattleMessage {
   const id =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -166,6 +172,8 @@ export function BattleContainer() {
   const [currentMessage, setCurrentMessage] = useState<BattleMessage | null>(null);
   const [isMessageAnimating, setIsMessageAnimating] = useState(false);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
+  const [pendingWinner, setPendingWinner] = useState<'player' | 'enemy' | 'draw' | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -262,7 +270,7 @@ export function BattleContainer() {
         if (isProcessing) {
           setIsProcessing(false);
         }
-        if (messageQueue.length === 0) {
+        if (messageQueue.length === 0 && !pendingWinner) {
           selectRandomDialogue();
         }
       }
@@ -274,6 +282,27 @@ export function BattleContainer() {
     pendingAutoAdvance,
     isProcessing,
     selectRandomDialogue,
+    pendingWinner,
+  ]);
+
+  useEffect(() => {
+    if (
+      pendingWinner &&
+      !showResult &&
+      !isProcessing &&
+      !isMessageAnimating &&
+      currentMessage === null &&
+      messageQueue.length === 0
+    ) {
+      setShowResult(true);
+    }
+  }, [
+    pendingWinner,
+    showResult,
+    isProcessing,
+    isMessageAnimating,
+    currentMessage,
+    messageQueue.length,
   ]);
 
   const scale = useMemo(() => {
@@ -342,12 +371,21 @@ export function BattleContainer() {
 
       const turnResult = newState.turnHistory[newState.turnHistory.length - 1];
       const turnMessages = buildTurnMessages(turnResult);
-      const winnerMessage =
-        newState.winner && WINNER_MESSAGE[newState.winner]
-          ? [createMessage('system', WINNER_MESSAGE[newState.winner])]
-          : [];
+      const winner = newState.winner;
+      let resultMessages: BattleMessage[] = [];
+      if (winner) {
+        resultMessages = [
+          createMessage('system', WINNER_MESSAGE[winner]),
+          createMessage('system', RESULT_NARRATION[winner]),
+        ];
+        setPendingWinner(winner);
+        setShowResult(false);
+      } else {
+        setPendingWinner(null);
+        setShowResult(false);
+      }
 
-      enqueueMessages([...turnMessages, ...winnerMessage]);
+      enqueueMessages([...turnMessages, ...resultMessages]);
 
       if (isBattleOver(newState)) {
         setShowActionButtons(false);
@@ -385,6 +423,8 @@ export function BattleContainer() {
     setIsMessageAnimating(false);
     setPendingAutoAdvance(false);
     setIsProcessing(false);
+    setPendingWinner(null);
+    setShowResult(false);
     initialMessageShownRef.current = false;
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
@@ -599,7 +639,7 @@ export function BattleContainer() {
             </div>
 
             {/* リザルト画面 */}
-            {isBattleOver(battleState) && battleState.winner && (
+            {showResult && battleState.winner && (
               <BattleResult
                 winner={battleState.winner}
                 onRestart={handleRestart}
