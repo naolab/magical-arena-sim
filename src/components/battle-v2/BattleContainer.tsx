@@ -348,23 +348,19 @@ export function BattleContainer() {
               </div>
             </div>
 
-            {/* 右下：ターン表示 */}
-            <div className="absolute bottom-6 right-8">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
-                <div className="absolute inset-2.5 rounded-full border border-white/10" />
+            {/* 左上：設定、ルール、ターン表示 */}
+            <div className="absolute top-8 left-8 flex gap-4">
+              <SettingsMenu onRestart={handleRestart} />
+              <RulesModal />
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-white/10 via-black/40 to-black/70 shadow-[0_18px_32px_rgba(8,6,20,0.55)] backdrop-blur">
+                <div className="absolute inset-1.5 rounded-full border border-white/10" />
                 <div className="text-center">
-                  <p className="text-[9px] uppercase tracking-[0.45em] text-white/60">Turn</p>
-                  <p className="text-2xl font-black text-white leading-tight">
+                  <p className="text-[6px] uppercase tracking-[0.3em] text-white/60">Turn</p>
+                  <p className="text-lg font-black text-white leading-tight">
                     {String(battleState.turnHistory.length).padStart(2, '0')}
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* 左下：設定メニューとルール */}
-            <div className="absolute bottom-6 left-8 flex gap-4">
-              <SettingsMenu onRestart={handleRestart} />
-              <RulesModal />
             </div>
 
             {/* リザルト画面 */}
