@@ -218,16 +218,23 @@ export function BattleContainer() {
               <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-0">
                 {/* バトル画面 */}
 
-                {/* 中央ファンゲージ（仮） */}
+                {/* 中央ファンゲージ */}
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
                   <div
                     style={{
                       width: '50px',
                       height: '130%',
                       transform: 'rotate(-15deg)',
-                      background: 'linear-gradient(to bottom, #ec4899 0%, #ec4899 50%, #22d3ee 50%, #22d3ee 100%)',
+                      background: `linear-gradient(to bottom,
+                        #ec4899 0%,
+                        #ec4899 ${battleState.audience.enemyFans * 100}%,
+                        #9ca3af ${battleState.audience.enemyFans * 100}%,
+                        #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                        #22d3ee ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                        #22d3ee 100%)`,
                       border: '2px solid white',
                       borderRadius: '4px',
+                      transition: 'background 0.5s ease',
                     }}
                   />
                 </div>
