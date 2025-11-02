@@ -73,6 +73,9 @@ export function processTurn(
   let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
   let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
 
+  const previousPlayerEffects = updatedPlayer.activeEffects;
+  const previousEnemyEffects = updatedEnemy.activeEffects;
+
   // 5. プレイヤーの特殊効果を発動
   const playerSpecialEffects = triggerSpecialEffects({
     emotion: playerAction,
@@ -100,16 +103,6 @@ export function processTurn(
       hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerSpecialEffects.healing),
     };
   }
-
-  // Terror/Ecstasy: 効果を追加
-  updatedPlayer = {
-    ...updatedPlayer,
-    activeEffects: [...updatedPlayer.activeEffects, ...playerSpecialEffects.playerEffects],
-  };
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: [...updatedEnemy.activeEffects, ...playerSpecialEffects.enemyEffects],
-  };
 
   // 5. 敵側の特殊効果を発動
   const enemySpecialEffects = triggerSpecialEffects({
@@ -139,16 +132,33 @@ export function processTurn(
     };
   }
 
+  // 6. 既存効果の更新と新規効果の追加
+  const playerEffectsAfterTick = removeExpiredEffects(updateEffectDurations(previousPlayerEffects));
+  const enemyEffectsAfterTick = removeExpiredEffects(updateEffectDurations(previousEnemyEffects));
+
+  const finalPlayerEffects = [
+    ...playerEffectsAfterTick,
+    ...playerSpecialEffects.playerEffects,
+    ...enemySpecialEffects.playerEffects,
+  ];
+
+  const finalEnemyEffects = [
+    ...enemyEffectsAfterTick,
+    ...playerSpecialEffects.enemyEffects,
+    ...enemySpecialEffects.enemyEffects,
+  ];
+
   updatedPlayer = {
     ...updatedPlayer,
-    activeEffects: [...updatedPlayer.activeEffects, ...enemySpecialEffects.playerEffects],
-  };
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: [...updatedEnemy.activeEffects, ...enemySpecialEffects.enemyEffects],
+    activeEffects: finalPlayerEffects,
   };
 
-  // 6. ファン率の変化量を計算
+  updatedEnemy = {
+    ...updatedEnemy,
+    activeEffects: finalEnemyEffects,
+  };
+
+  // 7. ファン率の変化量を計算
   const fanChanges = calculateFanChanges({
     judgement,
     consumedCommentCount: consumedPlayerComments.length,
@@ -156,14 +166,14 @@ export function processTurn(
     enemyFanRate: updatedEnemy.fanRate,
   });
 
-  // 7. 観客構成を更新（中立ファンから獲得）
+  // 8. 観客構成を更新（中立ファンから獲得）
   const updatedAudience = updateAudienceComposition(
     state.audience,
     fanChanges.playerChange,
     fanChanges.enemyChange
   );
 
-  // 8. ファン率を観客構成から設定
+  // 9. ファン率を観客構成から設定
   updatedPlayer = {
     ...updatedPlayer,
     fanRate: updatedAudience.playerFans,
@@ -172,20 +182,6 @@ export function processTurn(
   updatedEnemy = {
     ...updatedEnemy,
     fanRate: updatedAudience.enemyFans,
-  };
-
-  // 9. 特殊効果の持続ターンを更新
-  const playerEffectsAfterTick = removeExpiredEffects(updateEffectDurations(updatedPlayer.activeEffects));
-  const enemyEffectsAfterTick = removeExpiredEffects(updateEffectDurations(updatedEnemy.activeEffects));
-
-  updatedPlayer = {
-    ...updatedPlayer,
-    activeEffects: playerEffectsAfterTick,
-  };
-
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: enemyEffectsAfterTick,
   };
 
   // 10. ターン結果を作成
