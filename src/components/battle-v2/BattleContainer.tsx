@@ -521,6 +521,16 @@ export function BattleContainer() {
       const winner = newState.winner;
       let resultMessages: BattleMessage[] = [];
       if (winner) {
+        // 勝敗メッセージ表示前にHPを最終状態に更新（UIとロジックの同期）
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            player: { ...prev.player, hp: newState.player.hp },
+            enemy: { ...prev.enemy, hp: newState.enemy.hp },
+          };
+        });
+
         resultMessages = [
           createMessage('system', WINNER_MESSAGE[winner]),
           createMessage('system', RESULT_NARRATION[winner]),
