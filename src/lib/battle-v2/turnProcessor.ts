@@ -70,22 +70,13 @@ export function processTurn(
     config: state.config,
   });
 
+  type ActiveEffectExtended = SpecialEffect & { appliedTurn?: number };
+
+  const playerEffectsBeforeTurn = state.player.activeEffects as ActiveEffectExtended[];
+  const enemyEffectsBeforeTurn = state.enemy.activeEffects as ActiveEffectExtended[];
+
   let updatedPlayer = enemyDamageResult.defender as PlayerState; // 敵の攻撃後のプレイヤー
   let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
-
-  // 既存の特殊効果を1ターン進める（新規付与分はこの後に追加）
-  const tickedPlayerEffects = removeExpiredEffects(updateEffectDurations(updatedPlayer.activeEffects));
-  const tickedEnemyEffects = removeExpiredEffects(updateEffectDurations(updatedEnemy.activeEffects));
-
-  updatedPlayer = {
-    ...updatedPlayer,
-    activeEffects: tickedPlayerEffects,
-  };
-
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: tickedEnemyEffects,
-  };
 
   // 5. プレイヤーの特殊効果を発動
   const playerSpecialEffects = triggerSpecialEffects({
@@ -115,16 +106,6 @@ export function processTurn(
     };
   }
 
-  // Terror/Ecstasy: 効果を追加
-  updatedPlayer = {
-    ...updatedPlayer,
-    activeEffects: [...updatedPlayer.activeEffects, ...playerSpecialEffects.playerEffects],
-  };
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: [...updatedEnemy.activeEffects, ...playerSpecialEffects.enemyEffects],
-  };
-
   // 5. 敵側の特殊効果を発動
   const enemySpecialEffects = triggerSpecialEffects({
     emotion: enemyAction,
@@ -153,16 +134,49 @@ export function processTurn(
     };
   }
 
+  // 6. 既存効果の更新と新規効果の追加
+  const tickExistingEffects = (effects: ActiveEffectExtended[]) =>
+    removeExpiredEffects(
+      effects.map((effect) => {
+        const appliedTurn = effect.appliedTurn ?? state.currentTurn;
+        const shouldTick = appliedTurn < turnNumber;
+        return {
+          ...effect,
+          duration: shouldTick ? effect.duration - 1 : effect.duration,
+          appliedTurn,
+        };
+      })
+    ) as ActiveEffectExtended[];
+
+  const annotateNewEffects = (effects: SpecialEffect[]): ActiveEffectExtended[] =>
+    effects.map((effect) => ({ ...effect, appliedTurn: turnNumber }));
+
+  const playerEffectsAfterTick = tickExistingEffects(playerEffectsBeforeTurn);
+  const enemyEffectsAfterTick = tickExistingEffects(enemyEffectsBeforeTurn);
+
+  const finalPlayerEffects: ActiveEffectExtended[] = [
+    ...playerEffectsAfterTick,
+    ...annotateNewEffects(playerSpecialEffects.playerEffects),
+    ...annotateNewEffects(enemySpecialEffects.playerEffects),
+  ];
+
+  const finalEnemyEffects: ActiveEffectExtended[] = [
+    ...enemyEffectsAfterTick,
+    ...annotateNewEffects(playerSpecialEffects.enemyEffects),
+    ...annotateNewEffects(enemySpecialEffects.enemyEffects),
+  ];
+
   updatedPlayer = {
     ...updatedPlayer,
-    activeEffects: [...updatedPlayer.activeEffects, ...enemySpecialEffects.playerEffects],
-  };
-  updatedEnemy = {
-    ...updatedEnemy,
-    activeEffects: [...updatedEnemy.activeEffects, ...enemySpecialEffects.enemyEffects],
+    activeEffects: finalPlayerEffects,
   };
 
-  // 6. ファン率の変化量を計算
+  updatedEnemy = {
+    ...updatedEnemy,
+    activeEffects: finalEnemyEffects,
+  };
+
+  // 7. ファン率の変化量を計算
   const fanChanges = calculateFanChanges({
     judgement,
     consumedCommentCount: consumedPlayerComments.length,
@@ -170,14 +184,14 @@ export function processTurn(
     enemyFanRate: updatedEnemy.fanRate,
   });
 
-  // 7. 観客構成を更新（中立ファンから獲得）
+  // 8. 観客構成を更新（中立ファンから獲得）
   const updatedAudience = updateAudienceComposition(
     state.audience,
     fanChanges.playerChange,
     fanChanges.enemyChange
   );
 
-  // 8. ファン率を観客構成から設定
+  // 9. ファン率を観客構成から設定
   updatedPlayer = {
     ...updatedPlayer,
     fanRate: updatedAudience.playerFans,
@@ -188,7 +202,7 @@ export function processTurn(
     fanRate: updatedAudience.enemyFans,
   };
 
-  // 9. ターン結果を作成
+  // 10. ターン結果を作成
   const turnResult: TurnResult = {
     turnNumber,
     playerAction,
