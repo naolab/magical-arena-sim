@@ -82,16 +82,19 @@ export function processTurn(
     config: state.config,
   });
 
-  // Rage: 追加ダメージを適用
-  if (playerAction === 'rage' && playerSpecialEffects.extraDamage > 0) {
+  let playerExtraDamage = 0;
+  let playerHealing = 0;
+
+  if (playerSpecialEffects.extraDamage > 0) {
+    playerExtraDamage = playerSpecialEffects.extraDamage;
     updatedEnemy = {
       ...updatedEnemy,
       hp: Math.max(0, updatedEnemy.hp - playerSpecialEffects.extraDamage),
     };
   }
 
-  // Grief: HP回復を適用
-  if (playerAction === 'grief' && playerSpecialEffects.healing > 0) {
+  if (playerSpecialEffects.healing > 0) {
+    playerHealing = playerSpecialEffects.healing;
     updatedPlayer = {
       ...updatedPlayer,
       hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerSpecialEffects.healing),
@@ -106,6 +109,43 @@ export function processTurn(
   updatedEnemy = {
     ...updatedEnemy,
     activeEffects: [...updatedEnemy.activeEffects, ...playerSpecialEffects.enemyEffects],
+  };
+
+  // 5. 敵側の特殊効果を発動
+  const enemySpecialEffects = triggerSpecialEffects({
+    emotion: enemyAction,
+    target: 'enemy',
+    damage: enemyDamageResult.damage,
+    defender: updatedPlayer,
+    config: state.config,
+  });
+
+  let enemyExtraDamage = 0;
+  let enemyHealing = 0;
+
+  if (enemySpecialEffects.extraDamage > 0) {
+    enemyExtraDamage = enemySpecialEffects.extraDamage;
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - enemySpecialEffects.extraDamage),
+    };
+  }
+
+  if (enemySpecialEffects.healing > 0) {
+    enemyHealing = enemySpecialEffects.healing;
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemySpecialEffects.healing),
+    };
+  }
+
+  updatedPlayer = {
+    ...updatedPlayer,
+    activeEffects: [...updatedPlayer.activeEffects, ...enemySpecialEffects.playerEffects],
+  };
+  updatedEnemy = {
+    ...updatedEnemy,
+    activeEffects: [...updatedEnemy.activeEffects, ...enemySpecialEffects.enemyEffects],
   };
 
   // 6. ファン率の変化量を計算
@@ -153,12 +193,30 @@ export function processTurn(
     judgement,
     consumedComments: consumedPlayerComments,
     damage: {
-      toEnemy: playerDamageResult.damage + (playerSpecialEffects.extraDamage || 0),
-      toPlayer: enemyDamageResult.damage,
+      toEnemy: playerDamageResult.damage + playerExtraDamage,
+      toPlayer: enemyDamageResult.damage + enemyExtraDamage,
+      extraToEnemy: playerExtraDamage,
+      extraToPlayer: enemyExtraDamage,
     },
     specialEffects: {
-      player: playerSpecialEffects.playerEffects,
-      enemy: playerSpecialEffects.enemyEffects,
+      player: [
+        ...playerSpecialEffects.playerEffects,
+        ...enemySpecialEffects.playerEffects,
+      ],
+      enemy: [
+        ...playerSpecialEffects.enemyEffects,
+        ...enemySpecialEffects.enemyEffects,
+      ],
+    },
+    secondaryEffects: {
+      player: {
+        extraDamage: playerExtraDamage,
+        healing: playerHealing,
+      },
+      enemy: {
+        extraDamage: enemyExtraDamage,
+        healing: enemyHealing,
+      },
     },
     fanChange: {
       player: fanChanges.playerChange,

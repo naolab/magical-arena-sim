@@ -89,25 +89,64 @@ function buildTurnMessages(result: TurnResult): BattleMessage[] {
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
+  const { damage, secondaryEffects, specialEffects } = result;
+  const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
+  const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
 
   messages.push(createMessage('system', JUDGEMENT_MESSAGE[result.judgement]));
 
   messages.push(
     createMessage(
       'player',
-      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(result.damage.toEnemy, 'enemy')}`
+      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`
     )
   );
 
-  messages.push(...buildEffectMessages(result.specialEffects.player, 'player'));
-  messages.push(...buildEffectMessages(result.specialEffects.enemy, 'enemy'));
+  if (damage.extraToEnemy > 0) {
+    messages.push(
+      createMessage(
+        'player',
+        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy')}`
+      )
+    );
+  }
+
+  if (secondaryEffects.player.healing > 0) {
+    messages.push(
+      createMessage(
+        'player',
+        `あなたは ${secondaryEffects.player.healing} 回復した！`
+      )
+    );
+  }
 
   messages.push(
     createMessage(
       'enemy',
-      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(result.damage.toPlayer, 'player')}`
+      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`
     )
   );
+
+  if (damage.extraToPlayer > 0) {
+    messages.push(
+      createMessage(
+        'enemy',
+        `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`
+      )
+    );
+  }
+
+  if (secondaryEffects.enemy.healing > 0) {
+    messages.push(
+      createMessage(
+        'enemy',
+        `敵は ${secondaryEffects.enemy.healing} 回復した！`
+      )
+    );
+  }
+
+  messages.push(...buildEffectMessages(specialEffects.player, 'player'));
+  messages.push(...buildEffectMessages(specialEffects.enemy, 'enemy'));
 
   return messages;
 }
