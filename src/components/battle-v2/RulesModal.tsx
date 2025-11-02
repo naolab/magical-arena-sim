@@ -29,12 +29,14 @@ export function RulesModal() {
           >
             {/* モーダル内容 */}
             <div
-              className="bg-gray-900/95 border-2 border-white/20 rounded-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto"
+              className="bg-gray-900/95 border-2 border-white/20 rounded-xl p-8 max-w-2xl max-h-[80vh] w-[min(90vw,32rem)] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="text-3xl font-bold text-white mb-6">ルール</h2>
 
-              <RulesContent />
+              <div className="flex-1 overflow-y-auto pr-1 pb-1">
+                <RulesContent />
+              </div>
 
               <button
                 onClick={() => setIsOpen(false)}

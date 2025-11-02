@@ -20,7 +20,7 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
         </div>
 
-        <div className="relative">
+        <div className="relative flex max-h-[85vh] flex-col">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-3xl font-black text-white">ルール</h2>
             <button
@@ -31,7 +31,7 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
             </button>
           </div>
 
-          <div className="max-h-[calc(85vh-140px)] overflow-y-auto pr-2">
+          <div className="flex-1 overflow-y-auto pr-2 pb-1">
             {version === 'v2' ? <RulesContentV2 /> : <RulesContentV1 />}
           </div>
 
