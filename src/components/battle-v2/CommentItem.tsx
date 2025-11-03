@@ -2,6 +2,7 @@
 
 import { Comment } from '@/lib/battle-v2/types';
 import { getEmotionColor } from '@/lib/battle-v2/emotionSystem';
+import { useRef, useEffect } from 'react';
 
 interface CommentItemProps {
   comment: Comment;
@@ -12,18 +13,29 @@ interface CommentItemProps {
 
 export function CommentItem({ comment, isNew = false, animationDelay = 0, isHighlighted = false }: CommentItemProps) {
   const color = getEmotionColor(comment.emotion);
+  const wasHighlightedRef = useRef(false);
+
+  // 一度でもハイライトされたら記録
+  useEffect(() => {
+    if (isHighlighted) {
+      wasHighlightedRef.current = true;
+    }
+  }, [isHighlighted]);
+
+  // 一度でもハイライトされたコメントはアニメーションしない
+  const shouldAnimate = isNew && !isHighlighted && !wasHighlightedRef.current;
 
   return (
     <div
-      className={`rounded-lg p-2.5 text-white transition-all ${
-        isNew ? 'animate-slide-in' : ''
+      className={`rounded-lg p-2.5 text-white transition-all relative ${
+        shouldAnimate ? 'animate-slide-in' : ''
       } ${
-        isHighlighted ? 'ring-2 ring-white shadow-lg scale-105' : ''
+        isHighlighted ? 'ring-2 ring-white shadow-lg transform scale-105 z-10' : ''
       }`}
       style={{
         backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
         borderLeft: `4px solid ${color}`,
-        ...(isNew && {
+        ...(shouldAnimate && {
           opacity: 0,
           animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
         }),
