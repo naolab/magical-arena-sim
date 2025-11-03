@@ -737,6 +737,7 @@ export function BattleContainer() {
                       text={currentEnemyText}
                       className="text-white text-2xl text-center"
                       onComplete={currentMessage?.speaker === 'enemy' ? handleMessageComplete : undefined}
+                      enableColors={!!currentMessage}
                     />
                   </div>
                 </div>
@@ -767,6 +768,7 @@ export function BattleContainer() {
                           ? handleMessageComplete
                           : undefined
                       }
+                      enableColors={!!currentMessage}
                     />
                   </div>
                   {/* 次へ進むアイコン */}
