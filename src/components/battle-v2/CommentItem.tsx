@@ -39,6 +39,9 @@ export function CommentItem({ comment, isNew = false, animationDelay = 0, isHigh
           opacity: 0,
           animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
         }),
+        ...(isHighlighted && {
+          animation: 'gentlePulse 2s ease-in-out infinite',
+        }),
       }}
     >
       {/* 上部：感情アイコン */}
