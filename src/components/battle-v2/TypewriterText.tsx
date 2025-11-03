@@ -10,7 +10,7 @@ interface TypewriterTextProps {
   startDelay?: number; // 表示開始までの遅延（ミリ秒）
 }
 
-export function TypewriterText({ text, speed = 50, className = '', onComplete, startDelay = 0 }: TypewriterTextProps) {
+export function TypewriterText({ text, speed = 30, className = '', onComplete, startDelay = 0 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isStarted, setIsStarted] = useState(startDelay === 0);
