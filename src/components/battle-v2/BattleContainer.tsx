@@ -204,6 +204,9 @@ export function BattleContainer() {
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
+  // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
+  const accurateHpRef = useRef({ player: 100, enemy: 100 });
+
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
     width: BASE_STAGE_WIDTH,
@@ -261,7 +264,13 @@ export function BattleContainer() {
 
   // クライアントサイドでバトルを初期化（最初の1回のみ）
   useEffect(() => {
-    setBattleState(initBattle(params));
+    const initialState = initBattle(params);
+    setBattleState(initialState);
+    // HP追跡refも初期化
+    accurateHpRef.current = {
+      player: initialState.player.hp,
+      enemy: initialState.enemy.hp,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -304,44 +313,42 @@ export function BattleContainer() {
 
         if (pendingStateRef.current) {
           const finalState = pendingStateRef.current;
-          setBattleState((prev) => {
-            if (!finalState) return prev;
-            if (!prev) return finalState;
 
-            // UI側のHP（apply関数で更新済み）をそのまま使用
-            const updatedState = {
-              ...finalState,
-              player: {
-                ...finalState.player,
-                hp: prev.player.hp,
-              },
-              enemy: {
-                ...finalState.enemy,
-                hp: prev.enemy.hp,
-              },
-            };
+          // UI側のHP（apply関数で更新済み）をrefから取得
+          const updatedState = {
+            ...finalState,
+            player: {
+              ...finalState.player,
+              hp: accurateHpRef.current.player,  // refの値を使用
+            },
+            enemy: {
+              ...finalState.enemy,
+              hp: accurateHpRef.current.enemy,  // refの値を使用
+            },
+          };
 
-            // メッセージキュー完了後、UI側のHPで勝敗判定
-            const winner = checkWinner(updatedState);
-            if (winner) {
-              // 勝者が決まった場合、結果メッセージを追加
-              const resultMessages = [
-                createMessage('system', WINNER_MESSAGE[winner]),
-                createMessage('system', RESULT_NARRATION[winner]),
-              ];
-              setMessageQueue((prevQueue) => [...prevQueue, ...resultMessages]);
-              pendingWinnerRef.current = winner;
+          // メッセージキュー完了後、refの正確なHPで勝敗判定
+          const winner = checkWinner(updatedState);
 
-              // 勝敗確定した状態を保存
-              return {
-                ...updatedState,
-                isActive: false,
-                winner,
-              };
-            }
+          // 勝敗メッセージを追加（setBattleStateの外で実行）
+          if (winner) {
+            const resultMessages = [
+              createMessage('system', WINNER_MESSAGE[winner]),
+              createMessage('system', RESULT_NARRATION[winner]),
+            ];
+            setMessageQueue((prevQueue) => [...prevQueue, ...resultMessages]);
+            pendingWinnerRef.current = winner;
 
-            return updatedState;
-          });
+            // 勝敗確定した状態を保存
+            setBattleState({
+              ...updatedState,
+              isActive: false,
+              winner,
+            });
+          } else {
+            // 通常のstate更新
+            setBattleState(updatedState);
+          }
 
           pendingStateRef.current = null;
 
@@ -446,6 +453,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -458,6 +466,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -470,6 +479,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -482,6 +492,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -494,6 +505,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -506,6 +518,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -576,7 +589,13 @@ export function BattleContainer() {
 
   // バトルリスタート
   const handleRestart = () => {
-    setBattleState(initBattle(params));
+    const initialState = initBattle(params);
+    setBattleState(initialState);
+    // HP追跡refも初期化
+    accurateHpRef.current = {
+      player: initialState.player.hp,
+      enemy: initialState.enemy.hp,
+    };
     setRecentCommentIds([]);
     setShowActionButtons(false);
     setSelectedEmotion(null);
