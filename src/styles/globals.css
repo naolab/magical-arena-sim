@@ -48,3 +48,28 @@ body {
     opacity: 0.6;
   }
 }
+
+@keyframes hit-shake {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  20% {
+    transform: translate3d(-12px, 6px, 0) scale(1.02);
+  }
+  40% {
+    transform: translate3d(10px, -6px, 0) scale(0.98);
+  }
+  60% {
+    transform: translate3d(-6px, 4px, 0) scale(1.01);
+  }
+  80% {
+    transform: translate3d(6px, -4px, 0) scale(0.99);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.hit-shake {
+  animation: hit-shake 0.4s ease;
+}

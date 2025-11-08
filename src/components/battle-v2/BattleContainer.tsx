@@ -203,9 +203,13 @@ export function BattleContainer() {
   const [isMessageAnimating, setIsMessageAnimating] = useState(false);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [playerShake, setPlayerShake] = useState(false);
+  const [enemyShake, setEnemyShake] = useState(false);
 
   // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
   const accurateHpRef = useRef({ player: 100, enemy: 100 });
+  const playerHpRef = useRef<number | null>(null);
+  const enemyHpRef = useRef<number | null>(null);
 
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
@@ -217,6 +221,8 @@ export function BattleContainer() {
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingStateRef = useRef<BattleState | null>(null);
   const pendingWinnerRef = useRef<'player' | 'enemy' | 'draw' | null>(null);
+  const playerShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enemyShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectRandomDialogue = useCallback(() => {
     const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
@@ -252,6 +258,12 @@ export function BattleContainer() {
       if (advanceTimerRef.current) {
         clearTimeout(advanceTimerRef.current);
       }
+      if (playerShakeTimerRef.current) {
+        clearTimeout(playerShakeTimerRef.current);
+      }
+      if (enemyShakeTimerRef.current) {
+        clearTimeout(enemyShakeTimerRef.current);
+      }
     };
   }, []);
 
@@ -271,6 +283,8 @@ export function BattleContainer() {
       player: initialState.player.hp,
       enemy: initialState.enemy.hp,
     };
+    playerHpRef.current = initialState.player.hp;
+    enemyHpRef.current = initialState.enemy.hp;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -295,6 +309,36 @@ export function BattleContainer() {
       selectRandomDialogue();
     }
   }, [battleState, enqueueMessages, selectRandomDialogue]);
+
+  useEffect(() => {
+    if (!battleState) return;
+    const currentPlayerHp = battleState.player.hp;
+    if (playerHpRef.current !== null && currentPlayerHp < playerHpRef.current) {
+      if (playerShakeTimerRef.current) {
+        clearTimeout(playerShakeTimerRef.current);
+      }
+      setPlayerShake(true);
+      playerShakeTimerRef.current = setTimeout(() => {
+        setPlayerShake(false);
+      }, 400);
+    }
+    playerHpRef.current = currentPlayerHp;
+  }, [battleState?.player.hp, battleState]);
+
+  useEffect(() => {
+    if (!battleState) return;
+    const currentEnemyHp = battleState.enemy.hp;
+    if (enemyHpRef.current !== null && currentEnemyHp < enemyHpRef.current) {
+      if (enemyShakeTimerRef.current) {
+        clearTimeout(enemyShakeTimerRef.current);
+      }
+      setEnemyShake(true);
+      enemyShakeTimerRef.current = setTimeout(() => {
+        setEnemyShake(false);
+      }, 400);
+    }
+    enemyHpRef.current = currentEnemyHp;
+  }, [battleState?.enemy.hp, battleState]);
 
   useEffect(() => {
     if (!isMessageAnimating && currentMessage === null) {
@@ -666,14 +710,14 @@ export function BattleContainer() {
                   <img
                     src="/images/player-placeholder.jpg"
                     alt="Player stand-in"
-                    className="h-full w-full rounded-3xl object-cover"
+                    className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''}`}
                   />
                 </div>
                 <div className="absolute top-1/2 right-[-120px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
                     src="/images/enemy-placeholder.jpg"
                     alt="Enemy stand-in"
-                    className="h-full w-full rounded-3xl object-cover"
+                    className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''}`}
                   />
                 </div>
               </div>
@@ -856,4 +900,5 @@ export function BattleContainer() {
       </div>
     </main>
   );
+
 }
