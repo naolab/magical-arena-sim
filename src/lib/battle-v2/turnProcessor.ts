@@ -362,8 +362,8 @@ function triggerSpecialEffects(params: {
 
 /**
  * ファン率の変動を計算
- * プレイヤー: 消費コメント数 × 3%
- * 敵: 毎ターン固定で5%
+ * プレイヤー: 消費コメント数 × 6%
+ * 敵: 毎ターン固定で10%
  */
 function calculateFanChanges(params: {
   judgement: 'win' | 'draw' | 'lose';
@@ -373,11 +373,11 @@ function calculateFanChanges(params: {
 }): { playerChange: number; enemyChange: number } {
   const { consumedCommentCount } = params;
 
-  // プレイヤー: 消費コメント1個につき+3%
-  const playerChange = consumedCommentCount * 0.03;
+  // プレイヤー: 消費コメント1個につき+6%
+  const playerChange = consumedCommentCount * 0.06;
 
-  // 敵: 毎ターン固定で+5%
-  const enemyChange = 0.05;
+  // 敵: 毎ターン固定で+10%
+  const enemyChange = 0.1;
 
   return { playerChange, enemyChange };
 }
