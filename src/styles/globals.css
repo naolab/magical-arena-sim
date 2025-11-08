@@ -4,7 +4,7 @@
 
 :root {
   --foreground-rgb: 243, 244, 246;
-  --background-rgb: 15, 16, 20;
+  --background-rgb: 0, 0, 0;
 }
 
 body {
@@ -18,4 +18,112 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes hit-shake {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  20% {
+    transform: translate3d(-12px, 6px, 0) scale(1.02);
+  }
+  40% {
+    transform: translate3d(10px, -6px, 0) scale(0.98);
+  }
+  60% {
+    transform: translate3d(-6px, 4px, 0) scale(1.01);
+  }
+  80% {
+    transform: translate3d(6px, -4px, 0) scale(0.99);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.hit-shake {
+  animation: hit-shake 0.4s ease;
+}
+
+@keyframes heal-bounce {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  30% {
+    transform: translate3d(0, -20px, 0) scale(1.03);
+  }
+  60% {
+    transform: translate3d(0, 6px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.heal-bounce {
+  animation: heal-bounce 0.45s ease-out;
+}
+
+@keyframes vanish-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.97);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(4px);
+  }
+}
+
+.vanish-out {
+  animation: vanish-out 0.9s forwards ease-in;
+}
+
+@keyframes liquid-flow {
+  0%, 100% {
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% {
+    filter: brightness(1.15) hue-rotate(3deg);
+  }
+}
+
+.liquid-flow {
+  animation: liquid-flow 3s ease-in-out infinite;
 }
