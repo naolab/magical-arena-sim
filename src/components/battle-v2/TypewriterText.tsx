@@ -25,12 +25,14 @@ export function TypewriterText({ text, speed = 30, className = '', onComplete, s
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isStarted, setIsStarted] = useState(startDelay === 0);
+  const [hasCompleted, setHasCompleted] = useState(false);
 
   useEffect(() => {
     // テキストが変わったらリセット
     setDisplayedText('');
     setCurrentIndex(0);
     setIsStarted(startDelay === 0);
+    setHasCompleted(false);
 
     if (startDelay > 0) {
       const delayTimer = setTimeout(() => {
@@ -50,11 +52,12 @@ export function TypewriterText({ text, speed = 30, className = '', onComplete, s
       }, speed);
 
       return () => clearTimeout(timer);
-    } else if (currentIndex === text.length && onComplete) {
-      // 表示完了
+    } else if (currentIndex === text.length && !hasCompleted && onComplete) {
+      // 表示完了（一度だけ呼ぶ）
+      setHasCompleted(true);
       onComplete();
     }
-  }, [currentIndex, text, speed, onComplete, isStarted]);
+  }, [currentIndex, text, speed, onComplete, isStarted, hasCompleted]);
 
   // テキストを色付けしてレンダリング
   const renderColoredText = (text: string) => {
