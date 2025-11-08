@@ -14,8 +14,8 @@ type IconConfig = {
 };
 
 const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
-  buff: { color: '#f59e0b', Icon: SparkIcon }, // 濃いめの黄色
-  debuff: { color: '#16a34a', Icon: SkullIcon }, // 濃いめの緑
+  buff: { color: '#d97706', Icon: SparkIcon }, // より濃いオレンジ
+  debuff: { color: '#15803d', Icon: SkullIcon }, // より濃い緑
 };
 
 export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
@@ -30,7 +30,7 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
             key={`${effect.type}-${index}`}
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-white border shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
             style={{
-              background: `linear-gradient(135deg, ${config.color}ff 0%, ${config.color}bb 80%)`,
+              background: `linear-gradient(135deg, ${config.color}99 0%, ${config.color}77 80%)`,
               borderColor: `${config.color}`,
             }}
           >
