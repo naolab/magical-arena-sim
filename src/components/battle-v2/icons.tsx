@@ -36,3 +36,20 @@ export function SkullIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function ShieldIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 3l8 3v6c0 5-4 9-8 9s-8-4-8-9V6l8-3z" />
+      <path d="M9 11l3 3 3-3" />
+    </svg>
+  );
+}
