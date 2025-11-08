@@ -73,3 +73,22 @@ body {
 .hit-shake {
   animation: hit-shake 0.4s ease;
 }
+
+@keyframes heal-bounce {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  30% {
+    transform: translate3d(0, -20px, 0) scale(1.03);
+  }
+  60% {
+    transform: translate3d(0, 6px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.heal-bounce {
+  animation: heal-bounce 0.45s ease-out;
+}

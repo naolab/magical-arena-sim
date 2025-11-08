@@ -205,6 +205,8 @@ export function BattleContainer() {
   const [showResult, setShowResult] = useState(false);
   const [playerShake, setPlayerShake] = useState(false);
   const [enemyShake, setEnemyShake] = useState(false);
+  const [playerBounce, setPlayerBounce] = useState(false);
+  const [enemyBounce, setEnemyBounce] = useState(false);
 
   // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
   const accurateHpRef = useRef({ player: 100, enemy: 100 });
@@ -223,6 +225,8 @@ export function BattleContainer() {
   const pendingWinnerRef = useRef<'player' | 'enemy' | 'draw' | null>(null);
   const playerShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enemyShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playerBounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enemyBounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectRandomDialogue = useCallback(() => {
     const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
@@ -263,6 +267,12 @@ export function BattleContainer() {
       }
       if (enemyShakeTimerRef.current) {
         clearTimeout(enemyShakeTimerRef.current);
+      }
+      if (playerBounceTimerRef.current) {
+        clearTimeout(playerBounceTimerRef.current);
+      }
+      if (enemyBounceTimerRef.current) {
+        clearTimeout(enemyBounceTimerRef.current);
       }
     };
   }, []);
@@ -450,6 +460,26 @@ export function BattleContainer() {
     [scale]
   );
 
+  const triggerPlayerBounce = useCallback(() => {
+    if (playerBounceTimerRef.current) {
+      clearTimeout(playerBounceTimerRef.current);
+    }
+    setPlayerBounce(true);
+    playerBounceTimerRef.current = setTimeout(() => {
+      setPlayerBounce(false);
+    }, 450);
+  }, []);
+
+  const triggerEnemyBounce = useCallback(() => {
+    if (enemyBounceTimerRef.current) {
+      clearTimeout(enemyBounceTimerRef.current);
+    }
+    setEnemyBounce(true);
+    enemyBounceTimerRef.current = setTimeout(() => {
+      setEnemyBounce(false);
+    }, 450);
+  }, []);
+
   // プレイヤーアクション処理
   const handleEmotionClick = async (emotion: EmotionType) => {
     if (!battleState || isProcessing || isBattleOver(battleState)) return;
@@ -529,6 +559,7 @@ export function BattleContainer() {
             player: { ...prev.player, hp: nextHp },
           };
         });
+        triggerPlayerBounce();
       };
 
       const applyEnemyBaseDamage = (amount: number) => {
@@ -568,6 +599,7 @@ export function BattleContainer() {
             enemy: { ...prev.enemy, hp: nextHp },
           };
         });
+        triggerEnemyBounce();
       };
 
       const applyEffect = (effect: SpecialEffect) => {
@@ -710,14 +742,14 @@ export function BattleContainer() {
                   <img
                     src="/images/player-placeholder.jpg"
                     alt="Player stand-in"
-                    className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''}`}
+                    className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''} ${playerBounce ? 'heal-bounce' : ''}`}
                   />
                 </div>
                 <div className="absolute top-1/2 right-[-145px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
                     src="/images/enemy-placeholder.jpg"
                     alt="Enemy stand-in"
-                    className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''}`}
+                    className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''}`}
                   />
                 </div>
               </div>
