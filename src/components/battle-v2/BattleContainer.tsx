@@ -660,8 +660,26 @@ export function BattleContainer() {
               className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer bg-black"
               onClick={handleBattleAreaClick}
             >
+              {/* キャラクター配置エリア */}
+              <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-1/2 left-[-80px] w-[760px] h-[760px] -translate-y-[35%]">
+                  <img
+                    src="/images/player-placeholder.jpg"
+                    alt="Player stand-in"
+                    className="h-full w-full rounded-3xl object-cover"
+                  />
+                </div>
+                <div className="absolute top-1/2 right-[-120px] w-[760px] h-[760px] -translate-y-[35%]">
+                  <img
+                    src="/images/enemy-placeholder.jpg"
+                    alt="Enemy stand-in"
+                    className="h-full w-full rounded-3xl object-cover"
+                  />
+                </div>
+              </div>
+
               {/* 中央：バトル画面 */}
-              <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-0">
+              <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-10">
                 {/* バトル画面 */}
 
                 {/* 中央ファンゲージ */}
