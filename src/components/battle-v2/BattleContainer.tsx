@@ -14,6 +14,7 @@ import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
+import { BuffDebuffEffect } from './BuffDebuffEffect';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -41,6 +42,13 @@ interface BattleMessage {
   speaker: BattleMessageSpeaker;
   text: string;
   apply?: () => void;
+}
+
+interface EffectAnimation {
+  id: string;
+  type: 'buff' | 'debuff';
+  target: 'player' | 'enemy';
+  timestamp: number;
 }
 
 const JUDGEMENT_MESSAGE: Record<'win' | 'draw' | 'lose', string> = {
@@ -203,6 +211,7 @@ export function BattleContainer() {
   const [isMessageAnimating, setIsMessageAnimating] = useState(false);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [effectAnimations, setEffectAnimations] = useState<EffectAnimation[]>([]);
   const [playerShake, setPlayerShake] = useState(false);
   const [enemyShake, setEnemyShake] = useState(false);
   const [playerBounce, setPlayerBounce] = useState(false);
@@ -233,6 +242,10 @@ export function BattleContainer() {
   const enemyBounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerVanishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enemyVanishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleEffectComplete = useCallback((id: string) => {
+    setEffectAnimations(prev => prev.filter(anim => anim.id !== id));
+  }, []);
 
   const selectRandomDialogue = useCallback(() => {
     const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
@@ -663,6 +676,16 @@ export function BattleContainer() {
       };
 
       const applyEffect = (effect: SpecialEffect) => {
+        // エフェクトアニメーションをトリガー
+        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const newAnimation: EffectAnimation = {
+          id: `${effect.target}-${effectType}-${Date.now()}`,
+          type: effectType,
+          target: effect.target,
+          timestamp: Date.now(),
+        };
+        setEffectAnimations(prev => [...prev, newAnimation]);
+
         setBattleState((prev) => {
           if (!prev) return prev;
           if (effect.target === 'player') {
@@ -844,6 +867,35 @@ export function BattleContainer() {
                     className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''} ${enemyVanishing ? 'vanish-out' : ''} ${enemyInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
                 </div>
+              </div>
+
+              {/* エフェクトレイヤー */}
+              <div className="absolute inset-0 z-5 pointer-events-none overflow-visible">
+                {effectAnimations.map((anim) => {
+                  // キャラクターの位置に合わせて配置
+                  const isPlayer = anim.target === 'player';
+                  const left = isPlayer ? '30%' : '70%';
+
+                  return (
+                    <div
+                      key={anim.id}
+                      className="absolute overflow-visible"
+                      style={{
+                        left: left,
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '300px',
+                        height: '400px',
+                      }}
+                    >
+                      <BuffDebuffEffect
+                        type={anim.type}
+                        target={anim.target}
+                        onComplete={() => handleEffectComplete(anim.id)}
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               {/* 中央：バトル画面 */}
