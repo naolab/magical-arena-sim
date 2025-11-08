@@ -706,14 +706,14 @@ export function BattleContainer() {
             >
               {/* キャラクター配置エリア */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-1/2 left-[-80px] w-[760px] h-[760px] -translate-y-[35%]">
+                <div className="absolute top-1/2 left-[-105px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
                     src="/images/player-placeholder.jpg"
                     alt="Player stand-in"
                     className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''}`}
                   />
                 </div>
-                <div className="absolute top-1/2 right-[-120px] w-[760px] h-[760px] -translate-y-[35%]">
+                <div className="absolute top-1/2 right-[-145px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
                     src="/images/enemy-placeholder.jpg"
                     alt="Enemy stand-in"
