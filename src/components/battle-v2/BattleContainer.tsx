@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType, TurnResult, SpecialEffect } from '@/lib/battle-v2/types';
-import { initBattle, executePlayerAction, isBattleOver } from '@/lib/battle-v2/battleEngine';
+import { initBattle, executePlayerAction, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
@@ -204,6 +204,9 @@ export function BattleContainer() {
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
+  // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
+  const accurateHpRef = useRef({ player: 100, enemy: 100 });
+
   // 画面スケーリング
   const [viewportSize, setViewportSize] = useState({
     width: BASE_STAGE_WIDTH,
@@ -261,7 +264,13 @@ export function BattleContainer() {
 
   // クライアントサイドでバトルを初期化（最初の1回のみ）
   useEffect(() => {
-    setBattleState(initBattle(params));
+    const initialState = initBattle(params);
+    setBattleState(initialState);
+    // HP追跡refも初期化
+    accurateHpRef.current = {
+      player: initialState.player.hp,
+      enemy: initialState.enemy.hp,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -304,30 +313,55 @@ export function BattleContainer() {
 
         if (pendingStateRef.current) {
           const finalState = pendingStateRef.current;
-          setBattleState((prev) => {
-            if (!finalState) return prev;
-            if (!prev) return finalState;
-            return {
-              ...finalState,
-              player: {
-                ...finalState.player,
-                hp: prev.player.hp,
-              },
-              enemy: {
-                ...finalState.enemy,
-                hp: prev.enemy.hp,
-              },
-            };
-          });
-          pendingStateRef.current = null;
-          setIsProcessing(false);
 
-          if (pendingWinnerRef.current) {
-            setShowResult(true);
+          // UI側のHP（apply関数で更新済み）をrefから取得
+          const updatedState = {
+            ...finalState,
+            player: {
+              ...finalState.player,
+              hp: accurateHpRef.current.player,  // refの値を使用
+            },
+            enemy: {
+              ...finalState.enemy,
+              hp: accurateHpRef.current.enemy,  // refの値を使用
+            },
+          };
+
+          // メッセージキュー完了後、refの正確なHPで勝敗判定
+          const winner = checkWinner(updatedState);
+
+          // 勝敗メッセージを追加（setBattleStateの外で実行）
+          if (winner) {
+            const resultMessages = [
+              createMessage('system', WINNER_MESSAGE[winner]),
+              createMessage('system', RESULT_NARRATION[winner]),
+            ];
+            setMessageQueue((prevQueue) => [...prevQueue, ...resultMessages]);
+            pendingWinnerRef.current = winner;
+
+            // 勝敗確定した状態を保存
+            setBattleState({
+              ...updatedState,
+              isActive: false,
+              winner,
+            });
           } else {
-            setShowResult(false);
+            // 通常のstate更新
+            setBattleState(updatedState);
+          }
+
+          pendingStateRef.current = null;
+
+          // 勝敗メッセージがある場合、まだメッセージキューに残っているので処理は継続
+          // 勝敗メッセージが完了したら、次回のpendingAutoAdvanceでshowResultを表示
+          if (!pendingWinnerRef.current) {
+            setIsProcessing(false);
             selectRandomDialogue();
           }
+        } else if (pendingWinnerRef.current) {
+          // 勝敗メッセージも全て完了したので、結果画面を表示
+          setIsProcessing(false);
+          setShowResult(true);
           pendingWinnerRef.current = null;
         } else {
           setIsProcessing(false);
@@ -419,6 +453,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -431,6 +466,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -443,6 +479,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -455,6 +492,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -467,6 +505,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
           return {
             ...prev,
             player: { ...prev.player, hp: nextHp },
@@ -479,6 +518,7 @@ export function BattleContainer() {
         setBattleState((prev) => {
           if (!prev) return prev;
           const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
           return {
             ...prev,
             enemy: { ...prev.enemy, hp: nextHp },
@@ -518,25 +558,11 @@ export function BattleContainer() {
         onPlayerEffect: applyEffect,
         onEnemyEffect: applyEffect,
       });
-      const winner = newState.winner;
-      let resultMessages: BattleMessage[] = [];
-      if (winner) {
-        resultMessages = [
-          createMessage('system', WINNER_MESSAGE[winner]),
-          createMessage('system', RESULT_NARRATION[winner]),
-        ];
-        pendingWinnerRef.current = winner;
-        setShowResult(false);
-      } else {
-        pendingWinnerRef.current = null;
-        setShowResult(false);
-      }
+      // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
+      // 勝敗判定はメッセージキュー完了後に実行
+      pendingWinnerRef.current = null;
 
-      enqueueMessages([...turnMessages, ...resultMessages]);
-
-      if (isBattleOver(newState)) {
-        setShowActionButtons(false);
-      }
+      enqueueMessages([...turnMessages]);
     } catch (error) {
       console.error('Turn processing error:', error);
       setIsProcessing(false);
@@ -563,7 +589,13 @@ export function BattleContainer() {
 
   // バトルリスタート
   const handleRestart = () => {
-    setBattleState(initBattle(params));
+    const initialState = initBattle(params);
+    setBattleState(initialState);
+    // HP追跡refも初期化
+    accurateHpRef.current = {
+      player: initialState.player.hp,
+      enemy: initialState.enemy.hp,
+    };
     setRecentCommentIds([]);
     setShowActionButtons(false);
     setSelectedEmotion(null);
@@ -705,6 +737,7 @@ export function BattleContainer() {
                       text={currentEnemyText}
                       className="text-white text-2xl text-center"
                       onComplete={currentMessage?.speaker === 'enemy' ? handleMessageComplete : undefined}
+                      enableColors={!!currentMessage}
                     />
                   </div>
                 </div>
@@ -735,6 +768,7 @@ export function BattleContainer() {
                           ? handleMessageComplete
                           : undefined
                       }
+                      enableColors={!!currentMessage}
                     />
                   </div>
                   {/* 次へ進むアイコン */}

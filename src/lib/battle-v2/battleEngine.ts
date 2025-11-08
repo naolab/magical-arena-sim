@@ -95,15 +95,7 @@ export function executePlayerAction(
     comments: addCommentsToPool(updatedState.comments, newComments, updatedState.config.maxCommentPoolSize),
   };
 
-  // 3. 勝敗判定
-  const winner = checkWinner(updatedState);
-  if (winner) {
-    updatedState = {
-      ...updatedState,
-      isActive: false,
-      winner,
-    };
-  }
+  // 勝敗判定はUI側で行う（メッセージアニメーション完了後、UI側のHPが完全に反映された後）
 
   return updatedState;
 }
