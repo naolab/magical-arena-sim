@@ -127,3 +127,58 @@ body {
 .liquid-flow {
   animation: liquid-flow 3s ease-in-out infinite;
 }
+
+@keyframes buff-particle-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(0px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-120px) scale(1.2);
+  }
+}
+
+@keyframes debuff-particle-fall {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(0px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(120px) scale(1.2);
+  }
+}
+
+@keyframes flash {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.buff-particle {
+  animation: buff-particle-rise 1.2s ease-out forwards;
+}
+
+.debuff-particle {
+  animation: debuff-particle-fall 1.2s ease-out forwards;
+}
+
+.animate-flash {
+  animation: flash 0.6s ease-out;
+}
