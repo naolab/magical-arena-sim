@@ -832,23 +832,65 @@ export function BattleContainer() {
 
                 {/* 中央ファンゲージ */}
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
-                  <div
-                    style={{
-                      width: '50px',
-                      height: '130%',
-                      transform: 'rotate(-15deg)',
-                      background: `linear-gradient(to bottom,
-                        #22d3ee 0%,
-                        #22d3ee ${battleState.audience.enemyFans * 100}%,
-                        #9ca3af ${battleState.audience.enemyFans * 100}%,
-                        #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                        #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                        #ec4899 100%)`,
-                      border: '2px solid white',
-                      borderRadius: '4px',
-                      transition: 'background 0.5s ease',
-                    }}
-                  />
+                  <div style={{ position: 'relative', width: '50px', height: '130%' }}>
+                    {/* 外側のグロー（ぼかし効果） */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        transform: 'rotate(-15deg)',
+                        background: `linear-gradient(to bottom,
+                          #22d3ee 0%,
+                          #22d3ee ${battleState.audience.enemyFans * 100}%,
+                          #9ca3af ${battleState.audience.enemyFans * 100}%,
+                          #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                          #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                          #ec4899 100%)`,
+                        filter: 'blur(4px)',
+                        opacity: 0.4,
+                        borderRadius: '8px',
+                        transition: 'background 0.5s ease',
+                      }}
+                    />
+
+                    {/* メイン液体バー */}
+                    <div
+                      className="liquid-flow"
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        transform: 'rotate(-15deg)',
+                        background: `linear-gradient(to bottom,
+                          #22d3ee 0%,
+                          #22d3ee ${battleState.audience.enemyFans * 100}%,
+                          #9ca3af ${battleState.audience.enemyFans * 100}%,
+                          #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                          #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                          #ec4899 100%)`,
+                        boxShadow: 'inset 0 0 12px rgba(255,255,255,0.2), 0 0 15px rgba(34, 211, 238, 0.2), 0 0 15px rgba(236, 72, 153, 0.2)',
+                        border: '2px solid rgba(255, 255, 255, 0.8)',
+                        borderRadius: '8px',
+                        transition: 'background 0.5s ease',
+                      }}
+                    />
+
+                    {/* ハイライト（光沢効果） */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        width: '25px',
+                        height: '100%',
+                        left: '5px',
+                        transform: 'rotate(-15deg)',
+                        background: 'linear-gradient(to right, rgba(255,255,255,0.25), transparent)',
+                        borderRadius: '8px 0 0 8px',
+                        filter: 'blur(3px)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* 右上：敵HPゲージ */}

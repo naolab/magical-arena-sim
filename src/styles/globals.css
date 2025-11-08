@@ -114,3 +114,16 @@ body {
 .vanish-out {
   animation: vanish-out 0.9s forwards ease-in;
 }
+
+@keyframes liquid-flow {
+  0%, 100% {
+    filter: brightness(1) hue-rotate(0deg);
+  }
+  50% {
+    filter: brightness(1.15) hue-rotate(3deg);
+  }
+}
+
+.liquid-flow {
+  animation: liquid-flow 3s ease-in-out infinite;
+}

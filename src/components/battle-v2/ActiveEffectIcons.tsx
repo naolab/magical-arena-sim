@@ -28,15 +28,13 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
         return (
           <div
             key={`${effect.type}-${index}`}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-white/90 border"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-white border shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
             style={{
-              background: `linear-gradient(135deg, ${config.color}55 0%, ${config.color}15 100%)`,
-              borderColor: `${config.color}aa`,
+              background: `linear-gradient(135deg, ${config.color}ff 0%, ${config.color}bb 80%)`,
+              borderColor: `${config.color}`,
             }}
           >
-            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10">
-              <config.Icon className="h-3 w-3" style={{ color: config.color }} />
-            </div>
+            <config.Icon className="h-4 w-4 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]" style={{ color: config.color }} />
             <span className="tracking-wide">{effect.duration}</span>
           </div>
         );
