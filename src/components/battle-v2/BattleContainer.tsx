@@ -802,24 +802,24 @@ export function BattleContainer() {
       <div style={stageWrapperStyle}>
         <div style={stageStyle}>
           {/* 16:9固定レイアウト */}
-          <div className="relative w-full h-full bg-gray-900">
+          <div className="relative w-full h-full bg-black">
             {/* バトルエリア */}
             <div
-              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer bg-black"
+              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center"
               onClick={handleBattleAreaClick}
             >
               {/* キャラクター配置エリア */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-1/2 left-[-105px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
-                    src="/images/player-placeholder.jpg"
+                    src="/images/player-placeholder.png"
                     alt="Player stand-in"
                     className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''} ${playerBounce ? 'heal-bounce' : ''} ${playerVanishing ? 'vanish-out' : ''} ${playerInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
                 </div>
                 <div className="absolute top-1/2 right-[-145px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
-                    src="/images/enemy-placeholder.jpg"
+                    src="/images/enemy-placeholder.png"
                     alt="Enemy stand-in"
                     className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''} ${enemyVanishing ? 'vanish-out' : ''} ${enemyInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
