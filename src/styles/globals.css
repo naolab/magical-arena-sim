@@ -92,3 +92,25 @@ body {
 .heal-bounce {
   animation: heal-bounce 0.45s ease-out;
 }
+
+@keyframes vanish-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.97);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(4px);
+  }
+}
+
+.vanish-out {
+  animation: vanish-out 0.9s forwards ease-in;
+}

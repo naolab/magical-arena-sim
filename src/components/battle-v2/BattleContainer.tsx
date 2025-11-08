@@ -207,6 +207,10 @@ export function BattleContainer() {
   const [enemyShake, setEnemyShake] = useState(false);
   const [playerBounce, setPlayerBounce] = useState(false);
   const [enemyBounce, setEnemyBounce] = useState(false);
+  const [playerVanishing, setPlayerVanishing] = useState(false);
+  const [enemyVanishing, setEnemyVanishing] = useState(false);
+  const [playerInvisible, setPlayerInvisible] = useState(false);
+  const [enemyInvisible, setEnemyInvisible] = useState(false);
 
   // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
   const accurateHpRef = useRef({ player: 100, enemy: 100 });
@@ -227,6 +231,8 @@ export function BattleContainer() {
   const enemyShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playerBounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enemyBounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playerVanishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enemyVanishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectRandomDialogue = useCallback(() => {
     const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
@@ -273,6 +279,12 @@ export function BattleContainer() {
       }
       if (enemyBounceTimerRef.current) {
         clearTimeout(enemyBounceTimerRef.current);
+      }
+      if (playerVanishTimerRef.current) {
+        clearTimeout(playerVanishTimerRef.current);
+      }
+      if (enemyVanishTimerRef.current) {
+        clearTimeout(enemyVanishTimerRef.current);
       }
     };
   }, []);
@@ -349,6 +361,54 @@ export function BattleContainer() {
     }
     enemyHpRef.current = currentEnemyHp;
   }, [battleState?.enemy.hp, battleState]);
+
+  useEffect(() => {
+    if (!battleState) return;
+    const defeated = battleState.player.hp <= 0;
+    if (defeated) {
+      if (!playerVanishing) {
+        setPlayerVanishing(true);
+        setPlayerInvisible(false);
+        if (playerVanishTimerRef.current) {
+          clearTimeout(playerVanishTimerRef.current);
+        }
+        playerVanishTimerRef.current = setTimeout(() => {
+          setPlayerInvisible(true);
+        }, 900);
+      }
+    } else {
+      setPlayerVanishing(false);
+      setPlayerInvisible(false);
+      if (playerVanishTimerRef.current) {
+        clearTimeout(playerVanishTimerRef.current);
+        playerVanishTimerRef.current = null;
+      }
+    }
+  }, [battleState?.player.hp, playerVanishing, battleState]);
+
+  useEffect(() => {
+    if (!battleState) return;
+    const defeated = battleState.enemy.hp <= 0;
+    if (defeated) {
+      if (!enemyVanishing) {
+        setEnemyVanishing(true);
+        setEnemyInvisible(false);
+        if (enemyVanishTimerRef.current) {
+          clearTimeout(enemyVanishTimerRef.current);
+        }
+        enemyVanishTimerRef.current = setTimeout(() => {
+          setEnemyInvisible(true);
+        }, 900);
+      }
+    } else {
+      setEnemyVanishing(false);
+      setEnemyInvisible(false);
+      if (enemyVanishTimerRef.current) {
+        clearTimeout(enemyVanishTimerRef.current);
+        enemyVanishTimerRef.current = null;
+      }
+    }
+  }, [battleState?.enemy.hp, enemyVanishing, battleState]);
 
   useEffect(() => {
     if (!isMessageAnimating && currentMessage === null) {
@@ -688,6 +748,18 @@ export function BattleContainer() {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
     }
+    if (playerVanishTimerRef.current) {
+      clearTimeout(playerVanishTimerRef.current);
+      playerVanishTimerRef.current = null;
+    }
+    if (enemyVanishTimerRef.current) {
+      clearTimeout(enemyVanishTimerRef.current);
+      enemyVanishTimerRef.current = null;
+    }
+    setPlayerVanishing(false);
+    setEnemyVanishing(false);
+    setPlayerInvisible(false);
+    setEnemyInvisible(false);
     selectRandomDialogue();
   };
 
@@ -742,14 +814,14 @@ export function BattleContainer() {
                   <img
                     src="/images/player-placeholder.jpg"
                     alt="Player stand-in"
-                    className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''} ${playerBounce ? 'heal-bounce' : ''}`}
+                    className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''} ${playerBounce ? 'heal-bounce' : ''} ${playerVanishing ? 'vanish-out' : ''} ${playerInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
                 </div>
                 <div className="absolute top-1/2 right-[-145px] w-[760px] h-[760px] -translate-y-[35%]">
                   <img
                     src="/images/enemy-placeholder.jpg"
                     alt="Enemy stand-in"
-                    className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''}`}
+                    className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''} ${enemyVanishing ? 'vanish-out' : ''} ${enemyInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
                 </div>
               </div>
