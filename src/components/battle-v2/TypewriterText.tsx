@@ -13,8 +13,8 @@ interface TypewriterTextProps {
 
 // キーワードと色のマッピング
 const COLOR_MAP: Record<string, string> = {
-  'あなた': '#22d3ee', // 水色
-  '敵': '#ec4899', // ピンク
+  'あなた': '#ec4899', // ピンク
+  '敵': '#22d3ee', // 水色
   'Rage': '#ef4444', // 赤
   'Terror': '#22c55e', // 緑
   'Grief': '#3b82f6', // 青

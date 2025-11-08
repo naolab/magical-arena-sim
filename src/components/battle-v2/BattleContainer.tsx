@@ -838,12 +838,12 @@ export function BattleContainer() {
                       height: '130%',
                       transform: 'rotate(-15deg)',
                       background: `linear-gradient(to bottom,
-                        #ec4899 0%,
-                        #ec4899 ${battleState.audience.enemyFans * 100}%,
+                        #22d3ee 0%,
+                        #22d3ee ${battleState.audience.enemyFans * 100}%,
                         #9ca3af ${battleState.audience.enemyFans * 100}%,
                         #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                        #22d3ee ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                        #22d3ee 100%)`,
+                        #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
+                        #ec4899 100%)`,
                       border: '2px solid white',
                       borderRadius: '4px',
                       transition: 'background 0.5s ease',
@@ -889,7 +889,7 @@ export function BattleContainer() {
                     <path
                       d="M 0 0 L 1200 0 L 1200 80 L 1050 80 L 1020 120 L 990 80 L 0 80 Z"
                       fill="black"
-                      stroke="#ec4899"
+                      stroke="#22d3ee"
                       strokeWidth="4"
                     />
                   </svg>
@@ -916,7 +916,7 @@ export function BattleContainer() {
                     <path
                       d="M 0 40 L 150 40 L 180 0 L 210 40 L 1200 40 L 1200 120 L 0 120 Z"
                       fill="black"
-                      stroke="#22d3ee"
+                      stroke="#ec4899"
                       strokeWidth="4"
                     />
                   </svg>
@@ -941,7 +941,7 @@ export function BattleContainer() {
                   {isAwaitingNextAction && (
                     <div className="absolute bottom-4 right-8 animate-bounce">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M7 10L12 15L17 10" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M7 10L12 15L17 10" stroke="#ec4899" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   )}
