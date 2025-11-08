@@ -657,7 +657,7 @@ export function BattleContainer() {
           <div className="relative w-full h-full bg-gray-900">
             {/* バトルエリア */}
             <div
-              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer"
+              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer bg-black"
               onClick={handleBattleAreaClick}
             >
               {/* 中央：バトル画面 */}
