@@ -787,6 +787,26 @@ export function BattleContainer() {
     messageQueue.length === 0 &&
     !isBattleOver(battleState);
 
+  const fanGaugeSegments = battleState
+    ? [
+        {
+          key: 'enemy',
+          color: '#22d3ee',
+          height: battleState.audience.enemyFans * 100,
+        },
+        {
+          key: 'neutral',
+          color: '#9ca3af',
+          height: battleState.audience.neutralFans * 100,
+        },
+        {
+          key: 'player',
+          color: '#ec4899',
+          height: battleState.audience.playerFans * 100,
+        },
+      ]
+    : [];
+
   // 初期化中はローディング表示
   if (!battleState) {
     return (
@@ -810,14 +830,14 @@ export function BattleContainer() {
             >
               {/* キャラクター配置エリア */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-1/2 left-[-105px] w-[760px] h-[760px] -translate-y-[35%]">
+                <div className="absolute top-1/2 left-[-250px] w-[1020px] h-[1020px] -translate-y-[31%]">
                   <img
                     src="/images/player-placeholder.png"
                     alt="Player stand-in"
                     className={`h-full w-full rounded-3xl object-cover ${playerShake ? 'hit-shake' : ''} ${playerBounce ? 'heal-bounce' : ''} ${playerVanishing ? 'vanish-out' : ''} ${playerInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
                 </div>
-                <div className="absolute top-1/2 right-[-145px] w-[760px] h-[760px] -translate-y-[35%]">
+                <div className="absolute top-1/2 right-[-240px] w-[1020px] h-[1020px] -translate-y-[27%]">
                   <img
                     src="/images/enemy-placeholder.png"
                     alt="Enemy stand-in"
@@ -832,64 +852,26 @@ export function BattleContainer() {
 
                 {/* 中央ファンゲージ */}
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
-                  <div style={{ position: 'relative', width: '50px', height: '130%' }}>
-                    {/* 外側のグロー（ぼかし効果） */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        transform: 'rotate(-15deg)',
-                        background: `linear-gradient(to bottom,
-                          #22d3ee 0%,
-                          #22d3ee ${battleState.audience.enemyFans * 100}%,
-                          #9ca3af ${battleState.audience.enemyFans * 100}%,
-                          #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                          #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                          #ec4899 100%)`,
-                        filter: 'blur(4px)',
-                        opacity: 0.4,
-                        borderRadius: '8px',
-                        transition: 'background 0.5s ease',
-                      }}
-                    />
-
-                    {/* メイン液体バー */}
-                    <div
-                      className="liquid-flow"
-                      style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        transform: 'rotate(-15deg)',
-                        background: `linear-gradient(to bottom,
-                          #22d3ee 0%,
-                          #22d3ee ${battleState.audience.enemyFans * 100}%,
-                          #9ca3af ${battleState.audience.enemyFans * 100}%,
-                          #9ca3af ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                          #ec4899 ${(battleState.audience.enemyFans + battleState.audience.neutralFans) * 100}%,
-                          #ec4899 100%)`,
-                        boxShadow: 'inset 0 0 12px rgba(255,255,255,0.2), 0 0 15px rgba(34, 211, 238, 0.2), 0 0 15px rgba(236, 72, 153, 0.2)',
-                        border: '2px solid rgba(255, 255, 255, 0.8)',
-                        borderRadius: '8px',
-                        transition: 'background 0.5s ease',
-                      }}
-                    />
-
-                    {/* ハイライト（光沢効果） */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        width: '25px',
-                        height: '100%',
-                        left: '5px',
-                        transform: 'rotate(-15deg)',
-                        background: 'linear-gradient(to right, rgba(255,255,255,0.25), transparent)',
-                        borderRadius: '8px 0 0 8px',
-                        filter: 'blur(3px)',
-                        pointerEvents: 'none',
-                      }}
-                    />
+                  <div className="relative w-[56px] h-[140%]">
+                    <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-white bg-black/50 shadow-[0_0_30px_rgba(0,0,0,0.45)] overflow-hidden">
+                      <div className="absolute inset-0 flex flex-col">
+                        {fanGaugeSegments.map((segment) => (
+                          <div
+                            key={segment.key}
+                            className="w-full"
+                            style={{
+                              height: `${segment.height}%`,
+                              backgroundColor: segment.color,
+                              transition: 'height 0.85s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/5 mix-blend-screen" />
+                    </div>
+                    <div className="absolute inset-0 rotate-[-15deg] pointer-events-none">
+                      <div className="absolute inset-[2px] border border-white/40 rounded-lg" />
+                    </div>
                   </div>
                 </div>
 
