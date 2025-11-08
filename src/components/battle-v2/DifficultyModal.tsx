@@ -242,7 +242,7 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
             </button>
             <button
               onClick={() => {
-                onRestart();
+                onRestart?.();
                 onClose();
               }}
               className="flex-1 px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-full transition-colors"
