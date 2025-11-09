@@ -86,6 +86,7 @@ export function processTurn(
   let updatedEnemy = playerDamageResult.defender as EnemyState; // プレイヤーの攻撃後の敵
 
   // 5. プレイヤーの特殊効果を発動
+  console.log('[DEBUG] Player Action:', { playerAction, target: 'player' });
   const playerSpecialEffects = triggerSpecialEffects({
     emotion: playerAction,
     target: 'player',
@@ -122,6 +123,7 @@ export function processTurn(
   }
 
   // 5. 敵側の特殊効果を発動
+  console.log('[DEBUG] Enemy Action:', { enemyAction, target: 'enemy' });
   const enemySpecialEffects = triggerSpecialEffects({
     emotion: enemyAction,
     target: 'enemy',
@@ -154,6 +156,13 @@ export function processTurn(
   // 5.5. 毒ダメージの適用（ターン開始時の効果）
   const playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
   const enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+
+  console.log('[DEBUG] Poison Damage:', {
+    playerActiveEffects: updatedPlayer.activeEffects,
+    enemyActiveEffects: updatedEnemy.activeEffects,
+    playerPoisonDamage,
+    enemyPoisonDamage
+  });
 
   if (playerPoisonDamage > 0) {
     updatedPlayer = {
@@ -200,6 +209,15 @@ export function processTurn(
     ...annotateNewEffects(playerSpecialEffects.enemyEffects),
     ...annotateNewEffects(enemySpecialEffects.enemyEffects),
   ];
+
+  console.log('[DEBUG] Final Effects:', {
+    playerSpecialEffects_playerEffects: playerSpecialEffects.playerEffects,
+    playerSpecialEffects_enemyEffects: playerSpecialEffects.enemyEffects,
+    enemySpecialEffects_playerEffects: enemySpecialEffects.playerEffects,
+    enemySpecialEffects_enemyEffects: enemySpecialEffects.enemyEffects,
+    finalPlayerEffects,
+    finalEnemyEffects
+  });
 
   updatedPlayer = {
     ...updatedPlayer,
@@ -412,6 +430,11 @@ function triggerSpecialEffects(params: {
         }
       } else if (selectedVariant === 'poison') {
         const poison = applyTerrorPoisonEffect({ emotion, target, damage }, variantDef);
+        console.log('[DEBUG] Terror Poison:', {
+          attackerTarget: target,
+          poisonTarget: poison.target,
+          willPushTo: poison.target === 'player' ? 'playerEffects' : 'enemyEffects'
+        });
         if (poison.target === 'player') {
           result.playerEffects.push(poison);
         } else {

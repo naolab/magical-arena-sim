@@ -724,28 +724,42 @@ export function BattleContainer() {
         });
       };
 
-      const applyEffect = (effect: SpecialEffect) => {
+      const applyPlayerEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
         const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
         const newAnimation: EffectAnimation = {
-          id: `${effect.target}-${effectType}-${Date.now()}`,
+          id: `player-${effectType}-${Date.now()}`,
           type: effectType,
-          target: effect.target,
+          target: 'player',
           timestamp: Date.now(),
         };
         setEffectAnimations(prev => [...prev, newAnimation]);
 
         setBattleState((prev) => {
           if (!prev) return prev;
-          if (effect.target === 'player') {
-            return {
-              ...prev,
-              player: {
-                ...prev.player,
-                activeEffects: [...prev.player.activeEffects, effect],
-              },
-            };
-          }
+          return {
+            ...prev,
+            player: {
+              ...prev.player,
+              activeEffects: [...prev.player.activeEffects, effect],
+            },
+          };
+        });
+      };
+
+      const applyEnemyEffect = (effect: SpecialEffect) => {
+        // エフェクトアニメーションをトリガー
+        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const newAnimation: EffectAnimation = {
+          id: `enemy-${effectType}-${Date.now()}`,
+          type: effectType,
+          target: 'enemy',
+          timestamp: Date.now(),
+        };
+        setEffectAnimations(prev => [...prev, newAnimation]);
+
+        setBattleState((prev) => {
+          if (!prev) return prev;
           return {
             ...prev,
             enemy: {
@@ -765,8 +779,8 @@ export function BattleContainer() {
         onEnemyExtra: applyEnemyExtraDamage,
         onEnemyHeal: applyEnemyHealing,
         onEnemyPoison: applyEnemyPoisonDamage,
-        onPlayerEffect: applyEffect,
-        onEnemyEffect: applyEffect,
+        onPlayerEffect: applyPlayerEffect,
+        onEnemyEffect: applyEnemyEffect,
       });
       // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
       // 勝敗判定はメッセージキュー完了後に実行
