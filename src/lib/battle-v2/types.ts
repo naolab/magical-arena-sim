@@ -16,6 +16,48 @@ export type EmotionType = 'rage' | 'terror' | 'grief' | 'ecstasy';
 export type BattleResult = 'win' | 'draw' | 'lose';
 
 // ========================================
+// Action Variants
+// ========================================
+
+/** Rageのバリアント */
+export type RageVariant = 'explosive';
+
+/** Terrorのバリアント */
+export type TerrorVariant = 'weaken';
+
+/** Griefのバリアント */
+export type GriefVariant = 'drain';
+
+/** Ecstasyのバリアント */
+export type EcstasyVariant = 'inspire';
+
+/** 全てのアクションバリアント */
+export type ActionVariant =
+  | RageVariant
+  | TerrorVariant
+  | GriefVariant
+  | EcstasyVariant;
+
+/** 選択されたアクションバリアント */
+export interface ActionVariants {
+  rage: RageVariant;
+  terror: TerrorVariant;
+  grief: GriefVariant;
+  ecstasy: EcstasyVariant;
+}
+
+/** アクションバリアントの定義 */
+export interface ActionVariantDefinition {
+  id: string;
+  name: string;
+  nameJa: string; // 日本語名
+  description: string;
+  effectType: SpecialEffectType;
+  magnitude: number; // 効果量（%）
+  duration?: number; // 効果持続ターン数（buff/debuffの場合）
+}
+
+// ========================================
 // Comment System
 // ========================================
 

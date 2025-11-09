@@ -1,6 +1,8 @@
 'use client';
 
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
+import { ActionVariantSelector } from './ActionVariantSelector';
+import { EmotionType, ActionVariant } from '@/lib/battle-v2/types';
 
 interface DifficultyModalProps {
   isOpen: boolean;
@@ -196,6 +198,28 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                     <span className="font-bold text-xl w-24 text-center">+{params.ecstasyBuffMagnitude}%</span>
                   </div>
                 </div>
+              </div>
+            </section>
+
+            {/* アクションバリアント選択 */}
+            <section>
+              <h3 className="text-lg font-bold mb-3 text-cyan-400">アクションバリアント</h3>
+              <div className="space-y-4">
+                {(['rage', 'terror', 'grief', 'ecstasy'] as EmotionType[]).map((emotion) => (
+                  <ActionVariantSelector
+                    key={emotion}
+                    emotion={emotion}
+                    selectedVariant={params.selectedActionVariants[emotion]}
+                    onChange={(variant) =>
+                      setParams({
+                        selectedActionVariants: {
+                          ...params.selectedActionVariants,
+                          [emotion]: variant,
+                        },
+                      })
+                    }
+                  />
+                ))}
               </div>
             </section>
 

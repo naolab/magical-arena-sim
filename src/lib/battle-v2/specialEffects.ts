@@ -1,10 +1,17 @@
 /**
  * Special Effects System
  * Handles emotion-specific special effects
+ *
+ * Note: This system works in conjunction with the Action Variants system.
+ * - Selected variants are stored in config.selectedActionVariants
+ * - Effect values (magnitude, duration) are controlled by config parameters
+ * - When multiple variants per emotion are added, this system will need to
+ *   dispatch to different effect functions based on the selected variant
  */
 
 import { SpecialEffect, SpecialEffectTriggerParams, EmotionType } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
+import { getVariantDefinition } from './actionVariants';
 
 // ========================================
 // Constants

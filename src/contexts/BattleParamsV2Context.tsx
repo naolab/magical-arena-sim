@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import type { ActionVariants } from '@/lib/battle-v2/types';
 
 // V2パラメータの型定義
 export interface BattleParamsV2 {
@@ -29,6 +30,9 @@ export interface BattleParamsV2 {
   griefDrainRatio: number;
   ecstasyBuffMagnitude: number;
   ecstasyBuffDuration: number;
+
+  // アクションバリアント
+  selectedActionVariants: ActionVariants;
 
   // ファンシステム
   fanRateChangeOnWin: number;
@@ -67,6 +71,14 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   griefDrainRatio: 0.4,
   ecstasyBuffMagnitude: 30,
   ecstasyBuffDuration: 2,
+
+  // アクションバリアント
+  selectedActionVariants: {
+    rage: 'explosive',
+    terror: 'weaken',
+    grief: 'drain',
+    ecstasy: 'inspire',
+  },
 
   // ファンシステム
   fanRateChangeOnWin: 0.1,
