@@ -22,7 +22,7 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     id: 'explosive',
     name: 'バーストレイジ',
     nameJa: 'バーストレイジ',
-    description: '激情のまま連続攻撃を繰り出す（追加ダメージ+50%）',
+    description: '通常攻撃に加えて怒涛の追撃を叩き込む（基礎ダメージ+50%）',
     effectType: 'extra_damage',
     magnitude: 50, // 50%の追加ダメージ
     hasAttack: true,
@@ -47,7 +47,7 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     id: 'weaken',
     name: 'ディミニッシュテラー',
     nameJa: 'ディミニッシュテラー',
-    description: '恐怖で相手を委縮させ、攻撃力を低下させる（-20%、2ターン）',
+    description: '攻撃しながら相手を恐怖で蝕み、攻撃力を-20%（2ターン）',
     effectType: 'debuff',
     magnitude: 20, // 20%の攻撃力低下
     duration: 2, // 2ターン持続
@@ -74,7 +74,7 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     id: 'drain',
     name: 'ソウルドレイン',
     nameJa: 'ソウルドレイン',
-    description: '悲しみの重さで相手のエネルギーを吸い取る（ダメージの40%回復）',
+    description: 'ダメージを与えると同時に与ダメージの40%を吸収して回復',
     effectType: 'drain',
     magnitude: 40, // 与ダメージの40%を回復
     hasAttack: true,
@@ -99,7 +99,7 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     id: 'inspire',
     name: 'トランスブースト',
     nameJa: 'トランスブースト',
-    description: '至福の高揚感で能力が上昇する（攻撃力+30%、2ターン）',
+    description: '攻撃しつつ自身を高揚させ、攻撃力+30%（2ターン）',
     effectType: 'buff',
     magnitude: 30, // 30%の攻撃力上昇
     duration: 2, // 2ターン持続
