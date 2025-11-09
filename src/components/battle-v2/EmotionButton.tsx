@@ -9,17 +9,22 @@ interface EmotionButtonProps {
   disabled?: boolean;
   commentCount?: number; // この感情のコメント数
   isSelected?: boolean; // 選択されているか
+  label?: string;
+  description?: string;
+  tooltipPosition?: 'top' | 'bottom';
 }
 
 export function EmotionButton({
   emotion,
   onClick,
   disabled = false,
-  commentCount = 0,
   isSelected = false,
+  label,
+  description,
+  tooltipPosition = 'bottom',
 }: EmotionButtonProps) {
   const color = getEmotionColor(emotion);
-  const name = getEmotionName(emotion);
+  const name = label || getEmotionName(emotion);
   const darkerColor = getDarkerColor(color);
 
   return (
@@ -54,30 +59,24 @@ export function EmotionButton({
           />
         )}
 
-        {/* 感情名 */}
-        <div className="text-2xl font-black text-white mb-1 drop-shadow-md">{name}</div>
-
-        {/* 説明 */}
-        <div className="text-sm text-white/90 font-semibold">{getEmotionDescription(emotion)}</div>
+        {/* 技名 */}
+        <div className="text-lg font-black text-white drop-shadow-md">{name}</div>
       </div>
+
+      {/* ツールチップ */}
+      {description && (
+        <div
+          className={`pointer-events-none absolute left-1/2 w-56 -translate-x-1/2 rounded-xl border border-white/30 bg-black/80 p-3 text-sm text-white opacity-0 shadow-xl transition-opacity duration-200 delay-200 group-hover:opacity-100 ${
+            tooltipPosition === 'top'
+              ? 'bottom-[calc(100%+0.5rem)]'
+              : 'top-[calc(100%+0.5rem)]'
+          }`}
+        >
+          {description}
+        </div>
+      )}
     </button>
   );
-}
-
-/**
- * 感情の説明を取得
- */
-function getEmotionDescription(emotion: EmotionType): string {
-  switch (emotion) {
-    case 'rage':
-      return '追加ダメージ';
-    case 'terror':
-      return '敵デバフ';
-    case 'grief':
-      return 'HP吸収';
-    case 'ecstasy':
-      return '自己バフ';
-  }
 }
 
 /**

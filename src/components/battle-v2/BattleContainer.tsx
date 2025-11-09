@@ -1160,6 +1160,7 @@ export function BattleContainer() {
                     disabled={isProcessing}
                     comments={battleState.comments}
                     selectedEmotion={selectedEmotion}
+                    selectedVariants={battleState.config.selectedActionVariants}
                   />
                 </div>
               )}
