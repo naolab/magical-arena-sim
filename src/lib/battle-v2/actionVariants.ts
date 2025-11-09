@@ -60,9 +60,9 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     id: 'poison',
     name: 'ヴェノムナイトメア',
     nameJa: 'ヴェノムナイトメア',
-    description: '毒で相手を蝕む（毎ターン70ダメージ、3ターン）',
+    description: '毒で相手を蝕む（毎ターン100ダメージ、3ターン）',
     effectType: 'poison',
-    magnitude: 70, // 毎ターン70ダメージ
+    magnitude: 100, // 毎ターン100ダメージ
     duration: 3, // 3ターン持続
     hasAttack: false,
     maxUses: 20,
