@@ -3,7 +3,7 @@
  * Main battle management system
  */
 
-import { BattleState, PlayerState, EnemyState, EmotionType } from './types';
+import { BattleState, PlayerState, EnemyState, EmotionType, SkillUsageMap } from './types';
 import { BattleParamsV2, DEFAULT_BATTLE_PARAMS_V2 } from '@/contexts/BattleParamsV2Context';
 import { processTurn } from './turnProcessor';
 import {
@@ -11,6 +11,9 @@ import {
   addCommentsToPool,
 } from './commentSystem';
 import { initializeAudienceComposition } from './fanSystem';
+import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
+
+const ALL_EMOTIONS: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
 
 // ========================================
 // Battle Initialization
@@ -48,6 +51,30 @@ export function initBattle(params?: BattleParamsV2): BattleState {
     0
   );
 
+  const playerSkillUses: SkillUsageMap = {
+    rage: 0,
+    terror: 0,
+    grief: 0,
+    ecstasy: 0,
+  };
+
+  const enemySkillUses: SkillUsageMap = {
+    rage: 0,
+    terror: 0,
+    grief: 0,
+    ecstasy: 0,
+  };
+
+  for (const emotion of ALL_EMOTIONS) {
+    const playerVariant = config.selectedActionVariants[emotion];
+    const playerVariantDef = getVariantDefinition(emotion, playerVariant);
+    playerSkillUses[emotion] = playerVariantDef.maxUses;
+
+    const enemyVariant = DEFAULT_VARIANTS[emotion];
+    const enemyVariantDef = getVariantDefinition(emotion, enemyVariant);
+    enemySkillUses[emotion] = enemyVariantDef.maxUses;
+  }
+
   return {
     isActive: true,
     currentTurn: 0,
@@ -58,6 +85,10 @@ export function initBattle(params?: BattleParamsV2): BattleState {
     turnHistory: [],
     winner: null,
     config,
+    skillUses: {
+      player: playerSkillUses,
+      enemy: enemySkillUses,
+    },
   };
 }
 
@@ -79,6 +110,16 @@ export function executePlayerAction(
 ): BattleState {
   if (!state.isActive) {
     console.warn('Battle is not active');
+    return state;
+  }
+
+  if (state.skillUses?.player?.[playerAction] !== undefined && state.skillUses.player[playerAction] <= 0) {
+    console.warn(`No remaining uses for player action: ${playerAction}`);
+    return state;
+  }
+
+  if (state.skillUses?.enemy?.[enemyAction] !== undefined && state.skillUses.enemy[enemyAction] <= 0) {
+    console.warn(`No remaining uses for enemy action: ${enemyAction}`);
     return state;
   }
 

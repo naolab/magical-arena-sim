@@ -51,6 +51,18 @@ export function processTurn(
 ): BattleState {
   const turnNumber = state.currentTurn + 1;
 
+  const createEmptySkillUses = () => ({
+    rage: 0,
+    terror: 0,
+    grief: 0,
+    ecstasy: 0,
+  });
+
+  const currentSkillUses = state.skillUses ?? {
+    player: createEmptySkillUses(),
+    enemy: createEmptySkillUses(),
+  };
+
   // 1. 感情の相性判定
   const judgement = judgeEmotion(playerAction, enemyAction);
 
@@ -284,6 +296,23 @@ export function processTurn(
     fanRate: updatedAudience.enemyFans,
   };
 
+  const updatedSkillUses = {
+    player: {
+      ...currentSkillUses.player,
+      [playerAction]: Math.max(
+        0,
+        (currentSkillUses.player[playerAction] ?? 0) - 1
+      ),
+    },
+    enemy: {
+      ...currentSkillUses.enemy,
+      [enemyAction]: Math.max(
+        0,
+        (currentSkillUses.enemy[enemyAction] ?? 0) - 1
+      ),
+    },
+  };
+
   const nextComments = currentComments;
 
   // 10. ターン結果を作成
@@ -340,6 +369,7 @@ export function processTurn(
     enemy: updatedEnemy,
     audience: updatedAudience,
     comments: nextComments,
+    skillUses: updatedSkillUses,
     turnHistory: [...state.turnHistory, turnResult],
   };
 }

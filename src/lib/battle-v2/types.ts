@@ -46,6 +46,9 @@ export interface ActionVariants {
   ecstasy: EcstasyVariant;
 }
 
+/** 技の使用回数管理 */
+export type SkillUsageMap = Record<EmotionType, number>;
+
 /** アクションバリアントの定義 */
 export interface ActionVariantDefinition {
   id: string;
@@ -56,6 +59,7 @@ export interface ActionVariantDefinition {
   magnitude: number; // 効果量（%）
   duration?: number; // 効果持続ターン数（buff/debuffの場合）
   hasAttack: boolean; // 攻撃を行うか（false = 特殊効果のみ）
+  maxUses: number; // 使用可能回数
 }
 
 // ========================================
@@ -198,6 +202,10 @@ export interface BattleState {
   turnHistory: TurnResult[]; // 過去のターン履歴
   winner: 'player' | 'enemy' | 'draw' | null; // 勝者
   config: BattleParamsV2; // バトル設定パラメータ
+  skillUses: {
+    player: SkillUsageMap;
+    enemy: SkillUsageMap;
+  };
 }
 
 // ========================================

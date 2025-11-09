@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent } from '@/lib/battle-v2/types';
+import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
@@ -35,6 +35,13 @@ const PLAYER_DIALOGUES = [
   '次はもっと派手にいくよ！',
   'みんなが見てるんだから、負けられないもん！',
 ];
+
+const EMPTY_SKILL_USES: SkillUsageMap = {
+  rage: 0,
+  terror: 0,
+  grief: 0,
+  ecstasy: 0,
+};
 
 type BattleMessageSpeaker = 'player' | 'enemy' | 'system';
 
@@ -613,6 +620,7 @@ export function BattleContainer() {
   // プレイヤーアクション処理
   const handleEmotionClick = async (emotion: EmotionType) => {
     if (!battleState || isProcessing || isBattleOver(battleState)) return;
+    if (battleState.skillUses.player[emotion] <= 0) return;
 
     // まだ選択されていない場合は選択のみ
     if (selectedEmotion !== emotion) {
@@ -1158,9 +1166,9 @@ export function BattleContainer() {
                   <EmotionActionButtons
                     onAction={handleEmotionClick}
                     disabled={isProcessing}
-                    comments={battleState.comments}
                     selectedEmotion={selectedEmotion}
                     selectedVariants={battleState.config.selectedActionVariants}
+                    remainingUses={battleState ? battleState.skillUses.player : EMPTY_SKILL_USES}
                   />
                 </div>
               )}

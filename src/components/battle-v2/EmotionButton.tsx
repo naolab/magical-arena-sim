@@ -7,11 +7,13 @@ interface EmotionButtonProps {
   emotion: EmotionType;
   onClick: () => void;
   disabled?: boolean;
-  commentCount?: number; // この感情のコメント数
   isSelected?: boolean; // 選択されているか
   label?: string;
   description?: string;
   tooltipPosition?: 'top' | 'bottom';
+  remainingUses?: number;
+  maxUses?: number;
+  isExhausted?: boolean;
 }
 
 export function EmotionButton({
@@ -22,10 +24,18 @@ export function EmotionButton({
   label,
   description,
   tooltipPosition = 'bottom',
+  remainingUses,
+  maxUses,
+  isExhausted = false,
 }: EmotionButtonProps) {
   const color = getEmotionColor(emotion);
   const name = label || getEmotionName(emotion);
   const darkerColor = getDarkerColor(color);
+  const usesText =
+    maxUses !== undefined
+      ? `SP ${Math.max(0, remainingUses ?? maxUses ?? 0)} / ${maxUses}`
+      : '';
+  const unavailable = disabled || isExhausted;
 
   return (
     <button
@@ -36,15 +46,15 @@ export function EmotionButton({
       {/* カード本体 */}
       <div
         className={`relative overflow-hidden rounded-2xl border-4 p-6 transition-all duration-300 ${
-          disabled
+          unavailable
             ? 'opacity-50 border-gray-500'
             : 'border-white/20 group-hover:scale-105 group-hover:border-white/60 group-hover:shadow-2xl'
         }`}
         style={{
-          background: disabled
+          background: unavailable
             ? 'linear-gradient(to bottom right, #666, #444)'
             : `linear-gradient(to bottom right, ${color}, ${darkerColor})`,
-          boxShadow: disabled
+          boxShadow: unavailable
             ? 'none'
             : isSelected
               ? `0 0 32px ${color}, 0 8px 24px rgba(0,0,0,0.5)`
@@ -52,7 +62,7 @@ export function EmotionButton({
         }}
       >
         {/* 選択時の光るエフェクト */}
-        {isSelected && !disabled && (
+        {isSelected && !unavailable && (
           <div
             className="absolute inset-0 border-4 border-white animate-pulse pointer-events-none"
             style={{ borderRadius: '12px' }}
@@ -61,6 +71,13 @@ export function EmotionButton({
 
         {/* 技名 */}
         <div className="text-lg font-black text-white drop-shadow-md">{name}</div>
+
+        {/* 使用回数 */}
+        {usesText && (
+          <div className="mt-4 rounded-xl bg-black/30 px-3 py-2 text-center text-sm font-bold tracking-wide text-white">
+            {usesText}
+          </div>
+        )}
       </div>
 
       {/* ツールチップ */}

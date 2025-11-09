@@ -49,8 +49,11 @@ export function decideEnemyAction(
  * @returns 選択されたアクション
  */
 function decideEasyAI(state: BattleState): EmotionType {
-  const emotions = getAllEmotions();
-  return emotions[Math.floor(Math.random() * emotions.length)];
+  const available = getEnemyAvailableEmotions(state);
+  if (available.length === 0) {
+    return 'rage';
+  }
+  return available[Math.floor(Math.random() * available.length)];
 }
 
 // ========================================
@@ -67,9 +70,14 @@ function decideNormalAI(state: BattleState): EmotionType {
 
   // 重み付きランダム選択
   const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+  const available = getEnemyAvailableEmotions(state);
+  if (totalWeight <= 0) {
+    return available[0] ?? 'rage';
+  }
   let random = Math.random() * totalWeight;
 
   for (const emotion of getAllEmotions()) {
+    if (weights[emotion] <= 0) continue;
     random -= weights[emotion];
     if (random <= 0) {
       return emotion;
@@ -114,6 +122,15 @@ function calculateActionWeights(state: BattleState): Record<EmotionType, number>
     weights.terror += 1.0;
   }
 
+  const skillUses = getEnemySkillUses(state);
+  if (skillUses) {
+    for (const emotion of getAllEmotions()) {
+      if ((skillUses[emotion] ?? 0) <= 0) {
+        weights[emotion] = 0;
+      }
+    }
+  }
+
   return weights;
 }
 
@@ -127,6 +144,10 @@ function calculateActionWeights(state: BattleState): Record<EmotionType, number>
  * @returns 選択されたアクション
  */
 function decideHardAI(state: BattleState): EmotionType {
+  const available = getEnemyAvailableEmotions(state);
+  if (available.length === 0) {
+    return 'rage';
+  }
   const evaluations = evaluateAllActions(state);
 
   // 最も評価値の高いアクションを選択
@@ -147,6 +168,10 @@ function decideHardAI(state: BattleState): EmotionType {
       .map(([emotion]) => emotion as EmotionType);
 
     return sortedEmotions[1] || bestEmotion;
+  }
+
+  if (!hasEnemyUses(state, bestEmotion)) {
+    return available[0];
   }
 
   return bestEmotion;
@@ -179,6 +204,9 @@ function evaluateAllActions(state: BattleState): Record<EmotionType, number> {
  * @returns 評価値
  */
 function evaluateAction(state: BattleState, emotion: EmotionType): number {
+  if (!hasEnemyUses(state, emotion)) {
+    return -Infinity;
+  }
   let score = 0;
 
   // 1. HP状況による評価
@@ -271,4 +299,21 @@ export function predictPlayerAction(state: BattleState): EmotionType {
 export function getCounterAction(predictedPlayerAction: EmotionType): EmotionType {
   // プレイヤーの選択に勝てる感情を選ぶ
   return getWinningEmotion(predictedPlayerAction);
+}
+function getEnemySkillUses(state: BattleState) {
+  return state.skillUses?.enemy ?? null;
+}
+
+function getEnemyAvailableEmotions(state: BattleState): EmotionType[] {
+  const skillUses = getEnemySkillUses(state);
+  if (!skillUses) {
+    return getAllEmotions();
+  }
+  return getAllEmotions().filter((emotion) => (skillUses[emotion] ?? 0) > 0);
+}
+
+function hasEnemyUses(state: BattleState, emotion: EmotionType): boolean {
+  const skillUses = getEnemySkillUses(state);
+  if (!skillUses) return true;
+  return (skillUses[emotion] ?? 0) > 0;
 }
