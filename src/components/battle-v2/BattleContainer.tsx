@@ -1010,18 +1010,26 @@ export function BattleContainer() {
           <div className="relative w-full h-full bg-black">
             {/* バトルエリア */}
             <div
-              className={`absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center transition duration-300 ${
-                isSuperchatMode ? 'border-emerald-100 shadow-[0_0_80px_rgba(16,185,129,0.95)]' : 'border-white'
+              className={`absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center transition-all duration-500 ${
+                isSuperchatMode ? 'border-emerald-100 shadow-[0_0_80px_rgba(16,185,129,0.95)]' : 'border-white shadow-none'
               }`}
               onClick={handleBattleAreaClick}
             >
-              {isSuperchatMode && (
-                <>
-                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-200/70 via-transparent to-cyan-300/70 mix-blend-screen animate-pulse" />
-                  <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.55),_transparent_55%)] opacity-90 animate-pulse" />
-                  <div className="absolute inset-0 pointer-events-none mix-blend-screen bg-gradient-to-tr from-pink-400/25 via-transparent to-blue-400/25 animate-pulse-slow" />
-                </>
-              )}
+              <div
+                className={`absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-200/70 via-transparent to-cyan-300/70 mix-blend-screen transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-100 scale-100 animate-pulse' : 'opacity-0 scale-95'
+                }`}
+              />
+              <div
+                className={`absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.55),_transparent_55%)] transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-90 animate-pulse' : 'opacity-0'
+                }`}
+              />
+              <div
+                className={`absolute inset-0 pointer-events-none mix-blend-screen bg-gradient-to-tr from-pink-400/25 via-transparent to-blue-400/25 transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-100 animate-pulse-slow' : 'opacity-0'
+                }`}
+              />
               {/* キャラクター配置エリア */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-1/2 left-[-250px] w-[1020px] h-[1020px] -translate-y-[31%]">
