@@ -273,6 +273,27 @@ export function processTurn(
     ...annotateNewEffects(enemySpecialEffects.enemyEffects),
   ];
 
+  const playerCleansed = finalPlayerEffects.some(
+    (effect) => effect.type === 'cleanse' && effect.target === 'player'
+  );
+  const enemyCleansed = finalEnemyEffects.some(
+    (effect) => effect.type === 'cleanse' && effect.target === 'enemy'
+  );
+
+  const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
+    !(
+      (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison') &&
+      effect.target === target
+    );
+
+  const cleanedPlayerEffects = playerCleansed
+    ? finalPlayerEffects.filter((effect) => cleanseEffectFilter(effect, 'player'))
+    : finalPlayerEffects;
+
+  const cleanedEnemyEffects = enemyCleansed
+    ? finalEnemyEffects.filter((effect) => cleanseEffectFilter(effect, 'enemy'))
+    : finalEnemyEffects;
+
   console.log('[DEBUG] Final Effects:', {
     playerSpecialEffects_playerEffects: playerSpecialEffects.playerEffects,
     playerSpecialEffects_enemyEffects: playerSpecialEffects.enemyEffects,
@@ -284,12 +305,12 @@ export function processTurn(
 
   updatedPlayer = {
     ...updatedPlayer,
-    activeEffects: finalPlayerEffects,
+    activeEffects: cleanedPlayerEffects,
   };
 
   updatedEnemy = {
     ...updatedEnemy,
-    activeEffects: finalEnemyEffects,
+    activeEffects: cleanedEnemyEffects,
   };
 
   // 7. ファン率の変化量を計算
