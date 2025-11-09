@@ -47,9 +47,11 @@ import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
 export function processTurn(
   state: BattleState,
   playerAction: EmotionType,
-  enemyAction: EmotionType
+  enemyAction: EmotionType,
+  options?: { isSuperchatTurn?: boolean }
 ): BattleState {
   const turnNumber = state.currentTurn + 1;
+  const isSuperchatTurn = options?.isSuperchatTurn ?? false;
 
   const createEmptySkillUses = () => ({
     rage: 0,
@@ -63,12 +65,15 @@ export function processTurn(
     enemy: createEmptySkillUses(),
   };
 
+  const effectiveEnemyAction = isSuperchatTurn ? playerAction : enemyAction;
+
   // 1. 感情の相性判定
-  const judgement = judgeEmotion(playerAction, enemyAction);
+  const judgement = judgeEmotion(playerAction, effectiveEnemyAction);
 
   // 2. プレイヤーのコメント消費
   const { remaining: remainingComments, consumed: consumedPlayerComments } =
     consumeComments(state.comments, playerAction);
+  const earnedSuperchatTurn = consumedPlayerComments.some((comment) => comment.isSuperchat);
 
   const playerVariant = state.config.selectedActionVariants[playerAction];
   const playerVariantDef = getVariantDefinition(playerAction, playerVariant);
@@ -76,7 +81,7 @@ export function processTurn(
 
   const enemyVariant = DEFAULT_VARIANTS[enemyAction];
   const enemyVariantDef = getVariantDefinition(enemyAction, enemyVariant);
-  const enemyHasAttack = enemyVariantDef.hasAttack !== false;
+  const enemyHasAttack = !isSuperchatTurn && enemyVariantDef.hasAttack !== false;
 
   // 3. プレイヤーのダメージ計算と適用
   const playerDamageResult = playerHasAttack
@@ -164,21 +169,31 @@ export function processTurn(
   }
 
   // 5. 敵側の特殊効果を発動
-  console.log('[DEBUG] Enemy Action:', { enemyAction, target: 'enemy' });
-  const enemySpecialEffects = triggerSpecialEffects({
-    emotion: enemyAction,
-    target: 'enemy',
-    damage: enemyDamageResult.damage,
-    attacker: updatedEnemy,
-    defender: updatedPlayer,
-    comments: remainingComments,
-    config: state.config,
-  });
+  let enemySpecialEffects: SpecialEffectResult;
+  if (isSuperchatTurn) {
+    enemySpecialEffects = {
+      extraDamage: 0,
+      healing: 0,
+      playerEffects: [],
+      enemyEffects: [],
+    };
+  } else {
+    console.log('[DEBUG] Enemy Action:', { enemyAction, target: 'enemy' });
+    enemySpecialEffects = triggerSpecialEffects({
+      emotion: enemyAction,
+      target: 'enemy',
+      damage: enemyDamageResult.damage,
+      attacker: updatedEnemy,
+      defender: updatedPlayer,
+      comments: remainingComments,
+      config: state.config,
+    });
+  }
 
   let enemyExtraDamage = 0;
   let enemyHealing = 0;
 
-  if (enemySpecialEffects.extraDamage > 0) {
+  if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
     enemyExtraDamage = enemySpecialEffects.extraDamage;
     updatedPlayer = {
       ...updatedPlayer,
@@ -186,7 +201,7 @@ export function processTurn(
     };
   }
 
-  if (enemySpecialEffects.healing > 0) {
+  if (!isSuperchatTurn && enemySpecialEffects.healing > 0) {
     enemyHealing = enemySpecialEffects.healing;
     updatedEnemy = {
       ...updatedEnemy,
@@ -296,21 +311,20 @@ export function processTurn(
     fanRate: updatedAudience.enemyFans,
   };
 
+  const updatedSkillUsesPlayer = {
+    ...currentSkillUses.player,
+    [playerAction]: Math.max(0, (currentSkillUses.player[playerAction] ?? 0) - 1),
+  };
+  const updatedSkillUsesEnemy = { ...currentSkillUses.enemy };
+  if (!isSuperchatTurn) {
+    updatedSkillUsesEnemy[enemyAction] = Math.max(
+      0,
+      (currentSkillUses.enemy[enemyAction] ?? 0) - 1
+    );
+  }
   const updatedSkillUses = {
-    player: {
-      ...currentSkillUses.player,
-      [playerAction]: Math.max(
-        0,
-        (currentSkillUses.player[playerAction] ?? 0) - 1
-      ),
-    },
-    enemy: {
-      ...currentSkillUses.enemy,
-      [enemyAction]: Math.max(
-        0,
-        (currentSkillUses.enemy[enemyAction] ?? 0) - 1
-      ),
-    },
+    player: updatedSkillUsesPlayer,
+    enemy: updatedSkillUsesEnemy,
   };
 
   const nextComments = currentComments;
@@ -359,6 +373,7 @@ export function processTurn(
     audienceComposition: updatedAudience,
     commentConversions,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
+    superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
   };
 
   // 11. 状態を更新して返す
@@ -371,6 +386,7 @@ export function processTurn(
     comments: nextComments,
     skillUses: updatedSkillUses,
     turnHistory: [...state.turnHistory, turnResult],
+    pendingSuperchatTurn: earnedSuperchatTurn,
   };
 }
 

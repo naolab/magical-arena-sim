@@ -186,6 +186,7 @@ export interface TurnResult {
   audienceComposition: AudienceComposition; // ターン終了時の観客構成
   message: string; // ターンの説明メッセージ
   commentConversions?: CommentConversionEvent[]; // コメント変換イベント
+  superchatAwarded?: boolean; // スパチャ追撃獲得
 }
 
 // ========================================
@@ -203,6 +204,7 @@ export interface BattleState {
   turnHistory: TurnResult[]; // 過去のターン履歴
   winner: 'player' | 'enemy' | 'draw' | null; // 勝者
   config: BattleParamsV2; // バトル設定パラメータ
+  pendingSuperchatTurn: boolean; // スパチャ追撃待機
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;
