@@ -68,7 +68,7 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     id: 'debuff_scaling',
     name: 'ヘルファイア・スパイク',
     nameJa: 'ヘルファイア・スパイク',
-    description: '敵にかかっているデバフ数に応じて火力アップ（1個ごとに+30%）',
+    description: '敵のデバフ/毒の数に応じて追撃ダメージ（1個ごとに+40%）',
     effectType: 'extra_damage',
     magnitude: 0,
     hasAttack: true,
