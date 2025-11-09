@@ -69,6 +69,10 @@ export function processTurn(
   // 2. プレイヤーのコメント消費
   const { remaining: remainingComments, consumed: consumedPlayerComments } =
     consumeComments(state.comments, playerAction);
+  const playerCommentFanBonus = consumedPlayerComments.reduce(
+    (total, comment) => total + (comment.fanBonus ?? 0),
+    0
+  );
 
   const playerVariant = state.config.selectedActionVariants[playerAction];
   const playerVariantDef = getVariantDefinition(playerAction, playerVariant);
@@ -276,6 +280,7 @@ export function processTurn(
     consumedCommentCount: consumedPlayerComments.length,
     playerFanRate: updatedPlayer.fanRate,
     enemyFanRate: updatedEnemy.fanRate,
+    commentFanBonus: playerCommentFanBonus,
   });
 
   // 8. 観客構成を更新（中立ファンから獲得）
@@ -548,11 +553,12 @@ function calculateFanChanges(params: {
   consumedCommentCount: number;
   playerFanRate: number;
   enemyFanRate: number;
+  commentFanBonus?: number;
 }): { playerChange: number; enemyChange: number } {
-  const { consumedCommentCount } = params;
+  const { consumedCommentCount, commentFanBonus = 0 } = params;
 
   // プレイヤー: 消費コメント1個につき+6%
-  const playerChange = consumedCommentCount * 0.06;
+  const playerChange = consumedCommentCount * 0.06 + commentFanBonus;
 
   // 敵: 毎ターン固定で+10%
   const enemyChange = 0.1;

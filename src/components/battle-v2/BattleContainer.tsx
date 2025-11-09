@@ -638,7 +638,7 @@ export function BattleContainer() {
       if (!prev) return prev;
       return {
         ...prev,
-        comments: prev.comments.filter((c) => c.emotion !== emotion),
+        comments: prev.comments.filter((c) => !(c.isSuperchat || c.emotion === emotion)),
       };
     });
 
@@ -820,7 +820,7 @@ export function BattleContainer() {
           return {
             ...prev,
             comments: prev.comments.map((comment) =>
-              targetIds.has(comment.id)
+              targetIds.has(comment.id) && !comment.isSuperchat
                 ? { ...comment, emotion: conversion.emotion }
                 : comment
             ),

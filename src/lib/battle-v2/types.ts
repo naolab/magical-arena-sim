@@ -72,6 +72,8 @@ export interface Comment {
   emotion: EmotionType; // 感情属性
   text: string; // コメントテキスト
   createdAt: number; // 作成ターン
+  isSuperchat?: boolean; // スパチャかどうか
+  fanBonus?: number; // 追加ファン獲得量
 }
 
 /** コメント生成パラメータ */

@@ -41,7 +41,7 @@ export function EmotionButton({
   return (
     <button
       onClick={onClick}
-      disabled={disabled}
+      disabled={unavailable}
       className={`relative group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} select-none`}
     >
       {/* カード本体 */}

@@ -2,7 +2,7 @@
 
 import { Comment } from '@/lib/battle-v2/types';
 import { getEmotionColor } from '@/lib/battle-v2/emotionSystem';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type CSSProperties } from 'react';
 
 interface CommentItemProps {
   comment: Comment;
@@ -12,7 +12,8 @@ interface CommentItemProps {
 }
 
 export function CommentItem({ comment, isNew = false, animationDelay = 0, isHighlighted = false }: CommentItemProps) {
-  const color = getEmotionColor(comment.emotion);
+  const isSuperchat = !!comment.isSuperchat;
+  const color = isSuperchat ? '#f87171' : getEmotionColor(comment.emotion);
   const wasHighlightedRef = useRef(false);
 
   // 一度でもハイライトされたら記録
@@ -25,6 +26,35 @@ export function CommentItem({ comment, isNew = false, animationDelay = 0, isHigh
   // 一度でもハイライトされたコメントはアニメーションしない
   const shouldAnimate = isNew && !isHighlighted && !wasHighlightedRef.current;
 
+  const containerStyle: CSSProperties = {
+    borderLeft: `4px solid ${color}`,
+    backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
+  };
+
+  if (isSuperchat) {
+    containerStyle.background = isHighlighted
+      ? 'linear-gradient(90deg, #f472b6, #f97316, #fcd34d)'
+      : 'linear-gradient(90deg, rgba(244,114,182,0.75), rgba(249,115,22,0.75), rgba(252,211,77,0.75))';
+    containerStyle.borderLeft = '4px solid #fee2e2';
+    containerStyle.boxShadow = '0 0 6px rgba(252,211,77,0.9), 0 0 8px rgba(244,114,182,0.7), 0 0 10px rgba(249,115,22,0.6)';
+  }
+
+  if (shouldAnimate) {
+    Object.assign(containerStyle, {
+      opacity: 0,
+      animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
+    });
+  }
+
+  if (isHighlighted) {
+    Object.assign(containerStyle, {
+      animation: 'gentlePulse 2s ease-in-out infinite',
+    });
+  }
+
+  const icon = isSuperchat ? '虹' : getEmotionIcon(comment.emotion);
+  const label = isSuperchat ? 'SUPERCHAT' : getEmotionName(comment.emotion);
+
   return (
     <div
       className={`rounded-lg p-2.5 text-white transition-all relative ${
@@ -32,17 +62,7 @@ export function CommentItem({ comment, isNew = false, animationDelay = 0, isHigh
       } ${
         isHighlighted ? 'ring-2 ring-white shadow-lg transform scale-105 z-10' : ''
       }`}
-      style={{
-        backgroundColor: isHighlighted ? `${color}80` : `${color}40`,
-        borderLeft: `4px solid ${color}`,
-        ...(shouldAnimate && {
-          opacity: 0,
-          animation: `slideIn 0.3s ease-out ${animationDelay}ms forwards`,
-        }),
-        ...(isHighlighted && {
-          animation: 'gentlePulse 2s ease-in-out infinite',
-        }),
-      }}
+      style={containerStyle}
     >
       {/* 上部：感情アイコン */}
       <div className="mb-0.5 flex items-center gap-2">
@@ -50,10 +70,10 @@ export function CommentItem({ comment, isNew = false, animationDelay = 0, isHigh
           className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold text-white"
           style={{ backgroundColor: color }}
         >
-          {getEmotionIcon(comment.emotion)}
+          {icon}
         </div>
         <div className="text-xs font-semibold opacity-80">
-          {getEmotionName(comment.emotion)}
+          {label}
         </div>
       </div>
 
