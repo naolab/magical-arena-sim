@@ -35,25 +35,26 @@ export function EmotionButton({
     maxUses !== undefined
       ? `SP ${Math.max(0, remainingUses ?? maxUses ?? 0)} / ${maxUses}`
       : '';
+  const emotionTag = getEmotionName(emotion).toUpperCase();
   const unavailable = disabled || isExhausted;
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`relative group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`relative group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} select-none`}
     >
       {/* カード本体 */}
       <div
-        className={`relative overflow-hidden rounded-2xl border-4 p-6 transition-all duration-300 ${
+        className={`relative overflow-hidden rounded-xl border-4 px-4 py-3 transition-all duration-300 ${
           unavailable
             ? 'opacity-50 border-gray-500'
             : 'border-white/20 group-hover:scale-105 group-hover:border-white/60 group-hover:shadow-2xl'
         }`}
         style={{
           background: unavailable
-            ? 'linear-gradient(to bottom right, #666, #444)'
-            : `linear-gradient(to bottom right, ${color}, ${darkerColor})`,
+            ? 'linear-gradient(180deg, #777, #303030)'
+            : `linear-gradient(180deg, ${color} 0%, ${darkerColor} 70%, #1f1f1f 100%)`,
           boxShadow: unavailable
             ? 'none'
             : isSelected
@@ -70,12 +71,15 @@ export function EmotionButton({
         )}
 
         {/* 技名 */}
-        <div className="text-lg font-black text-white drop-shadow-md">{name}</div>
+        <div className="text-base font-black text-white drop-shadow-md">{name}</div>
 
         {/* 使用回数 */}
         {usesText && (
-          <div className="mt-4 rounded-xl bg-black/30 px-3 py-2 text-center text-sm font-bold tracking-wide text-white">
-            {usesText}
+          <div className="mt-0.5 flex items-center justify-center gap-3 text-xs font-bold tracking-wide text-white drop-shadow">
+            <span className="rounded-md border border-white/40 px-2 py-0.5 leading-none text-[10px] tracking-widest">
+              {emotionTag}
+            </span>
+            <span>{usesText}</span>
           </div>
         )}
       </div>
@@ -83,7 +87,7 @@ export function EmotionButton({
       {/* ツールチップ */}
       {description && (
         <div
-          className={`pointer-events-none absolute left-1/2 w-56 -translate-x-1/2 rounded-xl border border-white/30 bg-black/80 p-3 text-sm text-white opacity-0 shadow-xl transition-opacity duration-200 delay-200 group-hover:opacity-100 ${
+          className={`pointer-events-none absolute left-1/2 w-56 -translate-x-1/2 rounded-lg border border-white/30 bg-black/80 p-3 text-sm text-white opacity-0 shadow-xl transition-opacity duration-200 delay-200 group-hover:opacity-100 ${
             tooltipPosition === 'top'
               ? 'bottom-[calc(100%+0.5rem)]'
               : 'top-[calc(100%+0.5rem)]'

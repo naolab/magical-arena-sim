@@ -26,7 +26,7 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     effectType: 'extra_damage',
     magnitude: 50, // 50%の追加ダメージ
     hasAttack: true,
-    maxUses: 2,
+    maxUses: 20,
   },
   percentage: {
     id: 'percentage',
@@ -36,7 +36,7 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     effectType: 'extra_damage',
     magnitude: 15, // 最大HPの15%
     hasAttack: false,
-    maxUses: 2,
+    maxUses: 20,
   },
 };
 
@@ -54,7 +54,7 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     magnitude: 20, // 20%の攻撃力低下
     duration: 2, // 2ターン持続
     hasAttack: true,
-    maxUses: 2,
+    maxUses: 20,
   },
   poison: {
     id: 'poison',
@@ -65,7 +65,7 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     magnitude: 70, // 毎ターン70ダメージ
     duration: 3, // 3ターン持続
     hasAttack: false,
-    maxUses: 2,
+    maxUses: 20,
   },
 };
 
@@ -82,7 +82,7 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     effectType: 'drain',
     magnitude: 40, // 与ダメージの40%を回復
     hasAttack: true,
-    maxUses: 2,
+    maxUses: 20,
   },
   desperate: {
     id: 'desperate',
@@ -92,7 +92,7 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     effectType: 'drain',
     magnitude: 15, // 最大HPの15%
     hasAttack: false, // 回復のみ
-    maxUses: 2,
+    maxUses: 20,
   },
 };
 
@@ -110,7 +110,7 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     magnitude: 30, // 30%の攻撃力上昇
     duration: 2, // 2ターン持続
     hasAttack: true,
-    maxUses: 2,
+    maxUses: 20,
   },
   convert: {
     id: 'convert',
@@ -120,7 +120,7 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     effectType: 'buff',
     magnitude: 3, // 変換数
     hasAttack: false, // 変換のみ
-    maxUses: 2,
+    maxUses: 20,
   },
 };
 
