@@ -9,9 +9,21 @@
  *   dispatch to different effect functions based on the selected variant
  */
 
-import { SpecialEffect, SpecialEffectTriggerParams, EmotionType } from './types';
+import { SpecialEffect, SpecialEffectTriggerParams, EmotionType, Comment } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { getVariantDefinition } from './actionVariants';
+
+// ========================================
+// Extended Types for Variant Effects
+// ========================================
+
+/** 拡張された特殊効果トリガーパラメータ（バリアント対応） */
+export interface ExtendedEffectTriggerParams extends SpecialEffectTriggerParams {
+  enemyMaxHp?: number; // 敵の最大HP（割合ダメージ用）
+  playerHp?: number; // プレイヤーの現在HP（HP依存回復用）
+  playerMaxHp?: number; // プレイヤーの最大HP（HP依存回復用）
+  comments?: Comment[]; // コメントプール（コメント変換用）
+}
 
 // ========================================
 // Constants
@@ -108,6 +120,99 @@ export function applyEcstasyEffect(
 }
 
 // ========================================
+// New Variant-Specific Effects
+// ========================================
+
+/**
+ * Rage Percentage: 敵の最大HPに応じた割合ダメージ
+ * @param params 拡張トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 追加ダメージ量
+ */
+export function applyRagePercentageEffect(
+  params: ExtendedEffectTriggerParams,
+  variant: { magnitude: number }
+): number {
+  const { enemyMaxHp } = params;
+  if (!enemyMaxHp) return 0;
+
+  // 敵の最大HP × 割合（magnitude%）
+  return Math.round(enemyMaxHp * (variant.magnitude / 100));
+}
+
+/**
+ * Terror Poison: 毒効果（持続ダメージ）
+ * @param params トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 毒効果
+ */
+export function applyTerrorPoisonEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { magnitude: number; duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'poison',
+    emotion,
+    duration: variant.duration || 3,
+    magnitude: variant.magnitude, // 毎ターンのダメージ量
+    target: target === 'player' ? 'enemy' : 'player', // 相手に付与
+  };
+}
+
+/**
+ * Grief Desperate: HP率に応じた回復（HP低いほど回復UP）
+ * @param params 拡張トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 回復HP量
+ */
+export function applyGriefDesperateEffect(
+  params: ExtendedEffectTriggerParams,
+  variant: { magnitude: number }
+): number {
+  const { playerHp, playerMaxHp } = params;
+  if (!playerHp || !playerMaxHp) return 0;
+
+  const hpRatio = playerHp / playerMaxHp;
+  // HP率が低いほど回復量UP: 基本回復量 × (2 - HP率)
+  // HP100%時: 1.0倍, HP50%時: 1.5倍, HP0%時: 2.0倍
+  const multiplier = 2 - hpRatio;
+  const baseHeal = Math.round(playerMaxHp * (variant.magnitude / 100));
+
+  return Math.round(baseHeal * multiplier);
+}
+
+/**
+ * Ecstasy Convert: コメント色変換
+ * @param params 拡張トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 変換後のコメント配列
+ */
+export function applyEcstasyConvertEffect(
+  params: ExtendedEffectTriggerParams,
+  variant: { magnitude: number }
+): Comment[] | null {
+  const { comments } = params;
+  if (!comments) return null;
+
+  const convertCount = Math.min(variant.magnitude, comments.length);
+  const convertedComments = [...comments];
+
+  // 先頭からconvertCount個のコメントをecstasyに変換
+  for (let i = 0; i < convertCount; i++) {
+    if (convertedComments[i].emotion !== 'ecstasy') {
+      convertedComments[i] = {
+        ...convertedComments[i],
+        emotion: 'ecstasy',
+      };
+    }
+  }
+
+  return convertedComments;
+}
+
+// ========================================
 // Effect Management
 // ========================================
 
@@ -197,6 +302,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: 攻撃力+${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'debuff':
       return `${emotionName}: 攻撃力-${effect.magnitude}% (残り${effect.duration}ターン)`;
+    case 'poison':
+      return `${emotionName}: 毒 (${effect.magnitude}ダメージ/ターン, 残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':
@@ -204,4 +311,14 @@ export function getEffectDescription(effect: SpecialEffect): string {
     default:
       return `${emotionName}: 効果`;
   }
+}
+
+/**
+ * 毒効果によるダメージを計算・適用
+ * @param effects 有効な効果リスト
+ * @returns 毒ダメージの合計
+ */
+export function calculatePoisonDamage(effects: SpecialEffect[]): number {
+  const poisonEffects = effects.filter((e) => e.type === 'poison');
+  return poisonEffects.reduce((total, effect) => total + effect.magnitude, 0);
 }

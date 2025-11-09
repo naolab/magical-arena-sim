@@ -20,16 +20,16 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 // ========================================
 
 /** Rageのバリアント */
-export type RageVariant = 'explosive';
+export type RageVariant = 'explosive' | 'percentage';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken';
+export type TerrorVariant = 'weaken' | 'poison';
 
 /** Griefのバリアント */
-export type GriefVariant = 'drain';
+export type GriefVariant = 'drain' | 'desperate';
 
 /** Ecstasyのバリアント */
-export type EcstasyVariant = 'inspire';
+export type EcstasyVariant = 'inspire' | 'convert';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -55,6 +55,7 @@ export interface ActionVariantDefinition {
   effectType: SpecialEffectType;
   magnitude: number; // 効果量（%）
   duration?: number; // 効果持続ターン数（buff/debuffの場合）
+  hasAttack: boolean; // 攻撃を行うか（false = 特殊効果のみ）
 }
 
 // ========================================
@@ -84,7 +85,8 @@ export type SpecialEffectType =
   | 'extra_damage'  // Rage: 追加ダメージ
   | 'debuff'        // Terror: デバフ（攻撃力低下）
   | 'drain'         // Grief: HP吸収
-  | 'buff';         // Ecstasy: バフ（攻撃力上昇）
+  | 'buff'          // Ecstasy: バフ（攻撃力上昇）
+  | 'poison';       // Terror: 毒（持続ダメージ）
 
 /** 特殊効果 */
 export interface SpecialEffect {

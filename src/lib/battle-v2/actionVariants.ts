@@ -23,6 +23,16 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     description: '激情のまま連続攻撃を繰り出す（追加ダメージ+50%）',
     effectType: 'extra_damage',
     magnitude: 50, // 50%の追加ダメージ
+    hasAttack: true,
+  },
+  percentage: {
+    id: 'percentage',
+    name: 'Percentage Rage',
+    nameJa: '割合ダメージ',
+    description: '敵の最大HPに応じたダメージを与える（最大HPの15%）',
+    effectType: 'extra_damage',
+    magnitude: 15, // 最大HPの15%
+    hasAttack: true,
   },
 };
 
@@ -39,6 +49,17 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     effectType: 'debuff',
     magnitude: 20, // 20%の攻撃力低下
     duration: 2, // 2ターン持続
+    hasAttack: true,
+  },
+  poison: {
+    id: 'poison',
+    name: 'Toxic Terror',
+    nameJa: '猛毒の恐怖',
+    description: '毒で相手を蝕む（毎ターン50ダメージ、3ターン）',
+    effectType: 'poison',
+    magnitude: 50, // 毎ターン50ダメージ
+    duration: 3, // 3ターン持続
+    hasAttack: true,
   },
 };
 
@@ -54,6 +75,16 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     description: '悲しみの重さで相手のエネルギーを吸い取る（ダメージの40%回復）',
     effectType: 'drain',
     magnitude: 40, // 与ダメージの40%を回復
+    hasAttack: true,
+  },
+  desperate: {
+    id: 'desperate',
+    name: 'Desperate Grief',
+    nameJa: '絶望的回復',
+    description: 'HPが低いほど回復量が増加（最大HP30%、瀕死時は2倍）',
+    effectType: 'drain',
+    magnitude: 30, // 最大HPの30%（基本）
+    hasAttack: false, // 回復のみ
   },
 };
 
@@ -70,6 +101,16 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     effectType: 'buff',
     magnitude: 30, // 30%の攻撃力上昇
     duration: 2, // 2ターン持続
+    hasAttack: true,
+  },
+  convert: {
+    id: 'convert',
+    name: 'Converting Ecstasy',
+    nameJa: 'コメント変換',
+    description: 'コメントの色を変換する（3個をEcstasyに変換）',
+    effectType: 'buff',
+    magnitude: 3, // 変換数
+    hasAttack: false, // 変換のみ
   },
 };
 
@@ -80,22 +121,6 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
 /**
  * 感情タイプから対応するバリアント定義を取得
  */
-export function getVariantDefinition(
-  emotion: 'rage',
-  variant: RageVariant
-): ActionVariantDefinition;
-export function getVariantDefinition(
-  emotion: 'terror',
-  variant: TerrorVariant
-): ActionVariantDefinition;
-export function getVariantDefinition(
-  emotion: 'grief',
-  variant: GriefVariant
-): ActionVariantDefinition;
-export function getVariantDefinition(
-  emotion: 'ecstasy',
-  variant: EcstasyVariant
-): ActionVariantDefinition;
 export function getVariantDefinition(
   emotion: 'rage' | 'terror' | 'grief' | 'ecstasy',
   variant: RageVariant | TerrorVariant | GriefVariant | EcstasyVariant

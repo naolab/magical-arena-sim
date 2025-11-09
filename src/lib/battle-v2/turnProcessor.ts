@@ -21,9 +21,16 @@ import {
   applyTerrorEffect,
   applyGriefEffect,
   applyEcstasyEffect,
+  applyRagePercentageEffect,
+  applyTerrorPoisonEffect,
+  applyGriefDesperateEffect,
+  applyEcstasyConvertEffect,
   updateEffectDurations,
   removeExpiredEffects,
+  calculatePoisonDamage,
+  type ExtendedEffectTriggerParams,
 } from './specialEffects';
+import { getVariantDefinition } from './actionVariants';
 
 // ========================================
 // Turn Processing
@@ -83,7 +90,9 @@ export function processTurn(
     emotion: playerAction,
     target: 'player',
     damage: playerDamageResult.damage,
+    attacker: updatedPlayer,
     defender: updatedEnemy,
+    comments: remainingComments,
     config: state.config,
   });
 
@@ -106,12 +115,20 @@ export function processTurn(
     };
   }
 
+  // コメント変換があれば適用
+  let currentComments = remainingComments;
+  if (playerSpecialEffects.convertedComments) {
+    currentComments = playerSpecialEffects.convertedComments;
+  }
+
   // 5. 敵側の特殊効果を発動
   const enemySpecialEffects = triggerSpecialEffects({
     emotion: enemyAction,
     target: 'enemy',
     damage: enemyDamageResult.damage,
+    attacker: updatedEnemy,
     defender: updatedPlayer,
+    comments: remainingComments,
     config: state.config,
   });
 
@@ -131,6 +148,24 @@ export function processTurn(
     updatedEnemy = {
       ...updatedEnemy,
       hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemySpecialEffects.healing),
+    };
+  }
+
+  // 5.5. 毒ダメージの適用（ターン開始時の効果）
+  const playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
+  const enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+
+  if (playerPoisonDamage > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - playerPoisonDamage),
+    };
+  }
+
+  if (enemyPoisonDamage > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.max(0, updatedEnemy.hp - enemyPoisonDamage),
     };
   }
 
@@ -306,19 +341,22 @@ interface SpecialEffectResult {
   healing: number;
   playerEffects: SpecialEffect[];
   enemyEffects: SpecialEffect[];
+  convertedComments?: Comment[]; // コメント変換結果
 }
 
 /**
- * 特殊効果を発動
+ * 特殊効果を発動（バリアント対応版）
  */
 function triggerSpecialEffects(params: {
   emotion: EmotionType;
   target: 'player' | 'enemy';
   damage: number;
+  attacker: PlayerState | EnemyState;
   defender: PlayerState | EnemyState;
+  comments: Comment[];
   config: BattleParamsV2;
 }): SpecialEffectResult {
-  const { emotion, target, damage, config } = params;
+  const { emotion, target, damage, attacker, defender, comments, config } = params;
 
   const result: SpecialEffectResult = {
     extraDamage: 0,
@@ -327,34 +365,72 @@ function triggerSpecialEffects(params: {
     enemyEffects: [],
   };
 
+  // 選択されたバリアントを取得
+  const selectedVariant = config.selectedActionVariants[emotion];
+  const variantDef = getVariantDefinition(emotion, selectedVariant);
+
+  // 拡張パラメータを準備
+  const extendedParams: ExtendedEffectTriggerParams = {
+    emotion,
+    target,
+    damage,
+    enemyMaxHp: defender.maxHp,
+    playerHp: target === 'player' ? attacker.hp : defender.hp,
+    playerMaxHp: target === 'player' ? attacker.maxHp : defender.maxHp,
+    comments,
+  };
+
+  // バリアントに応じた処理
   switch (emotion) {
     case 'rage':
-      result.extraDamage = applyRageEffect({ emotion, target, damage }, config);
-      break;
-
-    case 'terror': {
-      const debuff = applyTerrorEffect({ emotion, target, damage }, config);
-      if (debuff.target === 'player') {
-        result.playerEffects.push(debuff);
-      } else {
-        result.enemyEffects.push(debuff);
+      if (selectedVariant === 'explosive') {
+        result.extraDamage = applyRageEffect({ emotion, target, damage }, config);
+      } else if (selectedVariant === 'percentage') {
+        result.extraDamage = applyRagePercentageEffect(extendedParams, variantDef);
       }
       break;
-    }
+
+    case 'terror':
+      if (selectedVariant === 'weaken') {
+        const debuff = applyTerrorEffect({ emotion, target, damage }, config);
+        if (debuff.target === 'player') {
+          result.playerEffects.push(debuff);
+        } else {
+          result.enemyEffects.push(debuff);
+        }
+      } else if (selectedVariant === 'poison') {
+        const poison = applyTerrorPoisonEffect({ emotion, target, damage }, variantDef);
+        if (poison.target === 'player') {
+          result.playerEffects.push(poison);
+        } else {
+          result.enemyEffects.push(poison);
+        }
+      }
+      break;
 
     case 'grief':
-      result.healing = applyGriefEffect({ emotion, target, damage }, config);
-      break;
-
-    case 'ecstasy': {
-      const buff = applyEcstasyEffect({ emotion, target, damage }, config);
-      if (buff.target === 'player') {
-        result.playerEffects.push(buff);
-      } else {
-        result.enemyEffects.push(buff);
+      if (selectedVariant === 'drain') {
+        result.healing = applyGriefEffect({ emotion, target, damage }, config);
+      } else if (selectedVariant === 'desperate') {
+        result.healing = applyGriefDesperateEffect(extendedParams, variantDef);
       }
       break;
-    }
+
+    case 'ecstasy':
+      if (selectedVariant === 'inspire') {
+        const buff = applyEcstasyEffect({ emotion, target, damage }, config);
+        if (buff.target === 'player') {
+          result.playerEffects.push(buff);
+        } else {
+          result.enemyEffects.push(buff);
+        }
+      } else if (selectedVariant === 'convert') {
+        const converted = applyEcstasyConvertEffect(extendedParams, variantDef);
+        if (converted) {
+          result.convertedComments = converted;
+        }
+      }
+      break;
   }
 
   return result;
