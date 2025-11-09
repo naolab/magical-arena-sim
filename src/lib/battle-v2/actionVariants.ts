@@ -55,9 +55,9 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     id: 'poison',
     name: 'Toxic Terror',
     nameJa: '猛毒の恐怖',
-    description: '毒で相手を蝕む（毎ターン50ダメージ、3ターン）',
+    description: '毒で相手を蝕む（毎ターン70ダメージ、3ターン）',
     effectType: 'poison',
-    magnitude: 50, // 毎ターン50ダメージ
+    magnitude: 70, // 毎ターン70ダメージ
     duration: 3, // 3ターン持続
     hasAttack: false,
   },
@@ -81,9 +81,9 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     id: 'desperate',
     name: 'Desperate Grief',
     nameJa: '絶望的回復',
-    description: 'HPが低いほど回復量が増加（最大HP30%、瀕死時は2倍）',
+    description: '強い悲しみで自分を立て直す（最大HPの15%回復）',
     effectType: 'drain',
-    magnitude: 30, // 最大HPの30%（基本）
+    magnitude: 15, // 最大HPの15%
     hasAttack: false, // 回復のみ
   },
 };

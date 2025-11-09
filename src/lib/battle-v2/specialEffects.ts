@@ -181,13 +181,8 @@ export function applyGriefDesperateEffect(
   const { playerHp, playerMaxHp } = params;
   if (!playerHp || !playerMaxHp) return 0;
 
-  const hpRatio = playerHp / playerMaxHp;
-  // HP率が低いほど回復量UP: 基本回復量 × (2 - HP率)
-  // HP100%時: 1.0倍, HP50%時: 1.5倍, HP0%時: 2.0倍
-  const multiplier = 2 - hpRatio;
-  const baseHeal = Math.round(playerMaxHp * (variant.magnitude / 100));
-
-  return Math.round(baseHeal * multiplier);
+  // 最大HPに対する固定割合回復
+  return Math.round(playerMaxHp * (variant.magnitude / 100));
 }
 
 /**
