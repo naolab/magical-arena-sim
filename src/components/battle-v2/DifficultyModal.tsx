@@ -80,49 +80,76 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                 <>
                   {/* 基本設定 */}
                   <section>
-              <h3 className="text-lg font-bold mb-3 text-cyan-400">基本設定</h3>
+                    <h3 className="text-lg font-bold mb-3 text-cyan-400">基本設定</h3>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-bold mb-2 block">プレイヤーHP</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="500" max="4000" step="50"
-                      value={params.playerMaxHp}
-                      onChange={(e) => setParams({ playerMaxHp: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">{params.playerMaxHp}</span>
-                  </div>
-                </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-bold">属性相性を有効にする</p>
+                          <p className="text-xs text-white/70">オフにすると常に互角扱いになります</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={params.enableMatchups}
+                            onChange={(e) => setParams({ enableMatchups: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-12 h-6 bg-white/20 rounded-full peer peer-checked:bg-cyan-400 transition-all relative">
+                            <div
+                              className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                params.enableMatchups ? 'translate-x-6' : 'translate-x-0'
+                              }`}
+                            ></div>
+                          </div>
+                        </label>
+                      </div>
 
-                <div>
-                  <label className="text-sm font-bold mb-2 block">敵HP</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="500" max="4000" step="50"
-                      value={params.enemyMaxHp}
-                      onChange={(e) => setParams({ enemyMaxHp: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">{params.enemyMaxHp}</span>
-                  </div>
-                </div>
+                      <div>
+                        <label className="text-sm font-bold mb-2 block">プレイヤーHP</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="range" min="500" max="4000" step="50"
+                            value={params.playerMaxHp}
+                            onChange={(e) => setParams({ playerMaxHp: Number(e.target.value) })}
+                            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <span className="font-bold text-xl w-24 text-center">{params.playerMaxHp}</span>
+                        </div>
+                      </div>
 
-                <div>
-                  <label className="text-sm font-bold mb-2 block">基本攻撃力</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="50" max="200" step="10"
-                      value={params.playerBasePower}
-                      onChange={(e) => setParams({ playerBasePower: Number(e.target.value), enemyBasePower: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">{params.playerBasePower}</span>
-                  </div>
-                </div>
-              </div>
-            </section>
+                      <div>
+                        <label className="text-sm font-bold mb-2 block">敵HP</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="range" min="500" max="4000" step="50"
+                            value={params.enemyMaxHp}
+                            onChange={(e) => setParams({ enemyMaxHp: Number(e.target.value) })}
+                            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <span className="font-bold text-xl w-24 text-center">{params.enemyMaxHp}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-bold mb-2 block">基本攻撃力</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="range" min="50" max="200" step="10"
+                            value={params.playerBasePower}
+                            onChange={(e) =>
+                              setParams({
+                                playerBasePower: Number(e.target.value),
+                                enemyBasePower: Number(e.target.value),
+                              })
+                            }
+                            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <span className="font-bold text-xl w-24 text-center">{params.playerBasePower}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
 
             {/* ダメージ設定 */}
             <section>
@@ -167,6 +194,7 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                     <span className="font-bold text-xl w-24 text-center">×{params.matchupBonusLose.toFixed(2)}</span>
                   </div>
                 </div>
+
               </div>
             </section>
 

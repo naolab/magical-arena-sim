@@ -84,13 +84,17 @@ export function judgeEmotion(
  * @returns 補正倍率
  */
 export function getMatchupBonus(result: BattleResult, config?: BattleParamsV2): number {
-  if (!config) {
-    return MATCHUP_BONUS[result];
+  if (config && config.enableMatchups === false) {
+    return 1.0;
   }
 
-  if (result === 'win') return config.matchupBonusWin;
-  if (result === 'lose') return config.matchupBonusLose;
-  return config.matchupBonusDraw;
+  if (config) {
+    if (result === 'win') return config.matchupBonusWin;
+    if (result === 'lose') return config.matchupBonusLose;
+    return config.matchupBonusDraw;
+  }
+
+  return MATCHUP_BONUS[result];
 }
 
 // ========================================
