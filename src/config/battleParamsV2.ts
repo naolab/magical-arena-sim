@@ -12,13 +12,13 @@ export const BATTLE_CONFIG = {
   playerMaxHp: 1000,
 
   /** 敵の最大HP */
-  enemyMaxHp: 1000,
+  enemyMaxHp: 2000,
 
   /** プレイヤーの基本攻撃力 */
   playerBasePower: 100,
 
   /** 敵の基本攻撃力 */
-  enemyBasePower: 100,
+  enemyBasePower: 150,
 
   /** 初期ファン率 */
   initialFanRate: 0.2,
