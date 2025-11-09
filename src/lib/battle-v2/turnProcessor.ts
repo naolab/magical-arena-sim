@@ -70,7 +70,7 @@ export function processTurn(
   // 4. 敵のダメージ計算と適用
   const enemyDamageResult = calculateAndApplyDamage({
     attacker: state.enemy,
-    defender: playerDamageResult.defender, // プレイヤーのダメージ適用後の敵
+    defender: state.player, // 現在のプレイヤー状態（敵の攻撃対象）
     action: enemyAction,
     judgement: judgement === 'win' ? 'lose' : judgement === 'lose' ? 'win' : 'draw',
     consumedComments: [], // 敵はコメントを消費しない
