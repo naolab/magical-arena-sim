@@ -178,8 +178,8 @@ export function applyGriefDesperateEffect(
   params: ExtendedEffectTriggerParams,
   variant: { magnitude: number }
 ): number {
-  const { playerHp, playerMaxHp } = params;
-  if (!playerHp || !playerMaxHp) return 0;
+  const { playerMaxHp } = params;
+  if (!playerMaxHp) return 0;
 
   // 最大HPに対する固定割合回復
   return Math.round(playerMaxHp * (variant.magnitude / 100));
