@@ -18,6 +18,7 @@ export interface BattleParamsV2 {
   matchupBonusWin: number;
   matchupBonusDraw: number;
   matchupBonusLose: number;
+  enableMatchups: boolean;
 
   // コメントシステム
   commentsPerTurn: number;
@@ -59,6 +60,7 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   matchupBonusWin: 1.5,
   matchupBonusDraw: 1.0,
   matchupBonusLose: 0.7,
+  enableMatchups: true,
 
   // コメントシステム
   commentsPerTurn: 3,

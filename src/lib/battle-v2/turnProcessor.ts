@@ -68,7 +68,9 @@ export function processTurn(
   const effectiveEnemyAction = isSuperchatTurn ? playerAction : enemyAction;
 
   // 1. 感情の相性判定
-  const judgement = judgeEmotion(playerAction, effectiveEnemyAction);
+  const judgement = state.config.enableMatchups
+    ? judgeEmotion(playerAction, effectiveEnemyAction)
+    : 'draw';
 
   // 2. プレイヤーのコメント消費
   const { remaining: remainingComments, consumed: consumedPlayerComments } =
