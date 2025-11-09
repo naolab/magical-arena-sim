@@ -76,6 +76,14 @@ export interface CommentGenerationParams {
   emotionWeights?: Record<EmotionType, number>; // 感情の重み（省略時は均等）
 }
 
+/** コメント変換イベント */
+export interface CommentConversionEvent {
+  target: 'player' | 'enemy';
+  emotion: EmotionType; // 変換後の感情
+  count: number; // 変換数
+  commentIds: string[]; // 対象コメントID
+}
+
 // ========================================
 // Special Effects
 // ========================================
@@ -172,6 +180,7 @@ export interface TurnResult {
   enemyState: EnemyState; // ターン終了時の敵状態
   audienceComposition: AudienceComposition; // ターン終了時の観客構成
   message: string; // ターンの説明メッセージ
+  commentConversions?: CommentConversionEvent[]; // コメント変換イベント
 }
 
 // ========================================

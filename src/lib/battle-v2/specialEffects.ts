@@ -25,6 +25,13 @@ export interface ExtendedEffectTriggerParams extends SpecialEffectTriggerParams 
   comments?: Comment[]; // コメントプール（コメント変換用）
 }
 
+/** コメント変換の結果 */
+export interface CommentConversionResult {
+  comments: Comment[];
+  convertedCommentIds: string[];
+  targetEmotion: EmotionType;
+}
+
 // ========================================
 // Constants
 // ========================================
@@ -192,24 +199,35 @@ export function applyGriefDesperateEffect(
 export function applyEcstasyConvertEffect(
   params: ExtendedEffectTriggerParams,
   variant: { magnitude: number }
-): Comment[] | null {
+): CommentConversionResult | null {
   const { comments } = params;
   if (!comments) return null;
 
   const convertCount = Math.min(variant.magnitude, comments.length);
   const convertedComments = [...comments];
+  const convertedIndices: number[] = [];
+  const targetEmotion: EmotionType = 'rage'; // 赤（Rage）に変換
 
-  // 先頭からconvertCount個のコメントをecstasyに変換
+  // 先頭からconvertCount個のコメントを赤（Rage）に変換
   for (let i = 0; i < convertCount; i++) {
-    if (convertedComments[i].emotion !== 'ecstasy') {
+    if (convertedComments[i].emotion !== targetEmotion) {
       convertedComments[i] = {
         ...convertedComments[i],
-        emotion: 'ecstasy',
+        emotion: targetEmotion,
       };
+      convertedIndices.push(i);
     }
   }
 
-  return convertedComments;
+  if (convertedIndices.length === 0) {
+    return null;
+  }
+
+  return {
+    comments: convertedComments,
+    convertedCommentIds: convertedIndices.map((index) => comments[index].id),
+    targetEmotion,
+  };
 }
 
 // ========================================

@@ -11,6 +11,7 @@ import {
   EnemyState,
   SpecialEffect,
   Comment,
+  CommentConversionEvent,
 } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { judgeEmotion } from './emotionSystem';
@@ -116,10 +117,20 @@ export function processTurn(
     };
   }
 
+  const commentConversions: CommentConversionEvent[] = [];
+
   // コメント変換があれば適用
   let currentComments = remainingComments;
   if (playerSpecialEffects.convertedComments) {
     currentComments = playerSpecialEffects.convertedComments;
+  }
+  if (playerSpecialEffects.commentConversion) {
+    commentConversions.push({
+      target: 'player',
+      emotion: playerSpecialEffects.commentConversion.targetEmotion,
+      count: playerSpecialEffects.commentConversion.count,
+      commentIds: playerSpecialEffects.commentConversion.convertedCommentIds,
+    });
   }
 
   // 5. 敵側の特殊効果を発動
@@ -255,6 +266,8 @@ export function processTurn(
     fanRate: updatedAudience.enemyFans,
   };
 
+  const nextComments = currentComments;
+
   // 10. ターン結果を作成
   const turnResult: TurnResult = {
     turnNumber,
@@ -297,6 +310,7 @@ export function processTurn(
     playerState: updatedPlayer,
     enemyState: updatedEnemy,
     audienceComposition: updatedAudience,
+    commentConversions,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
   };
 
@@ -307,7 +321,7 @@ export function processTurn(
     player: updatedPlayer,
     enemy: updatedEnemy,
     audience: updatedAudience,
-    comments: remainingComments,
+    comments: nextComments,
     turnHistory: [...state.turnHistory, turnResult],
   };
 }
@@ -356,12 +370,19 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
   };
 }
 
+interface CommentConversionSummary {
+  targetEmotion: EmotionType;
+  convertedCommentIds: string[];
+  count: number;
+}
+
 interface SpecialEffectResult {
   extraDamage: number;
   healing: number;
   playerEffects: SpecialEffect[];
   enemyEffects: SpecialEffect[];
-  convertedComments?: Comment[]; // コメント変換結果
+  convertedComments?: Comment[]; // コメント変換後の配列
+  commentConversion?: CommentConversionSummary;
 }
 
 /**
@@ -460,9 +481,14 @@ function triggerSpecialEffects(params: {
           result.enemyEffects.push(buff);
         }
       } else if (selectedVariant === 'convert') {
-        const converted = applyEcstasyConvertEffect(extendedParams, variantDef);
-        if (converted) {
-          result.convertedComments = converted;
+        const conversion = applyEcstasyConvertEffect(extendedParams, variantDef);
+        if (conversion) {
+          result.convertedComments = conversion.comments;
+          result.commentConversion = {
+            targetEmotion: conversion.targetEmotion,
+            convertedCommentIds: conversion.convertedCommentIds,
+            count: conversion.convertedCommentIds.length,
+          };
         }
       }
       break;

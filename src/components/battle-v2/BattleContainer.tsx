@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType, TurnResult, SpecialEffect } from '@/lib/battle-v2/types';
+import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
@@ -119,6 +119,7 @@ function buildTurnMessages(
     onEnemyPoison?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
+    onCommentConversion?: (conversion: CommentConversionEvent) => void;
   }
 ): BattleMessage[] {
   const messages: BattleMessage[] = [];
@@ -206,6 +207,20 @@ function buildTurnMessages(
         () => handlers.onEnemyPoison?.(secondaryEffects.enemy.poisonDamage)
       )
     );
+  }
+
+  if (result.commentConversions && result.commentConversions.length > 0) {
+    result.commentConversions.forEach((conversion) => {
+      const targetLabel = conversion.target === 'player' ? 'あなた' : '敵';
+      const emotionName = getEmotionName(conversion.emotion);
+      messages.push(
+        createMessage(
+          'system',
+          `${targetLabel}のコメントが先に真っ赤（${emotionName}）に${conversion.count}件変換される！`,
+          () => handlers.onCommentConversion?.(conversion)
+        )
+      );
+    });
   }
 
   messages.push(
@@ -770,6 +785,22 @@ export function BattleContainer() {
         });
       };
 
+      const applyCommentConversion = (conversion: CommentConversionEvent) => {
+        if (!conversion || conversion.count === 0) return;
+        const targetIds = new Set(conversion.commentIds);
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            comments: prev.comments.map((comment) =>
+              targetIds.has(comment.id)
+                ? { ...comment, emotion: conversion.emotion }
+                : comment
+            ),
+          };
+        });
+      };
+
       const turnMessages = buildTurnMessages(turnResult, {
         onPlayerBase: applyPlayerBaseDamage,
         onPlayerExtra: applyPlayerExtraDamage,
@@ -781,6 +812,7 @@ export function BattleContainer() {
         onEnemyPoison: applyEnemyPoisonDamage,
         onPlayerEffect: applyPlayerEffect,
         onEnemyEffect: applyEnemyEffect,
+        onCommentConversion: applyCommentConversion,
       });
       // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
       // 勝敗判定はメッセージキュー完了後に実行
