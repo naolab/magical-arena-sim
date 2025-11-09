@@ -12,6 +12,7 @@ import {
   SpecialEffect,
   Comment,
   CommentConversionEvent,
+  ActionVariantDefinition,
 } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { judgeEmotion } from './emotionSystem';
@@ -94,6 +95,8 @@ export function processTurn(
         judgement,
         consumedComments: consumedPlayerComments,
         config: state.config,
+        variant: playerVariantDef,
+        attackerState: state.player,
       })
     : {
         damage: 0,
@@ -109,6 +112,8 @@ export function processTurn(
         judgement: judgement === 'win' ? 'lose' : judgement === 'lose' ? 'win' : 'draw',
         consumedComments: [], // 敵はコメントを消費しない
         config: state.config,
+        variant: enemyVariantDef,
+        attackerState: state.enemy,
       })
     : {
         damage: 0,
@@ -403,6 +408,8 @@ interface DamageCalculationParams {
   judgement: 'win' | 'draw' | 'lose';
   consumedComments: Comment[];
   config: BattleParamsV2;
+  variant?: ActionVariantDefinition;
+  attackerState?: PlayerState | EnemyState;
 }
 
 interface DamageResult {
@@ -414,9 +421,9 @@ interface DamageResult {
  * ダメージを計算して適用
  */
 function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult {
-  const { attacker, defender, action, judgement, consumedComments, config } = params;
+  const { attacker, defender, action, judgement, consumedComments, config, variant, attackerState } = params;
 
-  const damage = calculateDamage({
+  let baseDamage = calculateDamage({
     action,
     basePower: attacker.basePower,
     fanRate: attacker.fanRate,
@@ -425,13 +432,25 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     activeEffects: attacker.activeEffects,
   }, config);
 
+  if (variant?.id === 'berserk_lowhp' && attackerState) {
+    const hpRatio = Math.max(0, Math.min(1, attackerState.hp / attackerState.maxHp));
+    const boost = 1 + (1 - hpRatio);
+    baseDamage = Math.round(baseDamage * boost);
+  }
+
+  if (variant?.id === 'chaos_strike') {
+    const [min = 0.5, max = 1.5] = (variant.metadata?.randomRange as number[]) ?? [0.5, 1.5];
+    const rand = min + Math.random() * (max - min);
+    baseDamage = Math.round(baseDamage * rand);
+  }
+
   const updatedDefender = {
     ...defender,
-    hp: Math.max(0, defender.hp - damage),
+    hp: Math.max(0, defender.hp - baseDamage),
   };
 
   return {
-    damage,
+    damage: baseDamage,
     defender: updatedDefender,
   };
 }
@@ -449,6 +468,7 @@ interface SpecialEffectResult {
   enemyEffects: SpecialEffect[];
   convertedComments?: Comment[]; // コメント変換後の配列
   commentConversion?: CommentConversionSummary;
+  extraDamageMultiplier?: number;
 }
 
 /**

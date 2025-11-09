@@ -38,6 +38,32 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  berserk_lowhp: {
+    id: 'berserk_lowhp',
+    name: 'ブラッディバーサーク',
+    nameJa: 'ブラッディバーサーク',
+    description: 'HPが減るほど火力が上がる（残HPが低いほど倍率UP）',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: true,
+    maxUses: 20,
+    metadata: {
+      scaling: 'lowhp',
+    },
+  },
+  chaos_strike: {
+    id: 'chaos_strike',
+    name: 'カオスストライク',
+    nameJa: 'カオスストライク',
+    description: 'ダメージが大きくブレる（50%〜200%）',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: true,
+    maxUses: 20,
+    metadata: {
+      randomRange: [0.5, 2.0],
+    },
+  },
 };
 
 // ========================================

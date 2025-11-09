@@ -20,7 +20,7 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 // ========================================
 
 /** Rageのバリアント */
-export type RageVariant = 'explosive' | 'percentage';
+export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike';
 
 /** Terrorのバリアント */
 export type TerrorVariant = 'weaken' | 'poison';
@@ -60,6 +60,7 @@ export interface ActionVariantDefinition {
   duration?: number; // 効果持続ターン数（buff/debuffの場合）
   hasAttack: boolean; // 攻撃を行うか（false = 特殊効果のみ）
   maxUses: number; // 使用可能回数
+  metadata?: Record<string, unknown>;
 }
 
 // ========================================
