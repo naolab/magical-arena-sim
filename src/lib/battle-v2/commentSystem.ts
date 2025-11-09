@@ -76,7 +76,6 @@ export function generateComments(
       text,
       createdAt: currentTurn,
       isSuperchat,
-      fanBonus: isSuperchat ? SUPERCHAT_FAN_BONUS : 0,
     });
   }
 
@@ -244,9 +243,6 @@ export function getCommentPoolSize(pool: Comment[]): number {
 }
 /** スパチャが生成される確率 */
 const SUPERCHAT_PROBABILITY = 0.1;
-
-/** スパチャ1件あたりの追加ファン獲得量 */
-export const SUPERCHAT_FAN_BONUS = 0.08;
 
 /** スパチャ用コメント */
 const SUPERCHAT_TEXTS = [
