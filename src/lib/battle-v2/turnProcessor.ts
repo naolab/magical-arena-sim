@@ -517,6 +517,10 @@ function triggerSpecialEffects(params: {
         result.extraDamage = applyRageEffect({ emotion, target, damage }, config);
       } else if (selectedVariant === 'percentage') {
         result.extraDamage = applyRagePercentageEffect(extendedParams, variantDef);
+      } else if (selectedVariant === 'debuff_scaling') {
+        const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison').length;
+        const multiplier = 1 + debuffCount * 0.4;
+        result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
       }
       break;
 
@@ -548,6 +552,15 @@ function triggerSpecialEffects(params: {
         result.healing = applyGriefEffect({ emotion, target, damage }, config);
       } else if (selectedVariant === 'desperate') {
         result.healing = applyGriefDesperateEffect(extendedParams, variantDef);
+      } else if (selectedVariant === 'cleanse_heal') {
+        result.healing = variantDef.magnitude;
+        result.playerEffects.push({
+          type: 'cleanse',
+          emotion,
+          duration: 0,
+          magnitude: 0,
+          target,
+        } as SpecialEffect);
       }
       break;
 

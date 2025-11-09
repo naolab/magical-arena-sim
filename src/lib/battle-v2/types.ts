@@ -20,13 +20,13 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 // ========================================
 
 /** Rageのバリアント */
-export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike';
+export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike' | 'debuff_scaling';
 
 /** Terrorのバリアント */
 export type TerrorVariant = 'weaken' | 'poison';
 
 /** Griefのバリアント */
-export type GriefVariant = 'drain' | 'desperate';
+export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal';
 
 /** Ecstasyのバリアント */
 export type EcstasyVariant = 'inspire' | 'convert';
@@ -101,6 +101,7 @@ export type SpecialEffectType =
   | 'drain'         // Grief: HP吸収
   | 'buff'          // Ecstasy: バフ（攻撃力上昇）
   | 'poison';       // Terror: 毒（持続ダメージ）
+  | 'cleanse';
 
 /** 特殊効果 */
 export interface SpecialEffect {

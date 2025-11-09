@@ -64,6 +64,16 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
       randomRange: [0.5, 2.0],
     },
   },
+  debuff_scaling: {
+    id: 'debuff_scaling',
+    name: 'ヘルファイア・スパイク',
+    nameJa: 'ヘルファイア・スパイク',
+    description: '敵にかかっているデバフ数に応じて火力アップ（1個ごとに+30%）',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: true,
+    maxUses: 20,
+  },
 };
 
 // ========================================
@@ -118,6 +128,16 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     effectType: 'drain',
     magnitude: 15, // 最大HPの15%
     hasAttack: false, // 回復のみ
+    maxUses: 20,
+  },
+  cleanse_heal: {
+    id: 'cleanse_heal',
+    name: 'ピュアリファイン',
+    nameJa: 'ピュアリファイン',
+    description: '150回復し、自分のデバフをすべて解除する',
+    effectType: 'drain',
+    magnitude: 150,
+    hasAttack: false,
     maxUses: 20,
   },
 };
