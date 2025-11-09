@@ -107,7 +107,7 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     id: 'convert',
     name: 'Converting Ecstasy',
     nameJa: 'コメント変換',
-    description: 'コメントの色を変換する（3個を赤〈Rage〉に変換）',
+    description: 'コメントの色を変換する（最大3個を赤〈Rage〉に変換）',
     effectType: 'buff',
     magnitude: 3, // 変換数
     hasAttack: false, // 変換のみ

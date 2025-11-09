@@ -201,22 +201,23 @@ export function applyEcstasyConvertEffect(
   variant: { magnitude: number }
 ): CommentConversionResult | null {
   const { comments } = params;
-  if (!comments) return null;
+  if (!comments || comments.length === 0) return null;
 
-  const convertCount = Math.min(variant.magnitude, comments.length);
+  const convertCount = variant.magnitude;
+  if (convertCount <= 0) return null;
+
   const convertedComments = [...comments];
   const convertedIndices: number[] = [];
   const targetEmotion: EmotionType = 'rage'; // 赤（Rage）に変換
 
-  // 先頭からconvertCount個のコメントを赤（Rage）に変換
-  for (let i = 0; i < convertCount; i++) {
-    if (convertedComments[i].emotion !== targetEmotion) {
-      convertedComments[i] = {
-        ...convertedComments[i],
-        emotion: targetEmotion,
-      };
-      convertedIndices.push(i);
-    }
+  // コメント全体から赤以外のコメントを探し、指定数分だけ変換
+  for (let i = 0; i < convertedComments.length && convertedIndices.length < convertCount; i++) {
+    if (convertedComments[i].emotion === targetEmotion) continue;
+    convertedComments[i] = {
+      ...convertedComments[i],
+      emotion: targetEmotion,
+    };
+    convertedIndices.push(i);
   }
 
   if (convertedIndices.length === 0) {
