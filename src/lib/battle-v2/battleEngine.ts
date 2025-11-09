@@ -153,9 +153,22 @@ export function executeSuperchatTurn(
     return state;
   }
 
-  const updatedState = processTurn(state, playerAction, playerAction, {
+  let updatedState = processTurn(state, playerAction, playerAction, {
     isSuperchatTurn: true,
   });
+
+  const newComments = generateComments(
+    { count: updatedState.config.commentsPerTurn },
+    updatedState.currentTurn
+  );
+  updatedState = {
+    ...updatedState,
+    comments: addCommentsToPool(
+      updatedState.comments,
+      newComments,
+      updatedState.config.maxCommentPoolSize
+    ),
+  };
 
   return updatedState;
 }
