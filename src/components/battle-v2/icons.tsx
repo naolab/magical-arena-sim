@@ -18,7 +18,7 @@ export function SparkIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SkullIcon(props: SVGProps<SVGSVGElement>) {
+export function AttackDownIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -29,10 +29,18 @@ export function SkullIcon(props: SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.2 4.5 3 5.9V19c0 .6.4 1 1 1h1v2h6v-2h1c.6 0 1-.4 1-1v-3.1c1.8-1.4 3-3.5 3-5.9 0-4.4-3.6-8-8-8z" />
-      <path d="M9 13h6" />
-      <circle cx="9" cy="10" r="1" />
-      <circle cx="15" cy="10" r="1" />
+      {/* Minus sign to represent reduced damage */}
+      <path d="M6 7h12" />
+
+      {/* Down arrow */}
+      <path d="M12 10v8" />
+      <path d="M9 15l3 3 3-3" />
+
+      {/* Cross mark for damage negation */}
+      <path d="M7 5l4 4" />
+      <path d="M11 5L7 9" />
+      <path d="M17 5l-4 4" />
+      <path d="M13 5l4 4" />
     </svg>
   );
 }

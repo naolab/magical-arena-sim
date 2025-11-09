@@ -3,7 +3,7 @@
 import { type ComponentType, useEffect, useState } from 'react';
 import { SpecialEffect } from '@/lib/battle-v2/types';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
-import { ShieldIcon, SparkIcon, SkullIcon, PoisonIcon } from './icons';
+import { ShieldIcon, SparkIcon, AttackDownIcon, PoisonIcon } from './icons';
 
 interface ActiveEffectIconsProps {
   effects: SpecialEffect[];
@@ -16,7 +16,7 @@ type IconConfig = {
 
 const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
   buff: { color: '#d97706', Icon: SparkIcon }, // より濃いオレンジ
-  debuff: { color: '#15803d', Icon: SkullIcon }, // より濃い緑
+  debuff: { color: '#15803d', Icon: AttackDownIcon }, // 下矢印×剣
   poison: { color: '#a855f7', Icon: PoisonIcon }, // 紫
 };
 
