@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { ActionVariantSelector } from './ActionVariantSelector';
-import { EmotionType, ActionVariant } from '@/lib/battle-v2/types';
+import { EmotionType } from '@/lib/battle-v2/types';
 
 interface DifficultyModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DifficultyModalProps {
 
 export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalProps) {
   const { params, setParams, resetParams } = useBattleParamsV2();
+  const [activeTab, setActiveTab] = useState<'basic' | 'variants'>('basic');
 
   if (!isOpen) return null;
 
@@ -49,9 +51,35 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 space-y-6 text-white/90 min-h-0">
-            {/* 基本設定 */}
-            <section>
+          <div className="flex flex-col flex-1 min-h-0 text-white/90">
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <button
+                className={`py-2 text-sm font-bold rounded-full border transition ${
+                  activeTab === 'basic'
+                    ? 'bg-cyan-500/90 border-cyan-300 text-white'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+                onClick={() => setActiveTab('basic')}
+              >
+                基本設定
+              </button>
+              <button
+                className={`py-2 text-sm font-bold rounded-full border transition ${
+                  activeTab === 'variants'
+                    ? 'bg-pink-500/90 border-pink-300 text-white'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+                onClick={() => setActiveTab('variants')}
+              >
+                アクションバリアント
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-6 min-h-0">
+              {activeTab === 'basic' ? (
+                <>
+                  {/* 基本設定 */}
+                  <section>
               <h3 className="text-lg font-bold mb-3 text-cyan-400">基本設定</h3>
 
               <div className="space-y-4">
@@ -59,7 +87,7 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                   <label className="text-sm font-bold mb-2 block">プレイヤーHP</label>
                   <div className="flex items-center gap-4">
                     <input
-                      type="range" min="500" max="2000" step="100"
+                      type="range" min="500" max="4000" step="50"
                       value={params.playerMaxHp}
                       onChange={(e) => setParams({ playerMaxHp: Number(e.target.value) })}
                       className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
@@ -72,7 +100,7 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                   <label className="text-sm font-bold mb-2 block">敵HP</label>
                   <div className="flex items-center gap-4">
                     <input
-                      type="range" min="500" max="2000" step="100"
+                      type="range" min="500" max="4000" step="50"
                       value={params.enemyMaxHp}
                       onChange={(e) => setParams({ enemyMaxHp: Number(e.target.value) })}
                       className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
@@ -142,87 +170,6 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
               </div>
             </section>
 
-            {/* 特殊効果設定 */}
-            <section>
-              <h3 className="text-lg font-bold mb-3 text-cyan-400">特殊効果設定</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-bold mb-2 block">Rage 追加ダメージ割合</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="0.0" max="1.0" step="0.1"
-                      value={params.rageExtraDamageRatio}
-                      onChange={(e) => setParams({ rageExtraDamageRatio: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">+{(params.rageExtraDamageRatio * 100).toFixed(0)}%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold mb-2 block">Terror デバフ強度</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="0" max="50" step="5"
-                      value={params.terrorDebuffMagnitude}
-                      onChange={(e) => setParams({ terrorDebuffMagnitude: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">-{params.terrorDebuffMagnitude}%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold mb-2 block">Grief HP吸収割合</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="0.0" max="0.8" step="0.1"
-                      value={params.griefDrainRatio}
-                      onChange={(e) => setParams({ griefDrainRatio: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">{(params.griefDrainRatio * 100).toFixed(0)}%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold mb-2 block">Ecstasy バフ強度</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="range" min="0" max="50" step="5"
-                      value={params.ecstasyBuffMagnitude}
-                      onChange={(e) => setParams({ ecstasyBuffMagnitude: Number(e.target.value) })}
-                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="font-bold text-xl w-24 text-center">+{params.ecstasyBuffMagnitude}%</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* アクションバリアント選択 */}
-            <section>
-              <h3 className="text-lg font-bold mb-3 text-cyan-400">アクションバリアント</h3>
-              <div className="space-y-4">
-                {(['rage', 'terror', 'grief', 'ecstasy'] as EmotionType[]).map((emotion) => (
-                  <ActionVariantSelector
-                    key={emotion}
-                    emotion={emotion}
-                    selectedVariant={params.selectedActionVariants[emotion]}
-                    onChange={(variant) =>
-                      setParams({
-                        selectedActionVariants: {
-                          ...params.selectedActionVariants,
-                          [emotion]: variant,
-                        },
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-
             {/* ファンシステム設定 */}
             <section>
               <h3 className="text-lg font-bold mb-3 text-cyan-400">ファンシステム設定</h3>
@@ -255,6 +202,27 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                 </div>
               </div>
             </section>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  {(['rage', 'terror', 'grief', 'ecstasy'] as EmotionType[]).map((emotion) => (
+                    <ActionVariantSelector
+                      key={emotion}
+                      emotion={emotion}
+                      selectedVariant={params.selectedActionVariants[emotion]}
+                      onChange={(variant) =>
+                        setParams({
+                          selectedActionVariants: {
+                            ...params.selectedActionVariants,
+                            [emotion]: variant,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/10 flex gap-3 flex-shrink-0">
