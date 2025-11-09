@@ -112,9 +112,11 @@ function buildTurnMessages(
     onPlayerBase: (amount: number) => void;
     onPlayerExtra: (amount: number) => void;
     onPlayerHeal: (amount: number) => void;
+    onPlayerPoison?: (amount: number) => void;
     onEnemyBase: (amount: number) => void;
     onEnemyExtra: (amount: number) => void;
     onEnemyHeal: (amount: number) => void;
+    onEnemyPoison?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
   }
@@ -181,6 +183,27 @@ function buildTurnMessages(
         'enemy',
         `敵は ${secondaryEffects.enemy.healing} 回復した！`,
         () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
+      )
+    );
+  }
+
+  // 毒ダメージのメッセージ
+  if (secondaryEffects.player.poisonDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `あなたは毒で ${secondaryEffects.player.poisonDamage} のダメージを受けた！`,
+        () => handlers.onPlayerPoison?.(secondaryEffects.player.poisonDamage)
+      )
+    );
+  }
+
+  if (secondaryEffects.enemy.poisonDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵は毒で ${secondaryEffects.enemy.poisonDamage} のダメージを受けた！`,
+        () => handlers.onEnemyPoison?.(secondaryEffects.enemy.poisonDamage)
       )
     );
   }
@@ -675,6 +698,32 @@ export function BattleContainer() {
         triggerEnemyBounce();
       };
 
+      const applyPlayerPoisonDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyPoisonDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
       const applyEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
         const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
@@ -711,9 +760,11 @@ export function BattleContainer() {
         onPlayerBase: applyPlayerBaseDamage,
         onPlayerExtra: applyPlayerExtraDamage,
         onPlayerHeal: applyPlayerHealing,
+        onPlayerPoison: applyPlayerPoisonDamage,
         onEnemyBase: applyEnemyBaseDamage,
         onEnemyExtra: applyEnemyExtraDamage,
         onEnemyHeal: applyEnemyHealing,
+        onEnemyPoison: applyEnemyPoisonDamage,
         onPlayerEffect: applyEffect,
         onEnemyEffect: applyEffect,
       });
