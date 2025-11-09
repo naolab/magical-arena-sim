@@ -156,10 +156,12 @@ export interface TurnResult {
     player: {
       extraDamage: number;
       healing: number;
+      poisonDamage: number; // 毒ダメージ
     };
     enemy: {
       extraDamage: number;
       healing: number;
+      poisonDamage: number; // 毒ダメージ
     };
   };
   fanChange: {

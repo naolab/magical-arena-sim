@@ -264,10 +264,12 @@ export function processTurn(
       player: {
         extraDamage: playerExtraDamage,
         healing: playerHealing,
+        poisonDamage: playerPoisonDamage,
       },
       enemy: {
         extraDamage: enemyExtraDamage,
         healing: enemyHealing,
+        poisonDamage: enemyPoisonDamage,
       },
     },
     fanChange: {
@@ -277,7 +279,7 @@ export function processTurn(
     playerState: updatedPlayer,
     enemyState: updatedEnemy,
     audienceComposition: updatedAudience,
-    message: generateTurnMessage(judgement, playerAction, enemyAction),
+    message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
   };
 
   // 11. 状態を更新して返す
@@ -535,7 +537,9 @@ function updateAudienceComposition(
 function generateTurnMessage(
   judgement: 'win' | 'draw' | 'lose',
   playerAction: EmotionType,
-  enemyAction: EmotionType
+  enemyAction: EmotionType,
+  playerPoisonDamage: number = 0,
+  enemyPoisonDamage: number = 0
 ): string {
   const actionNames: Record<EmotionType, string> = {
     rage: 'Rage',
@@ -547,11 +551,27 @@ function generateTurnMessage(
   const playerName = actionNames[playerAction];
   const enemyName = actionNames[enemyAction];
 
+  let baseMessage = '';
   if (judgement === 'win') {
-    return `${playerName} が ${enemyName} に勝利！`;
+    baseMessage = `${playerName} が ${enemyName} に勝利！`;
   } else if (judgement === 'lose') {
-    return `${enemyName} に敗北…`;
+    baseMessage = `${enemyName} に敗北…`;
   } else {
-    return `${playerName} と ${enemyName} は互角！`;
+    baseMessage = `${playerName} と ${enemyName} は互角！`;
   }
+
+  // 毒ダメージのメッセージを追加
+  const poisonMessages: string[] = [];
+  if (playerPoisonDamage > 0) {
+    poisonMessages.push(`プレイヤーは毒で${playerPoisonDamage}ダメージ！`);
+  }
+  if (enemyPoisonDamage > 0) {
+    poisonMessages.push(`敵は毒で${enemyPoisonDamage}ダメージ！`);
+  }
+
+  if (poisonMessages.length > 0) {
+    return `${baseMessage} ${poisonMessages.join(' ')}`;
+  }
+
+  return baseMessage;
 }
