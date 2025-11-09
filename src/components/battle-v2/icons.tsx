@@ -53,3 +53,32 @@ export function ShieldIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function PoisonIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="0.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* 大きい水滴 */}
+      <path d="M12 2C9 5 7 8 7 11c0 2.8 2.2 5 5 5s5-2.2 5-5c0-3-2-6-5-9z" opacity="0.9" />
+
+      {/* 小さい気泡1 */}
+      <circle cx="9" cy="18" r="1.5" opacity="0.7" />
+
+      {/* 小さい気泡2 */}
+      <circle cx="14" cy="19" r="1.2" opacity="0.7" />
+
+      {/* 小さい気泡3 */}
+      <circle cx="11" cy="21" r="1" opacity="0.6" />
+
+      {/* 水滴の中のハイライト */}
+      <ellipse cx="10" cy="8" rx="1.5" ry="2" fill="white" opacity="0.4" />
+    </svg>
+  );
+}
