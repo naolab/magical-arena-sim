@@ -33,6 +33,13 @@ import {
 } from './specialEffects';
 import { getVariantDefinition } from './actionVariants';
 
+const DEFAULT_VARIANTS = {
+  rage: 'explosive',
+  terror: 'weaken',
+  grief: 'drain',
+  ecstasy: 'inspire',
+} as const;
+
 // ========================================
 // Turn Processing
 // ========================================
@@ -58,25 +65,43 @@ export function processTurn(
   const { remaining: remainingComments, consumed: consumedPlayerComments } =
     consumeComments(state.comments, playerAction);
 
+  const playerVariant = state.config.selectedActionVariants[playerAction];
+  const playerVariantDef = getVariantDefinition(playerAction, playerVariant);
+  const playerHasAttack = playerVariantDef.hasAttack !== false;
+
+  const enemyVariant = DEFAULT_VARIANTS[enemyAction];
+  const enemyVariantDef = getVariantDefinition(enemyAction, enemyVariant);
+  const enemyHasAttack = enemyVariantDef.hasAttack !== false;
+
   // 3. プレイヤーのダメージ計算と適用
-  const playerDamageResult = calculateAndApplyDamage({
-    attacker: state.player,
-    defender: state.enemy,
-    action: playerAction,
-    judgement,
-    consumedComments: consumedPlayerComments,
-    config: state.config,
-  });
+  const playerDamageResult = playerHasAttack
+    ? calculateAndApplyDamage({
+        attacker: state.player,
+        defender: state.enemy,
+        action: playerAction,
+        judgement,
+        consumedComments: consumedPlayerComments,
+        config: state.config,
+      })
+    : {
+        damage: 0,
+        defender: state.enemy,
+      };
 
   // 4. 敵のダメージ計算と適用
-  const enemyDamageResult = calculateAndApplyDamage({
-    attacker: state.enemy,
-    defender: state.player, // 現在のプレイヤー状態（敵の攻撃対象）
-    action: enemyAction,
-    judgement: judgement === 'win' ? 'lose' : judgement === 'lose' ? 'win' : 'draw',
-    consumedComments: [], // 敵はコメントを消費しない
-    config: state.config,
-  });
+  const enemyDamageResult = enemyHasAttack
+    ? calculateAndApplyDamage({
+        attacker: state.enemy,
+        defender: state.player, // 現在のプレイヤー状態（敵の攻撃対象）
+        action: enemyAction,
+        judgement: judgement === 'win' ? 'lose' : judgement === 'lose' ? 'win' : 'draw',
+        consumedComments: [], // 敵はコメントを消費しない
+        config: state.config,
+      })
+    : {
+        damage: 0,
+        defender: state.player,
+      };
 
   type ActiveEffectExtended = SpecialEffect & { appliedTurn?: number };
 
@@ -408,15 +433,8 @@ function triggerSpecialEffects(params: {
 
   // 選択されたバリアントを取得
   // 敵の場合は常にデフォルトバリアント、プレイヤーの場合は選択されたバリアント
-  const defaultVariants = {
-    rage: 'explosive' as const,
-    terror: 'weaken' as const,
-    grief: 'drain' as const,
-    ecstasy: 'inspire' as const,
-  };
-
   const selectedVariant = target === 'enemy'
-    ? defaultVariants[emotion]
+    ? DEFAULT_VARIANTS[emotion]
     : config.selectedActionVariants[emotion];
   const variantDef = getVariantDefinition(emotion, selectedVariant);
 

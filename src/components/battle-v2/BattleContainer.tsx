@@ -78,17 +78,12 @@ function createMessage(speaker: BattleMessageSpeaker, text: string, apply?: () =
   return { id, speaker, text, apply };
 }
 
-function formatDamageText(amount: number, target: 'enemy' | 'player'): string {
-  if (amount <= 0) {
-    return target === 'enemy'
-      ? 'しかし敵にダメージは通らなかった！'
-      : 'しかしダメージは受けなかった！';
-  }
-
+const formatDamageText = (amount: number, target: 'enemy' | 'player'): string => {
+  if (amount <= 0) return '';
   return target === 'enemy'
     ? `敵に ${amount} のダメージ！`
     : `あなたは ${amount} のダメージを受けた！`;
-}
+};
 
 function buildEffectMessages(
   effects: TurnResult['specialEffects']['player'],
@@ -136,7 +131,11 @@ function buildTurnMessages(
     createMessage(
       'player',
       `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`,
-      () => handlers.onPlayerBase(baseDamageToEnemy)
+      () => {
+        if (baseDamageToEnemy > 0) {
+          handlers.onPlayerBase(baseDamageToEnemy);
+        }
+      }
     )
   );
 
@@ -164,7 +163,11 @@ function buildTurnMessages(
     createMessage(
       'enemy',
       `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`,
-      () => handlers.onEnemyBase(baseDamageToPlayer)
+      () => {
+        if (baseDamageToPlayer > 0) {
+          handlers.onEnemyBase(baseDamageToPlayer);
+        }
+      }
     )
   );
 

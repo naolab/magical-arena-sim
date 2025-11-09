@@ -32,7 +32,7 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     description: '敵の最大HPに応じたダメージを与える（最大HPの15%）',
     effectType: 'extra_damage',
     magnitude: 15, // 最大HPの15%
-    hasAttack: true,
+    hasAttack: false,
   },
 };
 
@@ -59,7 +59,7 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     effectType: 'poison',
     magnitude: 50, // 毎ターン50ダメージ
     duration: 3, // 3ターン持続
-    hasAttack: true,
+    hasAttack: false,
   },
 };
 
