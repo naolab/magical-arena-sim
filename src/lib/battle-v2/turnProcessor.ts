@@ -366,7 +366,17 @@ function triggerSpecialEffects(params: {
   };
 
   // 選択されたバリアントを取得
-  const selectedVariant = config.selectedActionVariants[emotion];
+  // 敵の場合は常にデフォルトバリアント、プレイヤーの場合は選択されたバリアント
+  const defaultVariants = {
+    rage: 'explosive' as const,
+    terror: 'weaken' as const,
+    grief: 'drain' as const,
+    ecstasy: 'inspire' as const,
+  };
+
+  const selectedVariant = target === 'enemy'
+    ? defaultVariants[emotion]
+    : config.selectedActionVariants[emotion];
   const variantDef = getVariantDefinition(emotion, selectedVariant);
 
   // 拡張パラメータを準備
