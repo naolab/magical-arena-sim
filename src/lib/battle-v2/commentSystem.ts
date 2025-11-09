@@ -242,7 +242,7 @@ export function getCommentPoolSize(pool: Comment[]): number {
   return pool.length;
 }
 /** スパチャが生成される確率 */
-const SUPERCHAT_PROBABILITY = 0.1;
+const SUPERCHAT_PROBABILITY = 0.07;
 
 /** スパチャ用コメント */
 const SUPERCHAT_TEXTS = [
