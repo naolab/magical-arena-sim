@@ -2,7 +2,6 @@
 
 import { Comment } from '@/lib/battle-v2/types';
 import { CommentItem } from './CommentItem';
-import { MAX_COMMENT_POOL_SIZE } from '@/lib/battle-v2/commentSystem';
 
 interface CommentPoolProps {
   comments: Comment[];
@@ -23,7 +22,9 @@ export function CommentPool({ comments, recentCommentIds = [], highlightEmotion 
               comment={comment}
               isNew={newCommentIndex !== -1}
               animationDelay={newCommentIndex !== -1 ? newCommentIndex * 300 : 0}
-              isHighlighted={highlightEmotion ? comment.emotion === highlightEmotion : false}
+              isHighlighted={
+                highlightEmotion ? comment.isSuperchat || comment.emotion === highlightEmotion : false
+              }
             />
           );
         })}

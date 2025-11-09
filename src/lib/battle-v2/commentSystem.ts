@@ -66,14 +66,16 @@ export function generateComments(
   const comments: Comment[] = [];
 
   for (let i = 0; i < count; i++) {
+    const isSuperchat = Math.random() < SUPERCHAT_PROBABILITY;
     const emotion = selectRandomEmotion(emotionWeights);
-    const text = selectRandomCommentText(emotion);
+    const text = isSuperchat ? selectSuperchatText() : selectRandomCommentText(emotion);
 
     comments.push({
       id: generateCommentId(currentTurn, i),
       emotion,
       text,
       createdAt: currentTurn,
+      isSuperchat,
     });
   }
 
@@ -117,6 +119,10 @@ function selectRandomEmotion(
 function selectRandomCommentText(emotion: EmotionType): string {
   const texts = SAMPLE_COMMENT_TEXTS[emotion];
   return texts[Math.floor(Math.random() * texts.length)];
+}
+
+function selectSuperchatText(): string {
+  return SUPERCHAT_TEXTS[Math.floor(Math.random() * SUPERCHAT_TEXTS.length)];
 }
 
 /**
@@ -169,8 +175,16 @@ export function consumeComments(
   pool: Comment[],
   emotion: EmotionType
 ): { remaining: Comment[]; consumed: Comment[] } {
-  const consumed = pool.filter((c) => c.emotion === emotion);
-  const remaining = pool.filter((c) => c.emotion !== emotion);
+  const consumed: Comment[] = [];
+  const remaining: Comment[] = [];
+
+  for (const comment of pool) {
+    if (comment.isSuperchat || comment.emotion === emotion) {
+      consumed.push(comment);
+    } else {
+      remaining.push(comment);
+    }
+  }
 
   return { remaining, consumed };
 }
@@ -191,7 +205,14 @@ export function getCommentCountByEmotion(
   };
 
   for (const comment of pool) {
-    counts[comment.emotion]++;
+    if (comment.isSuperchat) {
+      counts.rage++;
+      counts.terror++;
+      counts.grief++;
+      counts.ecstasy++;
+    } else {
+      counts[comment.emotion]++;
+    }
   }
 
   return counts;
@@ -220,3 +241,14 @@ export function pruneOldComments(
 export function getCommentPoolSize(pool: Comment[]): number {
   return pool.length;
 }
+/** スパチャが生成される確率 */
+const SUPERCHAT_PROBABILITY = 0.07;
+
+/** スパチャ用コメント */
+const SUPERCHAT_TEXTS = [
+  '🌈 虹色スパチャ！',
+  '推しに全財産ぶち込んだ！！',
+  '伝説のスパチャ、受け取って！',
+  'これで勝利を掴んでくれ！',
+  '感動をありがとう！',
+];

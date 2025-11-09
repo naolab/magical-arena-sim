@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap } from '@/lib/battle-v2/types';
-import { initBattle, executePlayerAction, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
+import { initBattle, executePlayerAction, executeSuperchatTurn, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
@@ -127,18 +127,22 @@ function buildTurnMessages(
   options: {
     playerSkillName: string;
     enemySkillName: string;
+    isSuperchatTurn?: boolean;
   }
 ): BattleMessage[] {
   const messages: BattleMessage[] = [];
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
-  const { playerSkillName, enemySkillName } = options;
+  const { playerSkillName, enemySkillName, isSuperchatTurn = false } = options;
   const { damage, secondaryEffects, specialEffects } = result;
   const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
   const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
 
   messages.push(createMessage('system', JUDGEMENT_MESSAGE[result.judgement]));
+  if (isSuperchatTurn) {
+    messages.push(createMessage('system', 'スパチャ追撃ターン！'));
+  }
 
   const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy');
   const playerOpening =
@@ -186,32 +190,34 @@ function buildTurnMessages(
     ? `${enemyOpening} ${enemyDamageText}`
     : enemyOpening;
 
-  messages.push(
-    createMessage('enemy', enemyMessageText, () => {
-      if (baseDamageToPlayer > 0) {
-        handlers.onEnemyBase(baseDamageToPlayer);
-      }
-    })
-  );
-
-  if (damage.extraToPlayer > 0) {
+  if (!isSuperchatTurn) {
     messages.push(
-      createMessage(
-        'enemy',
-        `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
-        () => handlers.onEnemyExtra(damage.extraToPlayer)
-      )
+      createMessage('enemy', enemyMessageText, () => {
+        if (baseDamageToPlayer > 0) {
+          handlers.onEnemyBase(baseDamageToPlayer);
+        }
+      })
     );
-  }
 
-  if (secondaryEffects.enemy.healing > 0) {
-    messages.push(
-      createMessage(
-        'enemy',
-        `敵は ${secondaryEffects.enemy.healing} 回復した！`,
-        () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
-      )
-    );
+    if (damage.extraToPlayer > 0) {
+      messages.push(
+        createMessage(
+          'enemy',
+          `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
+          () => handlers.onEnemyExtra(damage.extraToPlayer)
+        )
+      );
+    }
+
+    if (secondaryEffects.enemy.healing > 0) {
+      messages.push(
+        createMessage(
+          'enemy',
+          `敵は ${secondaryEffects.enemy.healing} 回復した！`,
+          () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
+        )
+      );
+    }
   }
 
   // 毒ダメージのメッセージ
@@ -225,7 +231,7 @@ function buildTurnMessages(
     );
   }
 
-  if (secondaryEffects.enemy.poisonDamage > 0) {
+  if (!isSuperchatTurn && secondaryEffects.enemy.poisonDamage > 0) {
     messages.push(
       createMessage(
         'system',
@@ -233,6 +239,10 @@ function buildTurnMessages(
         () => handlers.onEnemyPoison?.(secondaryEffects.enemy.poisonDamage)
       )
     );
+  }
+
+  if (result.superchatAwarded) {
+    messages.push(createMessage('system', 'スパチャの力で追撃ターンを獲得した！'));
   }
 
   if (result.commentConversions && result.commentConversions.length > 0) {
@@ -365,6 +375,13 @@ export function BattleContainer() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (battleState?.pendingSuperchatTurn && !isProcessing && !showActionButtons) {
+      setShowActionButtons(true);
+      setSelectedEmotion(null);
+    }
+  }, [battleState?.pendingSuperchatTurn, isProcessing, showActionButtons]);
 
   // HPゲージの色を計算
   const getHpColor = (hpRatio: number): string => {
@@ -620,6 +637,9 @@ export function BattleContainer() {
   // プレイヤーアクション処理
   const handleEmotionClick = async (emotion: EmotionType) => {
     if (!battleState || isProcessing || isBattleOver(battleState)) return;
+    const remainingUses = battleState.skillUses.player[emotion] ?? 0;
+    if (remainingUses <= 0) return;
+    const isSuperchatMode = battleState.pendingSuperchatTurn;
     if (battleState.skillUses.player[emotion] <= 0) return;
 
     // まだ選択されていない場合は選択のみ
@@ -638,16 +658,17 @@ export function BattleContainer() {
       if (!prev) return prev;
       return {
         ...prev,
-        comments: prev.comments.filter((c) => c.emotion !== emotion),
+        comments: prev.comments.filter((c) => !(c.isSuperchat || c.emotion === emotion)),
       };
     });
 
     try {
-      // 敵のアクションを決定
-      const enemyEmotion = decideEnemyAction(battleState, 'normal');
+      const enemyEmotion = isSuperchatMode ? null : decideEnemyAction(battleState, 'normal');
 
       // ターン処理を実行
-      const newState = executePlayerAction(battleState, emotion, enemyEmotion);
+      const newState = isSuperchatMode
+        ? executeSuperchatTurn(battleState, emotion)
+        : executePlayerAction(battleState, emotion, enemyEmotion!);
 
       // 新しいコメントIDを記録
       const oldCommentIds = battleState.comments.map(c => c.id);
@@ -820,7 +841,7 @@ export function BattleContainer() {
           return {
             ...prev,
             comments: prev.comments.map((comment) =>
-              targetIds.has(comment.id)
+              targetIds.has(comment.id) && !comment.isSuperchat
                 ? { ...comment, emotion: conversion.emotion }
                 : comment
             ),
@@ -830,8 +851,10 @@ export function BattleContainer() {
 
       const playerVariantId = battleState.config.selectedActionVariants[emotion];
       const playerSkillName = getVariantDefinition(emotion, playerVariantId)?.nameJa ?? getEmotionName(emotion);
-      const enemyVariantId = DEFAULT_VARIANTS[enemyEmotion];
-      const enemySkillName = getVariantDefinition(enemyEmotion, enemyVariantId)?.nameJa ?? getEmotionName(enemyEmotion);
+      const actualEnemyEmotion = enemyEmotion ?? turnResult.enemyAction;
+      const enemyVariantId = DEFAULT_VARIANTS[actualEnemyEmotion];
+      const enemySkillName =
+        getVariantDefinition(actualEnemyEmotion, enemyVariantId)?.nameJa ?? getEmotionName(actualEnemyEmotion);
 
       const turnMessages = buildTurnMessages(
         turnResult,
@@ -851,6 +874,7 @@ export function BattleContainer() {
         {
           playerSkillName,
           enemySkillName,
+          isSuperchatTurn: isSuperchatMode,
         }
       );
       // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
@@ -975,6 +999,8 @@ export function BattleContainer() {
     );
   }
 
+  const isSuperchatMode = battleState.pendingSuperchatTurn;
+
   return (
     <main className="h-screen w-screen bg-black flex items-center justify-center">
       {/* スケーリングコンテナ */}
@@ -984,9 +1010,26 @@ export function BattleContainer() {
           <div className="relative w-full h-full bg-black">
             {/* バトルエリア */}
             <div
-              className="absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 border-white cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center"
+              className={`absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center transition-all duration-500 ${
+                isSuperchatMode ? 'border-emerald-100 shadow-[0_0_80px_rgba(16,185,129,0.95)]' : 'border-white shadow-none'
+              }`}
               onClick={handleBattleAreaClick}
             >
+              <div
+                className={`absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-200/70 via-transparent to-cyan-300/70 mix-blend-screen transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-100 scale-100 animate-pulse' : 'opacity-0 scale-95'
+                }`}
+              />
+              <div
+                className={`absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.55),_transparent_55%)] transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-90 animate-pulse' : 'opacity-0'
+                }`}
+              />
+              <div
+                className={`absolute inset-0 pointer-events-none mix-blend-screen bg-gradient-to-tr from-pink-400/25 via-transparent to-blue-400/25 transition-all duration-500 ${
+                  isSuperchatMode ? 'opacity-100 animate-pulse-slow' : 'opacity-0'
+                }`}
+              />
               {/* キャラクター配置エリア */}
               <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-1/2 left-[-250px] w-[1020px] h-[1020px] -translate-y-[31%]">

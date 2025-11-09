@@ -89,6 +89,7 @@ export function initBattle(params?: BattleParamsV2): BattleState {
       player: playerSkillUses,
       enemy: enemySkillUses,
     },
+    pendingSuperchatTurn: false,
   };
 }
 
@@ -137,6 +138,37 @@ export function executePlayerAction(
   };
 
   // 勝敗判定はUI側で行う（メッセージアニメーション完了後、UI側のHPが完全に反映された後）
+
+  return updatedState;
+}
+
+/**
+ * スパチャ追撃ターンを実行
+ */
+export function executeSuperchatTurn(
+  state: BattleState,
+  playerAction: EmotionType
+): BattleState {
+  if (!state.isActive || !state.pendingSuperchatTurn) {
+    return state;
+  }
+
+  let updatedState = processTurn(state, playerAction, playerAction, {
+    isSuperchatTurn: true,
+  });
+
+  const newComments = generateComments(
+    { count: updatedState.config.commentsPerTurn },
+    updatedState.currentTurn
+  );
+  updatedState = {
+    ...updatedState,
+    comments: addCommentsToPool(
+      updatedState.comments,
+      newComments,
+      updatedState.config.maxCommentPoolSize
+    ),
+  };
 
   return updatedState;
 }

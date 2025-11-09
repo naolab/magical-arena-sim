@@ -48,9 +48,9 @@ export interface BattleParamsV2 {
 export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   // 基本パラメータ
   playerMaxHp: 1500,
-  enemyMaxHp: 1500,
+  enemyMaxHp: 2000,
   playerBasePower: 100,
-  enemyBasePower: 100,
+  enemyBasePower: 150,
   initialFanRate: 0.2,
 
   // ダメージ計算
