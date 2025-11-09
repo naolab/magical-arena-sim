@@ -15,6 +15,7 @@ import { RulesModal } from './RulesModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
+import { getVariantDefinition, DEFAULT_VARIANTS } from '@/lib/battle-v2/actionVariants';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -115,28 +116,38 @@ function buildTurnMessages(
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
+  },
+  options: {
+    playerSkillName: string;
+    enemySkillName: string;
   }
 ): BattleMessage[] {
   const messages: BattleMessage[] = [];
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
+  const { playerSkillName, enemySkillName } = options;
   const { damage, secondaryEffects, specialEffects } = result;
   const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
   const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
 
   messages.push(createMessage('system', JUDGEMENT_MESSAGE[result.judgement]));
 
+  const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy');
+  const playerOpening =
+    playerSkillName.length > 0
+      ? `あなたは ${playerSkillName} を発動！`
+      : `あなたは ${playerEmotionName} を繰り出した！`;
+  const playerMessageText = playerDamageText
+    ? `${playerOpening} ${playerDamageText}`
+    : playerOpening;
+
   messages.push(
-    createMessage(
-      'player',
-      `あなたは ${playerEmotionName} を繰り出した！${formatDamageText(baseDamageToEnemy, 'enemy')}`,
-      () => {
-        if (baseDamageToEnemy > 0) {
-          handlers.onPlayerBase(baseDamageToEnemy);
-        }
+    createMessage('player', playerMessageText, () => {
+      if (baseDamageToEnemy > 0) {
+        handlers.onPlayerBase(baseDamageToEnemy);
       }
-    )
+    })
   );
 
   if (damage.extraToEnemy > 0) {
@@ -159,16 +170,21 @@ function buildTurnMessages(
     );
   }
 
+  const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
+  const enemyOpening =
+    enemySkillName.length > 0
+      ? `敵は ${enemySkillName} を発動！`
+      : `敵は ${enemyEmotionName} を繰り出した！`;
+  const enemyMessageText = enemyDamageText
+    ? `${enemyOpening} ${enemyDamageText}`
+    : enemyOpening;
+
   messages.push(
-    createMessage(
-      'enemy',
-      `敵は ${enemyEmotionName} を繰り出した！${formatDamageText(baseDamageToPlayer, 'player')}`,
-      () => {
-        if (baseDamageToPlayer > 0) {
-          handlers.onEnemyBase(baseDamageToPlayer);
-        }
+    createMessage('enemy', enemyMessageText, () => {
+      if (baseDamageToPlayer > 0) {
+        handlers.onEnemyBase(baseDamageToPlayer);
       }
-    )
+    })
   );
 
   if (damage.extraToPlayer > 0) {
@@ -804,19 +820,31 @@ export function BattleContainer() {
         });
       };
 
-      const turnMessages = buildTurnMessages(turnResult, {
-        onPlayerBase: applyPlayerBaseDamage,
-        onPlayerExtra: applyPlayerExtraDamage,
-        onPlayerHeal: applyPlayerHealing,
-        onPlayerPoison: applyPlayerPoisonDamage,
-        onEnemyBase: applyEnemyBaseDamage,
-        onEnemyExtra: applyEnemyExtraDamage,
-        onEnemyHeal: applyEnemyHealing,
-        onEnemyPoison: applyEnemyPoisonDamage,
-        onPlayerEffect: applyPlayerEffect,
-        onEnemyEffect: applyEnemyEffect,
-        onCommentConversion: applyCommentConversion,
-      });
+      const playerVariantId = battleState.config.selectedActionVariants[emotion];
+      const playerSkillName = getVariantDefinition(emotion, playerVariantId)?.nameJa ?? getEmotionName(emotion);
+      const enemyVariantId = DEFAULT_VARIANTS[enemyEmotion];
+      const enemySkillName = getVariantDefinition(enemyEmotion, enemyVariantId)?.nameJa ?? getEmotionName(enemyEmotion);
+
+      const turnMessages = buildTurnMessages(
+        turnResult,
+        {
+          onPlayerBase: applyPlayerBaseDamage,
+          onPlayerExtra: applyPlayerExtraDamage,
+          onPlayerHeal: applyPlayerHealing,
+          onPlayerPoison: applyPlayerPoisonDamage,
+          onEnemyBase: applyEnemyBaseDamage,
+          onEnemyExtra: applyEnemyExtraDamage,
+          onEnemyHeal: applyEnemyHealing,
+          onEnemyPoison: applyEnemyPoisonDamage,
+          onPlayerEffect: applyPlayerEffect,
+          onEnemyEffect: applyEnemyEffect,
+          onCommentConversion: applyCommentConversion,
+        },
+        {
+          playerSkillName,
+          enemySkillName,
+        }
+      );
       // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
       // 勝敗判定はメッセージキュー完了後に実行
       pendingWinnerRef.current = null;

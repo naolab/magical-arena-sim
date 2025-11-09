@@ -19,6 +19,14 @@ const COLOR_MAP: Record<string, string> = {
   'Terror': '#22c55e', // 緑
   'Grief': '#3b82f6', // 青
   'Ecstasy': '#eab308', // 黄色
+  'バーストレイジ': '#ef4444',
+  'パーセントスマイト': '#ef4444',
+  'ディミニッシュテラー': '#22c55e',
+  'ヴェノムナイトメア': '#22c55e',
+  'ソウルドレイン': '#3b82f6',
+  'ラストリメディ': '#3b82f6',
+  'トランスブースト': '#eab308',
+  'クリムゾンコンバータ': '#eab308',
 };
 
 export function TypewriterText({ text, speed = 30, className = '', onComplete, startDelay = 0, enableColors = true }: TypewriterTextProps) {

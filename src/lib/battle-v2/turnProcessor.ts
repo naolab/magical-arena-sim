@@ -31,14 +31,7 @@ import {
   calculatePoisonDamage,
   type ExtendedEffectTriggerParams,
 } from './specialEffects';
-import { getVariantDefinition } from './actionVariants';
-
-const DEFAULT_VARIANTS = {
-  rage: 'explosive',
-  terror: 'weaken',
-  grief: 'drain',
-  ecstasy: 'inspire',
-} as const;
+import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
 
 // ========================================
 // Turn Processing

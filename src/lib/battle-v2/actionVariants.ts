@@ -9,6 +9,8 @@ import type {
   GriefVariant,
   EcstasyVariant,
   ActionVariantDefinition,
+  ActionVariant,
+  EmotionType,
 } from './types';
 
 // ========================================
@@ -18,8 +20,8 @@ import type {
 export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
   explosive: {
     id: 'explosive',
-    name: 'Explosive Rage',
-    nameJa: '爆発的激怒',
+    name: 'バーストレイジ',
+    nameJa: 'バーストレイジ',
     description: '激情のまま連続攻撃を繰り出す（追加ダメージ+50%）',
     effectType: 'extra_damage',
     magnitude: 50, // 50%の追加ダメージ
@@ -27,8 +29,8 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
   },
   percentage: {
     id: 'percentage',
-    name: 'Percentage Rage',
-    nameJa: '割合ダメージ',
+    name: 'パーセントスマイト',
+    nameJa: 'パーセントスマイト',
     description: '敵の最大HPに応じたダメージを与える（最大HPの15%）',
     effectType: 'extra_damage',
     magnitude: 15, // 最大HPの15%
@@ -43,8 +45,8 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
 export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
   weaken: {
     id: 'weaken',
-    name: 'Weakening Terror',
-    nameJa: '委縮の恐怖',
+    name: 'ディミニッシュテラー',
+    nameJa: 'ディミニッシュテラー',
     description: '恐怖で相手を委縮させ、攻撃力を低下させる（-20%、2ターン）',
     effectType: 'debuff',
     magnitude: 20, // 20%の攻撃力低下
@@ -53,8 +55,8 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
   },
   poison: {
     id: 'poison',
-    name: 'Toxic Terror',
-    nameJa: '猛毒の恐怖',
+    name: 'ヴェノムナイトメア',
+    nameJa: 'ヴェノムナイトメア',
     description: '毒で相手を蝕む（毎ターン70ダメージ、3ターン）',
     effectType: 'poison',
     magnitude: 70, // 毎ターン70ダメージ
@@ -70,8 +72,8 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
 export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
   drain: {
     id: 'drain',
-    name: 'Life Drain',
-    nameJa: '生命吸収',
+    name: 'ソウルドレイン',
+    nameJa: 'ソウルドレイン',
     description: '悲しみの重さで相手のエネルギーを吸い取る（ダメージの40%回復）',
     effectType: 'drain',
     magnitude: 40, // 与ダメージの40%を回復
@@ -79,8 +81,8 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
   },
   desperate: {
     id: 'desperate',
-    name: 'Desperate Grief',
-    nameJa: '絶望的回復',
+    name: 'ラストリメディ',
+    nameJa: 'ラストリメディ',
     description: '強い悲しみで自分を立て直す（最大HPの15%回復）',
     effectType: 'drain',
     magnitude: 15, // 最大HPの15%
@@ -95,8 +97,8 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
 export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> = {
   inspire: {
     id: 'inspire',
-    name: 'Inspiring Ecstasy',
-    nameJa: '鼓舞の恍惚',
+    name: 'トランスブースト',
+    nameJa: 'トランスブースト',
     description: '至福の高揚感で能力が上昇する（攻撃力+30%、2ターン）',
     effectType: 'buff',
     magnitude: 30, // 30%の攻撃力上昇
@@ -105,8 +107,8 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
   },
   convert: {
     id: 'convert',
-    name: 'Converting Ecstasy',
-    nameJa: 'コメント変換',
+    name: 'クリムゾンコンバータ',
+    nameJa: 'クリムゾンコンバータ',
     description: 'コメントの色を変換する（最大3個を赤〈Rage〉に変換）',
     effectType: 'buff',
     magnitude: 3, // 変換数
@@ -136,6 +138,13 @@ export function getVariantDefinition(
       return ECSTASY_VARIANTS[variant as EcstasyVariant];
   }
 }
+
+export const DEFAULT_VARIANTS: Record<EmotionType, ActionVariant> = {
+  rage: 'explosive',
+  terror: 'weaken',
+  grief: 'drain',
+  ecstasy: 'inspire',
+};
 
 /**
  * 全てのバリアント定義を感情タイプ別に取得
