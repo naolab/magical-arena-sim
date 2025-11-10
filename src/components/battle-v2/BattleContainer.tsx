@@ -493,11 +493,16 @@ export function BattleContainer() {
   }, []);
 
   const selectRandomDialogue = useCallback(() => {
-    const nextEnemy = ENEMY_DIALOGUES[Math.floor(Math.random() * ENEMY_DIALOGUES.length)];
+    // 敵キャラクターのセリフを取得
+    const enemyDialogues = battleState
+      ? getEnemyCharacter(battleState.config.enemyCharacterId).dialogues
+      : ENEMY_DIALOGUES;
+
+    const nextEnemy = enemyDialogues[Math.floor(Math.random() * enemyDialogues.length)];
     const nextPlayer = PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)];
     setEnemyDialogue(nextEnemy);
     setPlayerDialogue(nextPlayer);
-  }, []);
+  }, [battleState]);
 
   const enqueueMessages = useCallback((messages: BattleMessage[]) => {
     if (messages.length === 0) {
@@ -1225,6 +1230,11 @@ export function BattleContainer() {
       player: initialState.player.hp,
       enemy: initialState.enemy.hp,
     };
+    // セリフを新しい敵キャラクターに合わせて初期化
+    const enemyDialogues = getEnemyCharacter(initialState.config.enemyCharacterId).dialogues;
+    setEnemyDialogue(enemyDialogues[Math.floor(Math.random() * enemyDialogues.length)]);
+    setPlayerDialogue(PLAYER_DIALOGUES[Math.floor(Math.random() * PLAYER_DIALOGUES.length)]);
+
     setRecentCommentIds([]);
     setShowActionButtons(false);
     setSelectedEmotion(null);

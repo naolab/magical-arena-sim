@@ -19,6 +19,7 @@ export interface EnemyCharacter {
     ecstasy: ActionVariant;
   };
   aiStrategy?: AIStrategyType; // AI戦略タイプ
+  dialogues: string[]; // バトル中のセリフ
   // 将来的に追加する可能性のあるパラメータ
   baseHp?: number;
   basePower?: number;
@@ -40,6 +41,13 @@ export const ENEMY_CHARACTERS: Record<string, EnemyCharacter> = {
       ecstasy: 'inspire',
     },
     aiStrategy: 'normal',
+    dialogues: [
+      'ちゃんと言うことを聞かないと飼い犬に手を噛まれちゃうよ？',
+      'あら、構ってもらえるのがそんなに嬉しかった？',
+      'その程度の力で私に勝てると思ってるの？',
+      'もっと本気を出してくれないと、つまらないわ',
+      'いい調子ね、でもまだまだ甘いわよ',
+    ],
   },
   hitomi: {
     id: 'hitomi',
@@ -53,6 +61,13 @@ export const ENEMY_CHARACTERS: Record<string, EnemyCharacter> = {
       ecstasy: 'inspire',
     },
     aiStrategy: 'adaptive',
+    dialogues: [
+      'みんなの応援、すごく嬉しい！もっと頑張らなきゃ！',
+      'ファンのみんなが見ててくれるから負けないよ！',
+      'えっと…これで合ってる？みんな喜んでくれるかな？',
+      'わあ！いっぱいコメント来てる！嬉しいな！',
+      'みんなのために、精一杯頑張るね！',
+    ],
   },
 };
 
