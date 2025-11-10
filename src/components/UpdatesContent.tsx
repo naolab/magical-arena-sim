@@ -21,6 +21,16 @@ const TAG_CONFIG = {
 const UPDATES: UpdateCard[] = [
   {
     date: '2025.11.10',
+    title: '新技追加 & UI改善',
+    items: [
+      { text: '各属性に新技バリアントを追加', tag: 'new' },
+      { text: 'HPゲージタップで詳細HP表示機能', tag: 'new' },
+      { text: 'アクションバリアント設定ボタンを分離', tag: 'update' },
+      { text: 'スパチャ出現率を下方修正（7%→5%）', tag: 'balance' },
+    ],
+  },
+  {
+    date: '2025.11.10',
     title: '技選択システム & スパチャ実装',
     items: [
       { text: '技選択システムの実装', tag: 'new' },
