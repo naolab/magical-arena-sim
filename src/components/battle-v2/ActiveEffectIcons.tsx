@@ -3,7 +3,7 @@
 import { type ComponentType, useEffect, useState } from 'react';
 import { SpecialEffect } from '@/lib/battle-v2/types';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
-import { ShieldIcon, SparkIcon, AttackDownIcon, PoisonIcon, CurseIcon, RegenIcon } from './icons';
+import { ShieldIcon, SparkIcon, AttackDownIcon, PoisonIcon, CurseIcon, RegenIcon, FanBlockIcon } from './icons';
 
 interface ActiveEffectIconsProps {
   effects: SpecialEffect[];
@@ -20,6 +20,7 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
   poison: { color: '#a855f7', Icon: PoisonIcon }, // 紫
   curse: { color: '#7c2d12', Icon: CurseIcon }, // ダークレッド
   regen: { color: '#38bdf8', Icon: RegenIcon }, // 回復っぽい水色
+  fan_block: { color: '#16a34a', Icon: FanBlockIcon }, // ファン阻害: グリーン系
 };
 
 export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
@@ -64,7 +65,9 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
                         ? '毒効果'
                         : effect.type === 'curse'
                           ? '呪い効果'
-                          : '特殊効果'}
+                          : effect.type === 'fan_block'
+                            ? 'ファン阻害効果'
+                            : '特殊効果'}
                 </p>
                 <p className="text-white/90 leading-relaxed">{getEffectDescription(effect)}</p>
               </div>

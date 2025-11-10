@@ -156,3 +156,25 @@ export function RegenIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function FanBlockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* メガホン */}
+      <path d="M4 10l10-4v12l-10-4z" />
+      <path d="M14 8l4-3" />
+      <path d="M14 16l4 3" />
+
+      {/* 斜線 */}
+      <path d="M5 19L19 5" />
+    </svg>
+  );
+}

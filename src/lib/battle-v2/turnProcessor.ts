@@ -28,6 +28,7 @@ import {
   applyRageBloodPactEffect,
   applyTerrorPoisonEffect,
   applyTerrorCurseEffect,
+  applyTerrorFanBlockEffect,
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
@@ -345,7 +346,11 @@ export function processTurn(
 
   const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
     !(
-      (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse') &&
+      (effect.type === 'cleanse' ||
+        effect.type === 'debuff' ||
+        effect.type === 'poison' ||
+        effect.type === 'curse' ||
+        effect.type === 'fan_block') &&
       effect.target === target
     );
 
@@ -377,18 +382,24 @@ export function processTurn(
   };
 
   // 7. ファン率の変化量を計算
-  const fanChanges = calculateFanChanges({
+  const rawFanChanges = calculateFanChanges({
     judgement,
     consumedCommentCount: consumedPlayerComments.length,
     playerFanRate: updatedPlayer.fanRate,
     enemyFanRate: updatedEnemy.fanRate,
   });
 
+  const playerFanBlocked = updatedPlayer.activeEffects.some((effect) => effect.type === 'fan_block');
+  const enemyFanBlocked = updatedEnemy.activeEffects.some((effect) => effect.type === 'fan_block');
+
+  const playerFanChange = playerFanBlocked ? 0 : rawFanChanges.playerChange;
+  const enemyFanChange = enemyFanBlocked ? 0 : rawFanChanges.enemyChange;
+
   // 8. 観客構成を更新（中立ファンから獲得）
   const updatedAudience = updateAudienceComposition(
     state.audience,
-    fanChanges.playerChange,
-    fanChanges.enemyChange
+    playerFanChange,
+    enemyFanChange
   );
 
   // 9. ファン率を観客構成から設定
@@ -462,8 +473,8 @@ export function processTurn(
       },
     },
     fanChange: {
-      player: fanChanges.playerChange,
-      enemy: fanChanges.enemyChange,
+      player: playerFanChange,
+      enemy: enemyFanChange,
     },
     playerState: updatedPlayer,
     enemyState: updatedEnemy,
@@ -622,7 +633,13 @@ function triggerSpecialEffects(params: {
       } else if (selectedVariant === 'percentage') {
         result.extraDamage = applyRagePercentageEffect(extendedParams, variantDef);
       } else if (selectedVariant === 'debuff_scaling') {
-        const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse').length;
+        const debuffCount = defender.activeEffects.filter(
+          (effect) =>
+            effect.type === 'debuff' ||
+            effect.type === 'poison' ||
+            effect.type === 'curse' ||
+            effect.type === 'fan_block'
+        ).length;
         const multiplier = 1 + debuffCount * 0.4;
         result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
       } else if (selectedVariant === 'sacrifice') {
@@ -665,6 +682,13 @@ function triggerSpecialEffects(params: {
           result.playerEffects.push(curse);
         } else {
           result.enemyEffects.push(curse);
+        }
+      } else if (selectedVariant === 'fan_block') {
+        const fanBlock = applyTerrorFanBlockEffect({ emotion, target, damage }, variantDef);
+        if (fanBlock.target === 'player') {
+          result.playerEffects.push(fanBlock);
+        } else {
+          result.enemyEffects.push(fanBlock);
         }
       }
       break;

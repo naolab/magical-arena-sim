@@ -239,6 +239,24 @@ export function applyTerrorCurseEffect(
 }
 
 /**
+ * Terror Fan Block: ファン増加を阻害するデバフ
+ */
+export function applyTerrorFanBlockEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'fan_block',
+    emotion,
+    duration: variant.duration || 2,
+    magnitude: 0,
+    target: target === 'player' ? 'enemy' : 'player',
+  };
+}
+
+/**
  * Grief Desperate: HP率に応じた回復（HP低いほど回復UP）
  * @param params 拡張トリガーパラメータ
  * @param variant バリアント定義
@@ -373,7 +391,7 @@ export function checkActiveBuffsDebuffs(effects: SpecialEffect[]): {
 } {
   return {
     hasBuff: effects.some((e) => e.type === 'buff'),
-    hasDebuff: effects.some((e) => e.type === 'debuff'),
+    hasDebuff: effects.some((e) => e.type === 'debuff' || e.type === 'fan_block'),
   };
 }
 
@@ -403,6 +421,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: 呪い (最大HPの${effect.magnitude}%ダメージ/ターン, 残り${effect.duration}ターン)`;
     case 'regen':
       return `${emotionName}: リジェネ (${effect.magnitude}回復/ターン, 残り${effect.duration}ターン)`;
+    case 'fan_block':
+      return `${emotionName}: ファン増加阻害 (残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':

@@ -30,7 +30,7 @@ export type RageVariant =
   | 'blood_pact';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken' | 'poison' | 'curse';
+export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block';
 
 /** Griefのバリアント */
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
@@ -110,7 +110,8 @@ export type SpecialEffectType =
   | 'poison'        // Terror: 毒（持続ダメージ）
   | 'curse'         // Terror: 呪い（割合持続ダメージ）
   | 'cleanse'       // Grief: デバフ解除
-  | 'regen';        // Grief: リジェネ（持続回復）
+  | 'regen'         // Grief: リジェネ（持続回復）
+  | 'fan_block';    // Terror: ファン増加阻害
 
 /** 特殊効果 */
 export interface SpecialEffect {

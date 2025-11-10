@@ -142,6 +142,17 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  fan_block: {
+    id: 'fan_block',
+    name: 'サイレントチェイン',
+    nameJa: 'サイレントチェイン',
+    description: '2ターンの間、相手のファンが一切増えなくなる呪縛を与える',
+    effectType: 'fan_block',
+    magnitude: 0,
+    duration: 2,
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================

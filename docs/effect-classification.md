@@ -35,6 +35,7 @@
 | `debuff` | デバフ | 攻撃力低下などの能力減少 | ディミニッシュテラー (Terror - weaken) |
 | `poison` | 毒 | 固定値の持続ダメージ | ヴェノムナイトメア (Terror - poison) |
 | `curse` | 呪い | 割合の持続ダメージ | カースドシャドウ (Terror - curse) |
+| `fan_block` | ファン阻害 | ファン増加を一定ターン無効化 | サイレントチェイン (Terror - fan_block) |
 
 **カウント対象**:
 - ヘルファイア・スパイク (Rage - debuff_scaling): デバフ数に応じて追撃ダメージ
@@ -63,13 +64,17 @@
 ```typescript
 // デバフ効果のみを抽出
 const debuffs = effects.filter(
-  (effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse'
+  (effect) =>
+    effect.type === 'debuff' ||
+    effect.type === 'poison' ||
+    effect.type === 'curse' ||
+    effect.type === 'fan_block'
 );
 const debuffCount = debuffs.length;
 ```
 
 **使用例**:
-- ヘルファイア・スパイク: `const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse').length;`
+- ヘルファイア・スパイク: `const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse' || effect.type === 'fan_block').length;`
 
 ### バフのカウント
 
@@ -92,7 +97,11 @@ const buffCount = buffs.length;
 // デバフを除外（クレンジング）
 const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
   !(
-    (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse') &&
+    (effect.type === 'cleanse' ||
+      effect.type === 'debuff' ||
+      effect.type === 'poison' ||
+      effect.type === 'curse' ||
+      effect.type === 'fan_block') &&
     effect.target === target
   );
 
@@ -128,7 +137,7 @@ const cleanedEffects = effects.filter((effect) => cleanseEffectFilter(effect, 'p
 4. **ネガティブな効果**: プレイヤーにとって不利な状態変化
 
 **実装時の注意**:
-- 効果タイプは`debuff`系（既存: `debuff`, `poison`, `curse`）を使用
+- 効果タイプは`debuff`系（既存: `debuff`, `poison`, `curse`, `fan_block`）を使用
 - デバフカウント処理に追加：ヘルファイアなどの判定ロジックを更新
 - クレンジング対象に追加：`cleanseEffectFilter`に新しい効果タイプを追加
 
