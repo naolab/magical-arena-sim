@@ -874,7 +874,6 @@ function triggerSpecialEffects(params: {
         } else {
           result.enemyEffects.push(fanBlock);
         }
-      } else if (selectedVariant === 'chaotic_plague') {
       } else if (selectedVariant === 'damage_amplify') {
         const damageAmp: SpecialEffect = {
           type: 'damage_amp',
