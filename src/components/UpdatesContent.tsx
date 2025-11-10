@@ -28,6 +28,9 @@ const UPDATES: UpdateCard[] = [
       { text: 'アクションバリアント設定ボタンを分離', tag: 'update' },
       { text: 'スパチャ出現率を下方修正（7%→5%）', tag: 'balance' },
       { text: 'HP0後に回復効果で復活してしまうバグを修正', tag: 'fix' },
+      { text: 'バトル開始時にキャラ＆VSイントロ演出を追加', tag: 'new' },
+      { text: '勝敗確定時の暗転＋ヘッドライン演出を実装', tag: 'update' },
+      { text: 'リザルト操作ボタンをモノクロ基調に刷新', tag: 'update' },
     ],
   },
   {
