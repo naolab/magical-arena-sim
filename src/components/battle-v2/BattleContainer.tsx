@@ -429,6 +429,9 @@ export function BattleContainer() {
   const [resultOverlayVisible, setResultOverlayVisible] = useState(false);
   const [resultTextVisible, setResultTextVisible] = useState(false);
   const [showResultControls, setShowResultControls] = useState(false);
+  const [introActive, setIntroActive] = useState(true);
+  const [introContentVisible, setIntroContentVisible] = useState(false);
+  const [introFadeOut, setIntroFadeOut] = useState(false);
   const [effectAnimations, setEffectAnimations] = useState<EffectAnimation[]>([]);
   const [playerShake, setPlayerShake] = useState(false);
   const [enemyShake, setEnemyShake] = useState(false);
@@ -753,6 +756,24 @@ export function BattleContainer() {
       if (controlsTimer) clearTimeout(controlsTimer);
     };
   }, [showResult, battleState?.winner]);
+
+  useEffect(() => {
+    if (!battleState || !introActive) return;
+
+    const contentTimer = setTimeout(() => setIntroContentVisible(true), 200);
+    const fadeTimer = setTimeout(() => setIntroFadeOut(true), 2200);
+    const endTimer = setTimeout(() => {
+      setIntroActive(false);
+      setIntroContentVisible(false);
+      setIntroFadeOut(false);
+    }, 3200);
+
+    return () => {
+      clearTimeout(contentTimer);
+      clearTimeout(fadeTimer);
+      clearTimeout(endTimer);
+    };
+  }, [battleState, introActive]);
 
   const scale = useMemo(() => {
     const ratio = Math.min(
@@ -1192,6 +1213,9 @@ export function BattleContainer() {
     pendingWinnerRef.current = null;
     pendingStateRef.current = null;
     setShowResult(false);
+    setIntroActive(true);
+    setIntroContentVisible(false);
+    setIntroFadeOut(false);
     initialMessageShownRef.current = false;
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
@@ -1588,6 +1612,45 @@ export function BattleContainer() {
               <ActionVariantModal onRestart={handleRestart} />
               <RulesModal />
             </div>
+
+            {/* バトルイントロ演出 */}
+            {introActive && battleState && (
+              <div
+                className={`absolute inset-0 z-40 flex items-center justify-center bg-black transition-opacity duration-700 ${
+                  introFadeOut ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
+                <div
+                  className={`grid grid-cols-[1fr_auto_1fr] items-center justify-items-center gap-8 w-full max-w-[1600px] px-12 text-white transition-all duration-700 ${
+                    introContentVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="text-sm uppercase tracking-[0.6em] text-white/60">PLAYER</span>
+                    <div className="w-[540px] h-[540px]">
+                      <img
+                        src="/images/player-placeholder.png"
+                        alt="Player"
+                        className="h-full w-full object-cover rounded-[15%]"
+                      />
+                    </div>
+                  </div>
+                  <div className="text-9xl font-black tracking-[0.65em] text-center text-white drop-shadow-[0_15px_45px_rgba(0,0,0,0.9)]">
+                    VS
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="text-sm uppercase tracking-[0.6em] text-white/60">ENEMY</span>
+                    <div className="w-[540px] h-[540px]">
+                      <img
+                        src="/images/enemy-placeholder.png"
+                        alt="Enemy"
+                        className="h-full w-full object-cover rounded-[15%]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
