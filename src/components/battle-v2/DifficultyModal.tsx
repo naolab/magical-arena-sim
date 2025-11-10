@@ -15,16 +15,13 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
 
   const handlePlayerFansChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPlayerFans = Number(e.target.value);
-    const currentEnemyFans = params.initialEnemyFans;
-    const newNeutralFans = 1 - newPlayerFans - currentEnemyFans;
 
     setParams({
       initialPlayerFans: newPlayerFans,
-      initialNeutralFans: newNeutralFans,
     });
   };
 
-  const playerFansSliderMax = 1 - params.initialEnemyFans;
+  const playerFansSliderMax = 1.0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">

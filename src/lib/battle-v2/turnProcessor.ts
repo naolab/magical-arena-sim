@@ -48,6 +48,7 @@ import {
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
 import { getEnemyCharacter } from './enemyCharacters';
+import { updateAudienceComposition } from './fanSystem';
 
 function getDamageTakenMultiplierFromEffects(effects?: SpecialEffect[]): number {
   if (!effects || effects.length === 0) return 1;
@@ -544,25 +545,14 @@ export function processTurn(
     }
   }
 
-  // 7. ファン率の変化量を計算
-  const rawFanChanges = calculateFanChanges({
-    judgement,
-    consumedCommentCount: consumedPlayerComments.length,
-    playerFanRate: updatedPlayer.fanRate,
-    enemyFanRate: updatedEnemy.fanRate,
-  });
-
+  // 7. ファン率ブロック効果の確認
   const playerFanBlocked = updatedPlayer.activeEffects.some((effect) => effect.type === 'fan_block');
-  const enemyFanBlocked = updatedEnemy.activeEffects.some((effect) => effect.type === 'fan_block');
+  const playerCommentCount = playerFanBlocked ? 0 : consumedPlayerComments.length;
 
-  const playerFanChange = playerFanBlocked ? 0 : rawFanChanges.playerChange;
-  const enemyFanChange = enemyFanBlocked ? 0 : rawFanChanges.enemyChange;
-
-  // 8. 観客構成を更新（中立ファンから獲得）
+  // 8. 観客構成を更新（独立したファン率システム）
   const updatedAudience = updateAudienceComposition(
     state.audience,
-    playerFanChange,
-    enemyFanChange
+    playerCommentCount
   );
 
   // 9. ファン率を観客構成から設定
@@ -634,8 +624,8 @@ export function processTurn(
       },
     },
     fanChange: {
-      player: playerFanChange,
-      enemy: enemyFanChange,
+      player: updatedAudience.playerFans - state.audience.playerFans,
+      enemy: updatedAudience.enemyFans - state.audience.enemyFans,
     },
     playerState: updatedPlayer,
     enemyState: updatedEnemy,
@@ -1049,89 +1039,6 @@ function triggerSpecialEffects(params: {
   }
 
   return result;
-}
-
-/**
- * ファン率の変動を計算
- * プレイヤー: 消費コメント数 × 6%
- * 敵: 毎ターン固定で10%
- */
-function calculateFanChanges(params: {
-  judgement: 'win' | 'draw' | 'lose';
-  consumedCommentCount: number;
-  playerFanRate: number;
-  enemyFanRate: number;
-}): { playerChange: number; enemyChange: number } {
-  const { consumedCommentCount } = params;
-
-  // プレイヤー: 消費コメント1個につき+6%
-  const playerChange = consumedCommentCount * 0.06;
-
-  // 敵: 毎ターン固定で+10%
-  const enemyChange = 0.1;
-
-  return { playerChange, enemyChange };
-}
-
-/**
- * 観客構成を更新
- * まず中立ファンから獲得、足りなければ相手のファンを奪う
- */
-function updateAudienceComposition(
-  current: { playerFans: number; enemyFans: number; neutralFans: number },
-  playerFanChange: number,
-  enemyFanChange: number
-): { playerFans: number; enemyFans: number; neutralFans: number } {
-  // 現在の構成をコピー
-  let playerFans = current.playerFans;
-  let enemyFans = current.enemyFans;
-  let neutralFans = current.neutralFans;
-
-  // プレイヤーの獲得処理
-  if (playerFanChange > 0) {
-    // まず中立ファンから獲得
-    const fromNeutral = Math.min(playerFanChange, neutralFans);
-    playerFans += fromNeutral;
-    neutralFans -= fromNeutral;
-
-    // 不足分は敵ファンから奪う
-    const remaining = playerFanChange - fromNeutral;
-    if (remaining > 0) {
-      const fromEnemy = Math.min(remaining, enemyFans);
-      playerFans += fromEnemy;
-      enemyFans -= fromEnemy;
-    }
-  }
-
-  // 敵の獲得処理
-  if (enemyFanChange > 0) {
-    // まず中立ファンから獲得
-    const fromNeutral = Math.min(enemyFanChange, neutralFans);
-    enemyFans += fromNeutral;
-    neutralFans -= fromNeutral;
-
-    // 不足分はプレイヤーファンから奪う
-    const remaining = enemyFanChange - fromNeutral;
-    if (remaining > 0) {
-      const fromPlayer = Math.min(remaining, playerFans);
-      enemyFans += fromPlayer;
-      playerFans -= fromPlayer;
-    }
-  }
-
-  // 合計が1.0になるように正規化
-  const total = playerFans + enemyFans + neutralFans;
-  if (total > 0) {
-    playerFans /= total;
-    enemyFans /= total;
-    neutralFans /= total;
-  }
-
-  return {
-    playerFans: Math.max(0, Math.min(1, playerFans)),
-    enemyFans: Math.max(0, Math.min(1, enemyFans)),
-    neutralFans: Math.max(0, Math.min(1, neutralFans)),
-  };
 }
 
 /**

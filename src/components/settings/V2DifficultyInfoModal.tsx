@@ -73,11 +73,10 @@ export function V2DifficultyInfoModal({ isOpen, onClose }: V2DifficultyInfoModal
                 </dd>
               </div>
               <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-                <dt className="text-white/70">初期ファン (味方/敵/中立)</dt>
+                <dt className="text-white/70">初期ファン (味方/敵)</dt>
                 <dd className="text-xl font-semibold text-white">
                   {(defaults.initialPlayerFans * 100).toFixed(0)}% /{' '}
-                  {(defaults.initialEnemyFans * 100).toFixed(0)}% /{' '}
-                  {(defaults.initialNeutralFans * 100).toFixed(0)}%
+                  {(defaults.initialEnemyFans * 100).toFixed(0)}%
                 </dd>
               </div>
             </dl>

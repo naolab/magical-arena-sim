@@ -175,11 +175,10 @@ export interface EnemyState extends Combatant {
 // Audience System
 // ========================================
 
-/** 観客構成 */
+/** 観客構成（独立したファン率システム） */
 export interface AudienceComposition {
-  playerFans: number; // プレイヤーファン (0.0 ~ 1.0)
-  enemyFans: number; // 敵ファン (0.0 ~ 1.0)
-  neutralFans: number; // 中立ファン (0.0 ~ 1.0)
+  playerFans: number; // プレイヤーファン率 (0.0 ~ 1.0, 独立)
+  enemyFans: number; // 敵ファン率 (0.0 ~ 1.0, 独立)
 }
 
 // ========================================

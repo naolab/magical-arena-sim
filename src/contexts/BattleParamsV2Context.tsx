@@ -49,7 +49,6 @@ export interface BattleParamsV2 {
   fanStealAmountOnWin: number;
   initialPlayerFans: number;
   initialEnemyFans: number;
-  initialNeutralFans: number;
 }
 
 // デフォルト値
@@ -63,7 +62,7 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
 
   // ダメージ計算
   commentBonusPerCount: 0.2,
-  fanRateMaxBonus: 1.0,
+  fanRateMaxBonus: 2.0,
   matchupBonusWin: 1.5,
   matchupBonusDraw: 1.0,
   matchupBonusLose: 0.7,
@@ -101,9 +100,8 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   fanRateChangeOnLose: -0.05,
   fanRateBonusPerComment: 0.02,
   fanStealAmountOnWin: 0.05,
-  initialPlayerFans: 0.2,
-  initialEnemyFans: 0.2,
-  initialNeutralFans: 0.6,
+  initialPlayerFans: 0.0,
+  initialEnemyFans: 0.0,
 };
 
 // Contextの型定義
