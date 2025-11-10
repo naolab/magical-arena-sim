@@ -20,6 +20,19 @@ const TAG_CONFIG = {
 
 const UPDATES: UpdateCard[] = [
   {
+    date: '2025.11.11',
+    title: '新キャラクター & ファンシステム改修',
+    items: [
+      { text: '新しい敵キャラクター「ひとみ」を追加', tag: 'new' },
+      { text: '適応型AI搭載！コメント状況に応じて戦略を変更', tag: 'new' },
+      { text: '敵キャラクター選択UI実装（カード型レイアウト）', tag: 'new' },
+      { text: 'キャラクター別セリフシステムの実装', tag: 'update' },
+      { text: 'ファンゲージをプレイヤーと敵で独立表示', tag: 'update' },
+      { text: 'ファン獲得条件を変更（コメント消費数とターン数ベース）', tag: 'update' },
+      { text: '最大ダメージ倍率を2倍→3倍に上方修正', tag: 'balance' },
+    ],
+  },
+  {
     date: '2025.11.10',
     title: '新技追加 & UI改善',
     items: [
