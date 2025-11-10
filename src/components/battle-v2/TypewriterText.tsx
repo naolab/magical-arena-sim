@@ -35,6 +35,18 @@ export function TypewriterText({ text, speed = 30, className = '', onComplete, s
   const [isStarted, setIsStarted] = useState(startDelay === 0);
   const [hasCompleted, setHasCompleted] = useState(false);
 
+  // HTMLタグを含むテキストから、表示用の文字列とHTML構造を分離
+  const parseTextWithHtml = (html: string) => {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return {
+      plainText: temp.textContent || '',
+      htmlTemplate: html,
+    };
+  };
+
+  const { plainText, htmlTemplate } = parseTextWithHtml(text);
+
   useEffect(() => {
     // テキストが変わったらリセット
     setDisplayedText('');
@@ -53,66 +65,75 @@ export function TypewriterText({ text, speed = 30, className = '', onComplete, s
   useEffect(() => {
     if (!isStarted) return;
 
-    if (currentIndex < text.length) {
+    if (currentIndex < plainText.length) {
       const timer = setTimeout(() => {
-        setDisplayedText(text.substring(0, currentIndex + 1));
+        setDisplayedText(plainText.substring(0, currentIndex + 1));
         setCurrentIndex(currentIndex + 1);
       }, speed);
 
       return () => clearTimeout(timer);
-    } else if (currentIndex === text.length && !hasCompleted && onComplete) {
+    } else if (currentIndex === plainText.length && !hasCompleted && onComplete) {
       // 表示完了（一度だけ呼ぶ）
       setHasCompleted(true);
       onComplete();
     }
-  }, [currentIndex, text, speed, onComplete, isStarted, hasCompleted]);
+  }, [currentIndex, plainText, speed, onComplete, isStarted, hasCompleted]);
 
-  // テキストを色付けしてレンダリング
-  const renderColoredText = (text: string) => {
+  // HTMLテンプレートから表示用のHTMLを生成
+  const getDisplayedHtml = () => {
     if (!enableColors) {
-      return text;
+      return displayedText;
     }
 
-    const parts: { text: string; color?: string }[] = [];
-    let remaining = text;
-    let position = 0;
+    // HTMLタグを含む場合はそのまま使用し、プレーンテキストのみを制限
+    let charCount = 0;
+    let result = '';
+    let inTag = false;
 
-    while (remaining.length > 0) {
-      let matched = false;
+    for (let i = 0; i < htmlTemplate.length; i++) {
+      const char = htmlTemplate[i];
 
-      // 各キーワードをチェック
-      for (const [keyword, color] of Object.entries(COLOR_MAP)) {
-        if (remaining.startsWith(keyword)) {
-          parts.push({ text: keyword, color });
-          remaining = remaining.slice(keyword.length);
-          position += keyword.length;
-          matched = true;
+      if (char === '<') {
+        inTag = true;
+        result += char;
+      } else if (char === '>') {
+        inTag = false;
+        result += char;
+      } else if (inTag) {
+        result += char;
+      } else {
+        if (charCount < displayedText.length) {
+          result += char;
+          charCount++;
+        } else {
           break;
         }
       }
+    }
 
-      if (!matched) {
-        // マッチしない場合は1文字進める
-        parts.push({ text: remaining[0] });
-        remaining = remaining.slice(1);
-        position += 1;
+    // 開きタグが閉じられていない場合は閉じる
+    const openTags: string[] = [];
+    const tagRegex = /<\/?([a-z]+)[^>]*>/gi;
+    let match;
+
+    while ((match = tagRegex.exec(result)) !== null) {
+      const isClosing = match[0].startsWith('</');
+      const tagName = match[1];
+
+      if (!isClosing) {
+        openTags.push(tagName);
+      } else {
+        openTags.pop();
       }
     }
 
-    return (
-      <>
-        {parts.map((part, index) =>
-          part.color ? (
-            <span key={index} style={{ color: part.color, fontWeight: 'bold' }}>
-              {part.text}
-            </span>
-          ) : (
-            <span key={index}>{part.text}</span>
-          )
-        )}
-      </>
-    );
+    // 未閉鎖タグを閉じる
+    for (let i = openTags.length - 1; i >= 0; i--) {
+      result += `</${openTags[i]}>`;
+    }
+
+    return result;
   };
 
-  return <div className={className}>{renderColoredText(displayedText)}</div>;
+  return <div className={className} dangerouslySetInnerHTML={{ __html: getDisplayedHtml() }} />;
 }

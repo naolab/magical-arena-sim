@@ -103,6 +103,17 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  curse: {
+    id: 'curse',
+    name: 'カースドシャドウ',
+    nameJa: 'カースドシャドウ',
+    description: '呪いで相手を蝕む（毎ターン最大HPの5%ダメージ、3ターン）',
+    effectType: 'curse',
+    magnitude: 5, // 最大HPの5%
+    duration: 3, // 3ターン持続
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================

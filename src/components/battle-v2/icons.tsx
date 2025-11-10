@@ -90,3 +90,37 @@ export function PoisonIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function CurseIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="0.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* 頭蓋骨の上部 */}
+      <ellipse cx="12" cy="9" rx="6" ry="7" opacity="0.9" />
+
+      {/* 目のくぼみ（左） */}
+      <ellipse cx="9.5" cy="9" rx="1.5" ry="2" fill="black" opacity="1" />
+
+      {/* 目のくぼみ（右） */}
+      <ellipse cx="14.5" cy="9" rx="1.5" ry="2" fill="black" opacity="1" />
+
+      {/* 鼻の穴 */}
+      <path d="M11 12l1-1.5 1 1.5z" fill="black" opacity="0.8" />
+
+      {/* 歯（上） */}
+      <rect x="9" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+      <rect x="11.25" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+      <rect x="13.5" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+
+      {/* 不吉なオーラ（ぼんやりした円） */}
+      <circle cx="12" cy="10" r="8.5" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
+    </svg>
+  );
+}

@@ -169,6 +169,27 @@ export function applyTerrorPoisonEffect(
 }
 
 /**
+ * Terror - 呪い効果: 割合持続ダメージ
+ * @param params トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 呪い効果
+ */
+export function applyTerrorCurseEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { magnitude: number; duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'curse',
+    emotion,
+    duration: variant.duration || 3,
+    magnitude: variant.magnitude, // 最大HPの%
+    target: target === 'player' ? 'enemy' : 'player', // 相手に付与
+  };
+}
+
+/**
  * Grief Desperate: HP率に応じた回復（HP低いほど回復UP）
  * @param params 拡張トリガーパラメータ
  * @param variant バリアント定義
@@ -329,6 +350,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: 攻撃力-${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'poison':
       return `${emotionName}: 毒 (${effect.magnitude}ダメージ/ターン, 残り${effect.duration}ターン)`;
+    case 'curse':
+      return `${emotionName}: 呪い (最大HPの${effect.magnitude}%ダメージ/ターン, 残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':
@@ -346,4 +369,16 @@ export function getEffectDescription(effect: SpecialEffect): string {
 export function calculatePoisonDamage(effects: SpecialEffect[]): number {
   const poisonEffects = effects.filter((e) => e.type === 'poison');
   return poisonEffects.reduce((total, effect) => total + effect.magnitude, 0);
+}
+
+/**
+ * 呪い効果によるダメージを計算・適用（割合ダメージ）
+ * @param effects 有効な効果リスト
+ * @param maxHp 対象の最大HP
+ * @returns 呪いダメージの合計
+ */
+export function calculateCurseDamage(effects: SpecialEffect[], maxHp: number): number {
+  const curseEffects = effects.filter((e) => e.type === 'curse');
+  const totalPercentage = curseEffects.reduce((total, effect) => total + effect.magnitude, 0);
+  return Math.round(maxHp * (totalPercentage / 100));
 }

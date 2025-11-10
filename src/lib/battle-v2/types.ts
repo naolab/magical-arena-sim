@@ -23,7 +23,7 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike' | 'debuff_scaling';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken' | 'poison';
+export type TerrorVariant = 'weaken' | 'poison' | 'curse';
 
 /** Griefのバリアント */
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal';
@@ -101,6 +101,7 @@ export type SpecialEffectType =
   | 'drain'         // Grief: HP吸収
   | 'buff'          // Ecstasy: バフ（攻撃力上昇）
   | 'poison'        // Terror: 毒（持続ダメージ）
+  | 'curse'         // Terror: 呪い（割合持続ダメージ）
   | 'cleanse';      // Grief: デバフ解除
 
 /** 特殊効果 */
@@ -172,11 +173,13 @@ export interface TurnResult {
       extraDamage: number;
       healing: number;
       poisonDamage: number; // 毒ダメージ
+      curseDamage: number; // 呪いダメージ
     };
     enemy: {
       extraDamage: number;
       healing: number;
       poisonDamage: number; // 毒ダメージ
+      curseDamage: number; // 呪いダメージ
     };
   };
   fanChange: {

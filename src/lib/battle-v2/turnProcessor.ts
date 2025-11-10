@@ -25,12 +25,14 @@ import {
   applyEcstasyEffect,
   applyRagePercentageEffect,
   applyTerrorPoisonEffect,
+  applyTerrorCurseEffect,
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
   updateEffectDurations,
   removeExpiredEffects,
   calculatePoisonDamage,
+  calculateCurseDamage,
   type ExtendedEffectTriggerParams,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
@@ -248,6 +250,24 @@ export function processTurn(
     };
   }
 
+  // 5.6. 呪いダメージの適用（ターン開始時の効果）
+  const playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
+  const enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
+
+  if (playerCurseDamage > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - playerCurseDamage),
+    };
+  }
+
+  if (enemyCurseDamage > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.max(0, updatedEnemy.hp - enemyCurseDamage),
+    };
+  }
+
   // 6. 既存効果の更新と新規効果の追加
   const tickExistingEffects = (effects: ActiveEffectExtended[]) =>
     removeExpiredEffects(
@@ -289,7 +309,7 @@ export function processTurn(
 
   const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
     !(
-      (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison') &&
+      (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse') &&
       effect.target === target
     );
 
@@ -392,11 +412,13 @@ export function processTurn(
         extraDamage: playerExtraDamage,
         healing: playerHealing,
         poisonDamage: playerPoisonDamage,
+        curseDamage: playerCurseDamage,
       },
       enemy: {
         extraDamage: enemyExtraDamage,
         healing: enemyHealing,
         poisonDamage: enemyPoisonDamage,
+        curseDamage: enemyCurseDamage,
       },
     },
     fanChange: {
@@ -552,7 +574,7 @@ function triggerSpecialEffects(params: {
       } else if (selectedVariant === 'percentage') {
         result.extraDamage = applyRagePercentageEffect(extendedParams, variantDef);
       } else if (selectedVariant === 'debuff_scaling') {
-        const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison').length;
+        const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse').length;
         const multiplier = 1 + debuffCount * 0.4;
         result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
       }
@@ -577,6 +599,13 @@ function triggerSpecialEffects(params: {
           result.playerEffects.push(poison);
         } else {
           result.enemyEffects.push(poison);
+        }
+      } else if (selectedVariant === 'curse') {
+        const curse = applyTerrorCurseEffect({ emotion, target, damage }, variantDef);
+        if (curse.target === 'player') {
+          result.playerEffects.push(curse);
+        } else {
+          result.enemyEffects.push(curse);
         }
       }
       break;

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, executeSuperchatTurn, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
-import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
+import { getEmotionName, getEmotionColor } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
@@ -116,10 +116,12 @@ function buildTurnMessages(
     onPlayerExtra: (amount: number) => void;
     onPlayerHeal: (amount: number) => void;
     onPlayerPoison?: (amount: number) => void;
+    onPlayerCurse?: (amount: number) => void;
     onEnemyBase: (amount: number) => void;
     onEnemyExtra: (amount: number) => void;
     onEnemyHeal: (amount: number) => void;
     onEnemyPoison?: (amount: number) => void;
+    onEnemyCurse?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
@@ -127,6 +129,8 @@ function buildTurnMessages(
   options: {
     playerSkillName: string;
     enemySkillName: string;
+    playerEmotion: EmotionType;
+    enemyEmotion: EmotionType;
     isSuperchatTurn?: boolean;
   }
 ): BattleMessage[] {
@@ -134,7 +138,9 @@ function buildTurnMessages(
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
-  const { playerSkillName, enemySkillName, isSuperchatTurn = false } = options;
+  const { playerSkillName, enemySkillName, playerEmotion, enemyEmotion, isSuperchatTurn = false } = options;
+  const playerColor = getEmotionColor(playerEmotion);
+  const enemyColor = getEmotionColor(enemyEmotion);
   const { damage, secondaryEffects, specialEffects } = result;
   const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
   const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
@@ -147,7 +153,7 @@ function buildTurnMessages(
   const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy');
   const playerOpening =
     playerSkillName.length > 0
-      ? `あなたは ${playerSkillName} を発動！`
+      ? `あなたは <span style="color: ${playerColor}; font-weight: bold;">${playerSkillName}</span> を発動！`
       : `あなたは ${playerEmotionName} を繰り出した！`;
   const playerMessageText = playerDamageText
     ? `${playerOpening} ${playerDamageText}`
@@ -188,7 +194,7 @@ function buildTurnMessages(
   const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
   const enemyOpening =
     enemySkillName.length > 0
-      ? `敵は ${enemySkillName} を発動！`
+      ? `敵は <span style="color: ${enemyColor}; font-weight: bold;">${enemySkillName}</span> を発動！`
       : `敵は ${enemyEmotionName} を繰り出した！`;
   const enemyMessageText = enemyDamageText
     ? `${enemyOpening} ${enemyDamageText}`
@@ -241,6 +247,27 @@ function buildTurnMessages(
         'system',
         `敵は毒で ${secondaryEffects.enemy.poisonDamage} のダメージを受けた！`,
         () => handlers.onEnemyPoison?.(secondaryEffects.enemy.poisonDamage)
+      )
+    );
+  }
+
+  // 呪いダメージのメッセージ
+  if (secondaryEffects.player.curseDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `あなたは呪いで ${secondaryEffects.player.curseDamage} のダメージを受けた！`,
+        () => handlers.onPlayerCurse?.(secondaryEffects.player.curseDamage)
+      )
+    );
+  }
+
+  if (!isSuperchatTurn && secondaryEffects.enemy.curseDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵は呪いで ${secondaryEffects.enemy.curseDamage} のダメージを受けた！`,
+        () => handlers.onEnemyCurse?.(secondaryEffects.enemy.curseDamage)
       )
     );
   }
@@ -801,6 +828,32 @@ export function BattleContainer() {
         });
       };
 
+      const applyPlayerCurseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyCurseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
       const applyPlayerEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
         const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
@@ -877,10 +930,12 @@ export function BattleContainer() {
           onPlayerExtra: applyPlayerExtraDamage,
           onPlayerHeal: applyPlayerHealing,
           onPlayerPoison: applyPlayerPoisonDamage,
+          onPlayerCurse: applyPlayerCurseDamage,
           onEnemyBase: applyEnemyBaseDamage,
           onEnemyExtra: applyEnemyExtraDamage,
           onEnemyHeal: applyEnemyHealing,
           onEnemyPoison: applyEnemyPoisonDamage,
+          onEnemyCurse: applyEnemyCurseDamage,
           onPlayerEffect: applyPlayerEffect,
           onEnemyEffect: applyEnemyEffect,
           onCommentConversion: applyCommentConversion,
@@ -888,6 +943,8 @@ export function BattleContainer() {
         {
           playerSkillName,
           enemySkillName,
+          playerEmotion: emotion,
+          enemyEmotion: actualEnemyEmotion,
           isSuperchatTurn: isSuperchatMode,
         }
       );
