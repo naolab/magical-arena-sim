@@ -181,6 +181,10 @@ function buildTurnMessages(
     );
   }
 
+  if (result.cleansed) {
+    messages.push(createMessage('system', 'デバフが全て解除された！'));
+  }
+
   const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
   const enemyOpening =
     enemySkillName.length > 0

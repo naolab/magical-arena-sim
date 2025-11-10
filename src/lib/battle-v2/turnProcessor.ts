@@ -280,7 +280,7 @@ export function processTurn(
     ...annotateNewEffects(enemySpecialEffects.enemyEffects),
   ];
 
-  const playerCleansed = finalPlayerEffects.some(
+  const playerCleansed = playerSpecialEffects.cleansed || finalPlayerEffects.some(
     (effect) => effect.type === 'cleanse' && effect.target === 'player'
   );
   const enemyCleansed = finalEnemyEffects.some(
@@ -411,6 +411,7 @@ export function processTurn(
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
     commentBoostApplied: playerSpecialEffects.commentBoost,
     currentCommentBoost: updatedPermanentCommentBoost,
+    cleansed: playerSpecialEffects.cleansed,
   };
 
   // 11. 状態を更新して返す
@@ -501,6 +502,7 @@ interface SpecialEffectResult {
   commentConversion?: CommentConversionSummary;
   extraDamageMultiplier?: number;
   commentBoost?: number; // コメント追加量の増加値
+  cleansed?: boolean; // デバフが全て解除されたか
 }
 
 /**
@@ -586,13 +588,7 @@ function triggerSpecialEffects(params: {
         result.healing = applyGriefDesperateEffect(extendedParams, variantDef);
       } else if (selectedVariant === 'cleanse_heal') {
         result.healing = variantDef.magnitude;
-        result.playerEffects.push({
-          type: 'cleanse',
-          emotion,
-          duration: 0,
-          magnitude: 0,
-          target,
-        } as SpecialEffect);
+        result.cleansed = true; // デバフ解除フラグを立てる（アイコン表示しない）
       }
       break;
 

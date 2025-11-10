@@ -191,6 +191,7 @@ export interface TurnResult {
   superchatAwarded?: boolean; // スパチャ追撃獲得
   commentBoostApplied?: number; // このターンで増加したコメントブースト量
   currentCommentBoost?: number; // 現在の累積コメントブースト量
+  cleansed?: boolean; // プレイヤーのデバフが全て解除されたか
 }
 
 // ========================================
