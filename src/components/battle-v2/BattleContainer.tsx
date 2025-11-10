@@ -357,6 +357,15 @@ function buildTurnMessages(
     );
   }
 
+  if (result.commentLimitChanged) {
+    messages.push(
+      createMessage(
+        'system',
+        `コメント上限が${result.commentLimitChanged.newMax}になった！`
+      )
+    );
+  }
+
   if (result.commentVictory) {
     const text =
       result.commentVictory === 'both'

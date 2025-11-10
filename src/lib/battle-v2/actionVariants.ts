@@ -235,6 +235,16 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  limit_heal: {
+    id: 'limit_heal',
+    name: 'サクリファイス・ウォール',
+    nameJa: 'サクリファイス・ウォール',
+    description: 'コメント上限を1減らす代わりにHPを300回復（最大5回）',
+    effectType: 'drain',
+    magnitude: 300,
+    hasAttack: false,
+    maxUses: 5,
+  },
 };
 
 // ========================================
