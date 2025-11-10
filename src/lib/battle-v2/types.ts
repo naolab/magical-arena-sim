@@ -36,7 +36,8 @@ export type TerrorVariant =
   | 'curse'
   | 'fan_block'
   | 'chaotic_plague'
-  | 'damage_amplify';
+  | 'damage_amplify'
+  | 'victory_trigger';
 
 /** Griefのバリアント */
 export type GriefVariant =
