@@ -189,6 +189,8 @@ export interface TurnResult {
   message: string; // ターンの説明メッセージ
   commentConversions?: CommentConversionEvent[]; // コメント変換イベント
   superchatAwarded?: boolean; // スパチャ追撃獲得
+  commentBoostApplied?: number; // このターンで増加したコメントブースト量
+  currentCommentBoost?: number; // 現在の累積コメントブースト量
 }
 
 // ========================================

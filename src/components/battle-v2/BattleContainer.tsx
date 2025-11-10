@@ -262,6 +262,16 @@ function buildTurnMessages(
   messages.push(
     ...buildEffectMessages(specialEffects.player, 'player', handlers.onPlayerEffect)
   );
+
+  if (result.commentBoostApplied && result.commentBoostApplied > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `コメント追加量が+${result.commentBoostApplied}増加した！（現在+${result.currentCommentBoost}）`
+      )
+    );
+  }
+
   messages.push(
     ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
   );

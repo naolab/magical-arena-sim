@@ -409,6 +409,8 @@ export function processTurn(
     commentConversions,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
+    commentBoostApplied: playerSpecialEffects.commentBoost,
+    currentCommentBoost: updatedPermanentCommentBoost,
   };
 
   // 11. 状態を更新して返す
