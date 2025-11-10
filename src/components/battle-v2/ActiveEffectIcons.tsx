@@ -3,7 +3,7 @@
 import { type ComponentType, useEffect, useState } from 'react';
 import { SpecialEffect } from '@/lib/battle-v2/types';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
-import { ShieldIcon, SparkIcon, AttackDownIcon, PoisonIcon, CurseIcon, RegenIcon, FanBlockIcon } from './icons';
+import { ShieldIcon, SparkIcon, AttackDownIcon, PoisonIcon, CurseIcon, RegenIcon, FanBlockIcon, SkullIcon } from './icons';
 
 interface ActiveEffectIconsProps {
   effects: SpecialEffect[];
@@ -23,6 +23,7 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
   fan_block: { color: '#16a34a', Icon: FanBlockIcon }, // ファン阻害: グリーン系
   superchat_boost: { color: '#ec4899', Icon: SparkIcon }, // スパチャ率UP
   damage_amp: { color: '#ef4444', Icon: AttackDownIcon }, // 被ダメ増加
+  victory_trigger: { color: '#f97316', Icon: SkullIcon }, // 勝利トリガー（禍々しく）
 };
 
 export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
@@ -54,7 +55,9 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
                 className="h-4 w-4 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
                 style={{ color: config.color }}
               />
-              <span className="tracking-wide">{effect.duration}</span>
+              <span className="tracking-wide">
+                {Number.isFinite(effect.duration) ? effect.duration : '∞'}
+              </span>
             </button>
             {isOpen && (
               <div className="absolute left-1/2 top-full z-10 mt-2 w-56 -translate-x-1/2 rounded-xl border border-white/30 bg-black/85 p-3 text-xs text-white shadow-2xl">
@@ -73,7 +76,9 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
                               ? 'スパチャ率UP'
                               : effect.type === 'damage_amp'
                                 ? '被ダメ増加'
-                                : '特殊効果'}
+                                : effect.type === 'victory_trigger'
+                                  ? '勝利トリガー'
+                                  : '特殊効果'}
                 </p>
                 <p className="text-white/90 leading-relaxed">{getEffectDescription(effect)}</p>
               </div>

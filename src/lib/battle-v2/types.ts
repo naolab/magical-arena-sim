@@ -128,7 +128,8 @@ export type SpecialEffectType =
   | 'regen'         // Grief: リジェネ（持続回復）
   | 'fan_block'     // Terror: ファン増加阻害
   | 'superchat_boost' // Ecstasy: スパチャ率上昇
-  | 'damage_amp';   // 与ダメ倍率アップ（対象は被ダメ増加）
+  | 'damage_amp'    // 与ダメージ増幅（被ダメ増加）
+  | 'victory_trigger'; // コメント枯渇勝利トリガー
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -226,6 +227,7 @@ export interface TurnResult {
     comments: Comment[];
     limitedEmotions?: EmotionType[];
   }; // コメントリフレッシュイベント
+  commentVictory?: 'player' | 'enemy' | 'both'; // コメント枯渇勝利イベント
   superchatAwarded?: boolean; // スパチャ追撃獲得
   commentBoostApplied?: number; // このターンで増加したコメントブースト量
   currentCommentBoost?: number; // 現在の累積コメントブースト量

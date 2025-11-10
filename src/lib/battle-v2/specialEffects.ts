@@ -554,6 +554,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: スパチャ率上昇 (残り${effect.duration}ターン)`;
     case 'damage_amp':
       return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
+    case 'victory_trigger':
+      return `${emotionName}: コメント枯渇勝利 (永続)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':

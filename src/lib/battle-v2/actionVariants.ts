@@ -177,6 +177,16 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
       damageMultiplier: 1.2,
     },
   },
+  victory_trigger: {
+    id: 'victory_trigger',
+    name: '奈落のフィナーレ',
+    nameJa: '奈落のフィナーレ',
+    description: 'コメントが枯渇すると即勝利する特殊な呪いを自分に付与（永続, 重ね掛け不可）',
+    effectType: 'victory_trigger',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 1,
+  },
 };
 
 // ========================================

@@ -357,6 +357,16 @@ function buildTurnMessages(
     );
   }
 
+  if (result.commentVictory) {
+    const text =
+      result.commentVictory === 'both'
+        ? 'コメントが枯れ、双方が倒れた！'
+        : result.commentVictory === 'player'
+          ? 'コメントが枯れ、敵が倒れた！'
+          : 'コメントが枯れ、あなたが倒れた！';
+    messages.push(createMessage('system', text));
+  }
+
   messages.push(
     ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
   );

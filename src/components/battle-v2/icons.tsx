@@ -157,6 +157,30 @@ export function RegenIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function SkullIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path
+        d="M12 3c4 0 7 3 7 7 0 3-2 5-2 7v2H7v-2c0-2-2-4-2-7 0-4 3-7 7-7Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <circle cx="9" cy="10" r="1.8" />
+      <circle cx="15" cy="10" r="1.8" />
+      <path d="M9 16h6" />
+      <path d="M10 19h4" />
+    </svg>
+  );
+}
+
 export function FanBlockIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

@@ -92,7 +92,6 @@ export function processTurn(
     player: getDamageTakenMultiplierFromEffects(state.player.activeEffects),
     enemy: getDamageTakenMultiplierFromEffects(state.enemy.activeEffects),
   };
-  let nextDamageMultiplierState = { player: 1, enemy: 1 };
   const createEmptySkillUses = () => ({
     rage: 0,
     terror: 0,
@@ -399,7 +398,7 @@ export function processTurn(
   const newPlayerEffects = annotateNewEffects(playerSpecialEffects.playerEffects);
   const newEnemyOnPlayerEffects = annotateNewEffects(enemySpecialEffects.playerEffects);
 
-  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp'];
+  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp', 'victory_trigger'];
   const playerNeedsRemoval = [...newPlayerEffects, ...newEnemyOnPlayerEffects].some((effect) =>
     dedupTypes.includes(effect.type as SpecialEffectType)
   );
@@ -474,6 +473,38 @@ export function processTurn(
     activeEffects: cleanedEnemyEffects,
   };
 
+  const nextComments = currentComments;
+
+  let commentVictory: 'player' | 'enemy' | 'both' | undefined;
+  if (nextComments.length === 0) {
+    const hasPlayerVictoryTrigger = cleanedPlayerEffects.some(
+      (effect) => effect.type === 'victory_trigger' && effect.target === 'player'
+    );
+    const hasEnemyVictoryTrigger = cleanedEnemyEffects.some(
+      (effect) => effect.type === 'victory_trigger' && effect.target === 'enemy'
+    );
+    if (hasPlayerVictoryTrigger) {
+      updatedEnemy = {
+        ...updatedEnemy,
+        hp: 0,
+      };
+    }
+    if (hasEnemyVictoryTrigger) {
+      updatedPlayer = {
+        ...updatedPlayer,
+        hp: 0,
+      };
+    }
+    if (hasPlayerVictoryTrigger || hasEnemyVictoryTrigger) {
+      commentVictory =
+        hasPlayerVictoryTrigger && hasEnemyVictoryTrigger
+          ? 'both'
+          : hasPlayerVictoryTrigger
+            ? 'player'
+            : 'enemy';
+    }
+  }
+
   // 7. ファン率の変化量を計算
   const rawFanChanges = calculateFanChanges({
     judgement,
@@ -521,8 +552,6 @@ export function processTurn(
     player: updatedSkillUsesPlayer,
     enemy: updatedSkillUsesEnemy,
   };
-
-  const nextComments = currentComments;
 
   // 10. ターン結果を作成
   const turnResult: TurnResult = {
@@ -580,6 +609,7 @@ export function processTurn(
           limitedEmotions: commentRefreshData.limitedEmotions,
         }
       : undefined,
+    commentVictory,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
     commentBoostApplied: playerSpecialEffects.commentBoost,
@@ -602,7 +632,6 @@ export function processTurn(
     superchatBoostTurns,
     superchatBoostMultiplier,
     nextAttackMultiplier: nextAttackMultiplierState,
-    nextDamageMultiplier: nextDamageMultiplierState,
   };
 }
 
@@ -832,6 +861,19 @@ function triggerSpecialEffects(params: {
           result.playerEffects.push(damageAmp);
         } else {
           result.enemyEffects.push(damageAmp);
+        }
+      } else if (selectedVariant === 'victory_trigger') {
+        const victoryEffect: SpecialEffect = {
+          type: 'victory_trigger',
+          emotion,
+          duration: Number.POSITIVE_INFINITY,
+          magnitude: 0,
+          target,
+        };
+        if (target === 'player') {
+          result.playerEffects.push(victoryEffect);
+        } else {
+          result.enemyEffects.push(victoryEffect);
         }
       } else if (selectedVariant === 'chaotic_plague') {
         const effects = generateChaoticPlagueEffects(
