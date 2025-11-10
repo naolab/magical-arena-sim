@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap, Comment } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, executeSuperchatTurn, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
@@ -9,7 +10,6 @@ import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
 import { TypewriterText } from './TypewriterText';
-import { BattleResult } from './BattleResult';
 import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
 import { ActionVariantModal } from './ActionVariantModal';
@@ -18,6 +18,7 @@ import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
 import { HealingEffect } from './HealingEffect';
 import { getVariantDefinition, DEFAULT_VARIANTS } from '@/lib/battle-v2/actionVariants';
+import { Button } from '@/components/ui/Button';
 
 const BASE_STAGE_WIDTH = 1600;
 const BASE_STAGE_HEIGHT = 900;
@@ -77,6 +78,12 @@ const RESULT_NARRATION: Record<'player' | 'enemy' | 'draw', string> = {
   player: '歓声がこだまする。勝利の光が視界を包んだ！',
   enemy: '視界が真っ暗になった…。力尽きて膝をつく。',
   draw: '互いに倒れ伏し、静寂だけが残った…。',
+};
+
+const RESULT_HEADLINE: Record<'player' | 'enemy' | 'draw', string> = {
+  player: 'VICTORY',
+  enemy: 'DEFEAT',
+  draw: 'DRAW',
 };
 
 function createMessage(speaker: BattleMessageSpeaker, text: string, apply?: () => void): BattleMessage {
@@ -419,6 +426,9 @@ export function BattleContainer() {
   const [isMessageAnimating, setIsMessageAnimating] = useState(false);
   const [pendingAutoAdvance, setPendingAutoAdvance] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [resultOverlayVisible, setResultOverlayVisible] = useState(false);
+  const [resultTextVisible, setResultTextVisible] = useState(false);
+  const [showResultControls, setShowResultControls] = useState(false);
   const [effectAnimations, setEffectAnimations] = useState<EffectAnimation[]>([]);
   const [playerShake, setPlayerShake] = useState(false);
   const [enemyShake, setEnemyShake] = useState(false);
@@ -723,6 +733,26 @@ export function BattleContainer() {
     selectRandomDialogue,
     showResult,
   ]);
+
+  useEffect(() => {
+    let textTimer: ReturnType<typeof setTimeout> | null = null;
+    let controlsTimer: ReturnType<typeof setTimeout> | null = null;
+
+    if (showResult && battleState?.winner) {
+      setResultOverlayVisible(true);
+      textTimer = setTimeout(() => setResultTextVisible(true), 500);
+      controlsTimer = setTimeout(() => setShowResultControls(true), 2600);
+    } else {
+      setResultOverlayVisible(false);
+      setResultTextVisible(false);
+      setShowResultControls(false);
+    }
+
+    return () => {
+      if (textTimer) clearTimeout(textTimer);
+      if (controlsTimer) clearTimeout(controlsTimer);
+    };
+  }, [showResult, battleState?.winner]);
 
   const scale = useMemo(() => {
     const ratio = Math.min(
@@ -1248,7 +1278,7 @@ export function BattleContainer() {
             <div
               className={`absolute top-[-4px] left-0 w-[1200px] h-[800px] border-4 cursor-pointer bg-[url(/images/battle-background.jpg)] bg-cover bg-center transition-all duration-500 ${
                 isSuperchatMode ? 'border-emerald-100 shadow-[0_0_80px_rgba(16,185,129,0.95)]' : 'border-white shadow-none'
-              }`}
+              } relative`}
               onClick={handleBattleAreaClick}
             >
               <div
@@ -1474,6 +1504,58 @@ export function BattleContainer() {
                 </div>
               )}
 
+              {/* 勝敗確定演出 */}
+              {showResult && battleState.winner && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center overflow-hidden">
+                  <div
+                    className={`absolute inset-0 bg-black/70 transition-opacity duration-[1500ms] ease-out ${
+                      resultOverlayVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-b from-black/80 via-black/95 to-black transition-opacity duration-[1500ms] ease-out ${
+                      resultOverlayVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  <div className="relative flex flex-col items-center gap-6 text-center pointer-events-none">
+                    <p
+                      className={`text-7xl font-black tracking-[0.35em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.8)] transition-all duration-[900ms] ease-out ${
+                        resultTextVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                      }`}
+                    >
+                      {RESULT_HEADLINE[battleState.winner]}
+                    </p>
+                    <p
+                      className={`max-w-xl text-lg text-white/80 leading-relaxed transition-opacity duration-[900ms] ease-out delay-200 ${
+                        resultTextVisible ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      {RESULT_NARRATION[battleState.winner]}
+                    </p>
+                  </div>
+                  {showResultControls && (
+                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 flex gap-4 pointer-events-auto">
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="bg-white/10 text-white border border-white/30 uppercase tracking-[0.25em] hover:bg-white/20"
+                        onClick={handleRestart}
+                      >
+                        リトライ
+                      </Button>
+                      <Link href="/">
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          className="bg-white/5 text-white border border-white/20 uppercase tracking-[0.25em] hover:bg-white/15"
+                        >
+                          トップに戻る
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 右上：コメントエリア */}
@@ -1507,13 +1589,6 @@ export function BattleContainer() {
               <RulesModal />
             </div>
 
-            {/* リザルト画面 */}
-            {showResult && battleState.winner && (
-              <BattleResult
-                winner={battleState.winner}
-                onRestart={handleRestart}
-              />
-            )}
           </div>
         </div>
       </div>
