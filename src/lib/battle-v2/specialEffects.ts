@@ -498,7 +498,7 @@ export function getEffectDescription(effect: SpecialEffect): string {
 
   switch (effect.type) {
     case 'buff':
-      return `${emotionName}: 攻撃力+${effect.magnitude}% (残り${effect.duration}ターン)`;
+      return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'debuff':
       return `${emotionName}: 攻撃力-${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'poison':

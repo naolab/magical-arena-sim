@@ -284,6 +284,20 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
       attackMultiplier: 1.8,
     },
   },
+  damage_resonance: {
+    id: 'damage_resonance',
+    name: 'レゾナンスブレイク',
+    nameJa: 'レゾナンスブレイク',
+    description: '次のターンの与ダメージを+50%にする（継続ダメージ含む, 重ね掛け不可）',
+    effectType: 'buff',
+    magnitude: 50,
+    duration: 1,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 1.5,
+    },
+  },
 };
 
 // ========================================

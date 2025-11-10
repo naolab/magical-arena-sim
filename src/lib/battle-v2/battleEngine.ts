@@ -97,6 +97,10 @@ export function initBattle(params?: BattleParamsV2): BattleState {
       player: 1,
       enemy: 1,
     },
+    nextDamageMultiplier: {
+      player: 1,
+      enemy: 1,
+    },
   };
 }
 

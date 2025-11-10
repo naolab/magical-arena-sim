@@ -43,7 +43,8 @@ export type EcstasyVariant =
   | 'refresh'
   | 'dual_refresh'
   | 'superchat_boost'
-  | 'attack_charge';
+  | 'attack_charge'
+  | 'damage_resonance';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -246,6 +247,10 @@ export interface BattleState {
     player: number;
     enemy: number;
   }; // 次ターンの攻撃力倍率
+  nextDamageMultiplier?: {
+    player: number;
+    enemy: number;
+  }; // 次ターンの総与ダメ倍率
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;

@@ -77,6 +77,8 @@ export function processTurn(
   }
   const currentAttackMultiplier = state.nextAttackMultiplier ?? { player: 1, enemy: 1 };
   let nextAttackMultiplierState = { player: 1, enemy: 1 };
+  const currentDamageMultiplier = state.nextDamageMultiplier ?? { player: 1, enemy: 1 };
+  let nextDamageMultiplierState = { player: 1, enemy: 1 };
 
   const createEmptySkillUses = () => ({
     rage: 0,
@@ -122,6 +124,7 @@ export function processTurn(
         variant: playerVariantDef,
         attackerState: state.player,
         attackMultiplier: currentAttackMultiplier.player ?? 1,
+        damageMultiplier: currentDamageMultiplier.player ?? 1,
       })
     : {
         damage: 0,
@@ -140,6 +143,7 @@ export function processTurn(
         variant: enemyVariantDef,
         attackerState: state.enemy,
         attackMultiplier: currentAttackMultiplier.enemy ?? 1,
+        damageMultiplier: currentDamageMultiplier.enemy ?? 1,
       })
     : {
         damage: 0,
@@ -170,10 +174,13 @@ export function processTurn(
   let playerHealing = 0;
 
   if (playerSpecialEffects.extraDamage > 0) {
-    playerExtraDamage = playerSpecialEffects.extraDamage;
+    const scaledExtra = Math.round(
+      playerSpecialEffects.extraDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
+    );
+    playerExtraDamage = scaledExtra;
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - playerSpecialEffects.extraDamage),
+      hp: Math.max(0, updatedEnemy.hp - scaledExtra),
     };
   }
 
@@ -234,6 +241,14 @@ export function processTurn(
     }
   }
 
+  if (playerSpecialEffects.damageCharge) {
+    if (playerSpecialEffects.damageCharge.target === 'player') {
+      nextDamageMultiplierState.player = playerSpecialEffects.damageCharge.multiplier;
+    } else {
+      nextDamageMultiplierState.enemy = playerSpecialEffects.damageCharge.multiplier;
+    }
+  }
+
   // 5. 敵側の特殊効果を発動
   let enemySpecialEffects: SpecialEffectResult;
   if (isSuperchatTurn) {
@@ -260,10 +275,13 @@ export function processTurn(
   let enemyHealing = 0;
 
   if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
-    enemyExtraDamage = enemySpecialEffects.extraDamage;
+    const scaledExtra = Math.round(
+      enemySpecialEffects.extraDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
+    );
+    enemyExtraDamage = scaledExtra;
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - enemySpecialEffects.extraDamage),
+      hp: Math.max(0, updatedPlayer.hp - scaledExtra),
     };
   }
 
@@ -283,8 +301,14 @@ export function processTurn(
   }
 
   // 5.5. 毒ダメージの適用（ターン開始時の効果）
-  const playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
-  const enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+  let playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
+  let enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+  playerPoisonDamage = Math.round(
+    playerPoisonDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
+  );
+  enemyPoisonDamage = Math.round(
+    enemyPoisonDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
+  );
 
   console.log('[DEBUG] Poison Damage:', {
     playerActiveEffects: updatedPlayer.activeEffects,
@@ -308,8 +332,14 @@ export function processTurn(
   }
 
   // 5.6. 呪いダメージの適用（ターン開始時の効果）
-  const playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
-  const enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
+  let playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
+  let enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
+  playerCurseDamage = Math.round(
+    playerCurseDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
+  );
+  enemyCurseDamage = Math.round(
+    enemyCurseDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
+  );
 
   if (playerCurseDamage > 0) {
     updatedPlayer = {
@@ -568,6 +598,7 @@ export function processTurn(
     superchatBoostTurns,
     superchatBoostMultiplier,
     nextAttackMultiplier: nextAttackMultiplierState,
+    nextDamageMultiplier: nextDamageMultiplierState,
   };
 }
 
@@ -585,6 +616,7 @@ interface DamageCalculationParams {
   variant?: ActionVariantDefinition;
   attackerState?: PlayerState | EnemyState;
   attackMultiplier?: number;
+  damageMultiplier?: number;
 }
 
 interface DamageResult {
@@ -606,6 +638,7 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     variant,
     attackerState,
     attackMultiplier = 1,
+    damageMultiplier = 1,
   } = params;
 
   let baseDamage = calculateDamage({
@@ -637,6 +670,7 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
   }
 
   baseDamage = Math.round(baseDamage * Math.max(0, attackMultiplier));
+  baseDamage = Math.round(baseDamage * Math.max(0, damageMultiplier));
 
   const updatedDefender = {
     ...defender,
@@ -672,6 +706,10 @@ interface SpecialEffectResult {
     multiplier: number;
   };
   attackCharge?: {
+    target: 'player' | 'enemy';
+    multiplier: number;
+  };
+  damageCharge?: {
     target: 'player' | 'enemy';
     multiplier: number;
   };
@@ -834,6 +872,20 @@ function triggerSpecialEffects(params: {
           result.convertedComments = dualRefresh.comments;
           result.commentRefresh = dualRefresh;
         }
+      } else if (selectedVariant === 'damage_resonance') {
+        const damageMultiplier =
+          (variantDef.metadata?.damageMultiplier as number | undefined) ?? 1.5;
+        result.damageCharge = {
+          target,
+          multiplier: damageMultiplier,
+        };
+        result.playerEffects.push({
+          type: 'buff',
+          emotion,
+          duration: variantDef.duration ?? 1,
+          magnitude: variantDef.magnitude,
+          target,
+        });
       } else if (selectedVariant === 'attack_charge') {
         const attackMultiplier = (variantDef.metadata?.attackMultiplier as number | undefined) ?? 2;
         result.attackCharge = {
