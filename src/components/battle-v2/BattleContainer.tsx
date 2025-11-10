@@ -1282,25 +1282,9 @@ export function BattleContainer() {
     messageQueue.length === 0 &&
     !isBattleOver(battleState);
 
-  const fanGaugeSegments = battleState
-    ? [
-        {
-          key: 'enemy',
-          color: '#22d3ee',
-          height: battleState.audience.enemyFans * 100,
-        },
-        {
-          key: 'neutral',
-          color: '#9ca3af',
-          height: battleState.audience.neutralFans * 100,
-        },
-        {
-          key: 'player',
-          color: '#ec4899',
-          height: battleState.audience.playerFans * 100,
-        },
-      ]
-    : [];
+  // ファンゲージは2本に分割（左右対称配置）
+  const playerFanHeight = battleState ? battleState.audience.playerFans * 100 : 0;
+  const enemyFanHeight = battleState ? battleState.audience.enemyFans * 100 : 0;
 
   // 初期化中はローディング表示
   if (!battleState) {
@@ -1397,27 +1381,45 @@ export function BattleContainer() {
               <div className="absolute top-[120px] left-0 right-0 bottom-[120px] z-10">
                 {/* バトル画面 */}
 
-                {/* 中央ファンゲージ */}
-                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
+                {/* 2本のファンゲージ（左右対称配置） */}
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center gap-0 pointer-events-none">
+                  {/* プレイヤーゲージ（左・ピンク） */}
                   <div className="relative w-[56px] h-[140%]">
-                    <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-white bg-black/50 shadow-[0_0_30px_rgba(0,0,0,0.45)] overflow-hidden">
-                      <div className="absolute inset-0 flex flex-col">
-                        {fanGaugeSegments.map((segment) => (
-                          <div
-                            key={segment.key}
-                            className="w-full"
-                            style={{
-                              height: `${segment.height}%`,
-                              backgroundColor: segment.color,
-                              transition: 'height 0.85s cubic-bezier(0.4, 0, 0.2, 1)',
-                            }}
-                          />
-                        ))}
+                    <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-pink-500 bg-black/50 shadow-[0_0_30px_rgba(236,72,153,0.45)] overflow-hidden">
+                      <div className="absolute inset-0 flex flex-col justify-end">
+                        <div
+                          className="w-full"
+                          style={{
+                            height: `${playerFanHeight}%`,
+                            backgroundColor: '#ec4899',
+                            transition: 'height 0.85s cubic-bezier(0.4, 0, 0.2, 1)',
+                          }}
+                        />
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/5 mix-blend-screen" />
                     </div>
                     <div className="absolute inset-0 rotate-[-15deg] pointer-events-none">
-                      <div className="absolute inset-[2px] border border-white/40 rounded-lg" />
+                      <div className="absolute inset-[2px] border border-pink-400/40 rounded-lg" />
+                    </div>
+                  </div>
+
+                  {/* 敵ゲージ（右・シアン） */}
+                  <div className="relative w-[56px] h-[140%]">
+                    <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-cyan-400 bg-black/50 shadow-[0_0_30px_rgba(34,211,238,0.45)] overflow-hidden">
+                      <div className="absolute inset-0 flex flex-col justify-end">
+                        <div
+                          className="w-full"
+                          style={{
+                            height: `${enemyFanHeight}%`,
+                            backgroundColor: '#22d3ee',
+                            transition: 'height 0.85s cubic-bezier(0.4, 0, 0.2, 1)',
+                          }}
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/5 mix-blend-screen" />
+                    </div>
+                    <div className="absolute inset-0 rotate-[-15deg] pointer-events-none">
+                      <div className="absolute inset-[2px] border border-cyan-400/40 rounded-lg" />
                     </div>
                   </div>
                 </div>
