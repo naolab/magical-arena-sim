@@ -196,13 +196,15 @@ export function processTurn(
   if (playerSpecialEffects.extraDamage > 0) {
     const scaledExtra = Math.round(playerSpecialEffects.extraDamage * enemyDamageTakenMultiplier);
     playerExtraDamage = scaledExtra;
+    const newHp = Math.max(0, updatedEnemy.hp - scaledExtra);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - scaledExtra),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
-  if (playerSpecialEffects.healing > 0) {
+  if (playerSpecialEffects.healing > 0 && !updatedPlayer.isDead) {
     playerHealing = playerSpecialEffects.healing;
     updatedPlayer = {
       ...updatedPlayer,
@@ -211,9 +213,11 @@ export function processTurn(
   }
 
   if (playerSpecialEffects.selfDamage && playerSpecialEffects.selfDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
@@ -296,13 +300,15 @@ export function processTurn(
   if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
     const scaledExtra = Math.round(enemySpecialEffects.extraDamage * playerDamageTakenMultiplier);
     enemyExtraDamage = scaledExtra;
+    const newHp = Math.max(0, updatedPlayer.hp - scaledExtra);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - scaledExtra),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
-  if (!isSuperchatTurn && enemySpecialEffects.healing > 0) {
+  if (!isSuperchatTurn && enemySpecialEffects.healing > 0 && !updatedEnemy.isDead) {
     enemyHealing = enemySpecialEffects.healing;
     updatedEnemy = {
       ...updatedEnemy,
@@ -311,9 +317,11 @@ export function processTurn(
   }
 
   if (!isSuperchatTurn && enemySpecialEffects.selfDamage && enemySpecialEffects.selfDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -331,16 +339,20 @@ export function processTurn(
   });
 
   if (playerPoisonDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerPoisonDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerPoisonDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
   if (enemyPoisonDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemyPoisonDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemyPoisonDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -351,16 +363,20 @@ export function processTurn(
   enemyCurseDamage = Math.round(enemyCurseDamage * enemyDamageTakenMultiplier);
 
   if (playerCurseDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerCurseDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerCurseDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
   if (enemyCurseDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemyCurseDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemyCurseDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -368,14 +384,14 @@ export function processTurn(
   const playerRegenHealing = calculateRegenHealing(updatedPlayer.activeEffects);
   const enemyRegenHealing = calculateRegenHealing(updatedEnemy.activeEffects);
 
-  if (playerRegenHealing > 0) {
+  if (playerRegenHealing > 0 && !updatedPlayer.isDead) {
     updatedPlayer = {
       ...updatedPlayer,
       hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerRegenHealing),
     };
   }
 
-  if (enemyRegenHealing > 0) {
+  if (enemyRegenHealing > 0 && !updatedEnemy.isDead) {
     updatedEnemy = {
       ...updatedEnemy,
       hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemyRegenHealing),
@@ -504,12 +520,14 @@ export function processTurn(
       updatedEnemy = {
         ...updatedEnemy,
         hp: 0,
+        isDead: true,
       };
     }
     if (hasEnemyVictoryTrigger) {
       updatedPlayer = {
         ...updatedPlayer,
         hp: 0,
+        isDead: true,
       };
     }
     if (hasPlayerVictoryTrigger || hasEnemyVictoryTrigger) {
@@ -729,9 +747,11 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
   const damageTakenMultiplier = getDamageTakenMultiplierFromEffects(defender.activeEffects);
   baseDamage = Math.round(baseDamage * damageTakenMultiplier);
 
+  const newHp = Math.max(0, defender.hp - baseDamage);
   const updatedDefender = {
     ...defender,
-    hp: Math.max(0, defender.hp - baseDamage),
+    hp: newHp,
+    isDead: newHp <= 0 ? true : defender.isDead,
   };
 
   return {

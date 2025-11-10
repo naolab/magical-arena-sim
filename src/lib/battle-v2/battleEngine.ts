@@ -202,8 +202,8 @@ export function executeSuperchatTurn(
 export function checkWinner(
   state: BattleState
 ): 'player' | 'enemy' | 'draw' | null {
-  const playerDead = state.player.hp <= 0;
-  const enemyDead = state.enemy.hp <= 0;
+  const playerDead = state.player.hp <= 0 || state.player.isDead;
+  const enemyDead = state.enemy.hp <= 0 || state.enemy.isDead;
 
   if (playerDead && enemyDead) {
     return 'draw'; // 相打ち
