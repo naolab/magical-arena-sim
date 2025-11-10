@@ -27,6 +27,7 @@ const UPDATES: UpdateCard[] = [
       { text: 'HPゲージタップで詳細HP表示機能', tag: 'new' },
       { text: 'アクションバリアント設定ボタンを分離', tag: 'update' },
       { text: 'スパチャ出現率を下方修正（7%→5%）', tag: 'balance' },
+      { text: 'HP0後に回復効果で復活してしまうバグを修正', tag: 'fix' },
     ],
   },
   {

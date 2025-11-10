@@ -47,6 +47,7 @@ import {
   type CommentRefreshResult,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
+import { getEnemyCharacter } from './enemyCharacters';
 
 function getDamageTakenMultiplierFromEffects(effects?: SpecialEffect[]): number {
   if (!effects || effects.length === 0) return 1;
@@ -107,6 +108,9 @@ export function processTurn(
     enemy: createEmptySkillUses(),
   };
 
+  // 敵キャラクターの取得
+  const enemyCharacter = getEnemyCharacter(state.config.enemyCharacterId);
+
   const effectiveEnemyAction = isSuperchatTurn ? playerAction : enemyAction;
 
   // 1. 感情の相性判定
@@ -123,7 +127,7 @@ export function processTurn(
   const playerVariantDef = getVariantDefinition(playerAction, playerVariant);
   const playerHasAttack = playerVariantDef.hasAttack !== false;
 
-  const enemyVariant = DEFAULT_VARIANTS[enemyAction];
+  const enemyVariant = enemyCharacter.actionVariants[enemyAction];
   const enemyVariantDef = getVariantDefinition(enemyAction, enemyVariant);
   const enemyHasAttack = !isSuperchatTurn && enemyVariantDef.hasAttack !== false;
 
@@ -811,9 +815,10 @@ function triggerSpecialEffects(params: {
   };
 
   // 選択されたバリアントを取得
-  // 敵の場合は常にデフォルトバリアント、プレイヤーの場合は選択されたバリアント
+  // 敵の場合は敵キャラクターのバリアント、プレイヤーの場合は選択されたバリアント
+  const enemyCharacter = getEnemyCharacter(config.enemyCharacterId);
   const selectedVariant = target === 'enemy'
-    ? DEFAULT_VARIANTS[emotion]
+    ? enemyCharacter.actionVariants[emotion]
     : config.selectedActionVariants[emotion];
   const variantDef = getVariantDefinition(emotion, selectedVariant);
 
