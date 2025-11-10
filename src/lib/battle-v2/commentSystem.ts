@@ -265,7 +265,7 @@ export function shouldGenerateSuperchat(): boolean {
   return Math.random() < SUPERCHAT_PROBABILITY;
 }
 /** スパチャが生成される確率 */
-const SUPERCHAT_PROBABILITY = 0.07;
+const SUPERCHAT_PROBABILITY = 0.05;
 
 /** スパチャ用コメント */
 const SUPERCHAT_TEXTS = [
