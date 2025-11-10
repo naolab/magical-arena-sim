@@ -181,7 +181,7 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     id: 'victory_trigger',
     name: '奈落のフィナーレ',
     nameJa: '奈落のフィナーレ',
-    description: 'コメントが枯渇すると即勝利する特殊な呪いを自分に付与（永続, 重ね掛け不可）',
+    description: 'コメントが全て沉んだ瞬間、呪いが現実を終焉させ敵を滅ぼす（永続・重ね掛け不可）',
     effectType: 'victory_trigger',
     magnitude: 0,
     hasAttack: false,
