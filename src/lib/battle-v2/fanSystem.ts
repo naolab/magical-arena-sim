@@ -53,32 +53,20 @@ export function getFanRateRank(fanRate: number): string {
 // ========================================
 
 /**
- * 勝敗に応じたファン率の変化量を計算
- * @param result 勝敗結果
+ * プレイヤーのファン率変化量を計算（消費コメント数×5%）
  * @param commentCount 消費したコメント数
- * @param config バトル設定パラメータ
  * @returns ファン率の変化量
  */
-export function calculateFanRateChange(
-  result: BattleResult,
-  commentCount: number,
-  config: BattleParamsV2
-): number {
-  let change = 0;
+export function calculatePlayerFanRateChange(commentCount: number): number {
+  return commentCount * 0.05;
+}
 
-  // 基本変動
-  if (result === 'win') {
-    change = config.fanRateChangeOnWin;
-  } else if (result === 'lose') {
-    change = config.fanRateChangeOnLose;
-  } else {
-    change = 0; // 引き分けは変化なし
-  }
-
-  // コメントボーナス
-  change += commentCount * config.fanRateBonusPerComment;
-
-  return change;
+/**
+ * 敵のファン率変化量を計算（毎ターン+10%固定）
+ * @returns ファン率の変化量
+ */
+export function calculateEnemyFanRateChange(): number {
+  return 0.10;
 }
 
 // ========================================
@@ -86,7 +74,7 @@ export function calculateFanRateChange(
 // ========================================
 
 /**
- * 初期の観客構成を生成
+ * 初期の観客構成を生成（独立したファン率システム）
  * @param config バトル設定パラメータ
  * @returns 初期観客構成
  */
@@ -94,62 +82,30 @@ export function initializeAudienceComposition(config: BattleParamsV2): AudienceC
   return {
     playerFans: config.initialPlayerFans,
     enemyFans: config.initialEnemyFans,
-    neutralFans: config.initialNeutralFans,
   };
 }
 
 /**
- * 観客構成を更新
+ * 観客構成を更新（独立したファン率システム）
  * @param current 現在の観客構成
- * @param result プレイヤー視点での勝敗
- * @param playerFanRate プレイヤーのファン率
- * @param enemyFanRate 敵のファン率
- * @param config バトル設定パラメータ
+ * @param playerCommentCount プレイヤーが消費したコメント数
  * @returns 更新された観客構成
  */
 export function updateAudienceComposition(
   current: AudienceComposition,
-  result: BattleResult,
-  playerFanRate: number,
-  enemyFanRate: number,
-  config: BattleParamsV2
+  playerCommentCount: number
 ): AudienceComposition {
-  const fanStealAmount = config.fanStealAmountOnWin;
+  // プレイヤー：消費コメント数×5%増加
+  const playerChange = calculatePlayerFanRateChange(playerCommentCount);
+  const newPlayerFans = Math.max(0, Math.min(1, current.playerFans + playerChange));
 
-  let playerFans = current.playerFans;
-  let enemyFans = current.enemyFans;
-  let neutralFans = current.neutralFans;
-
-  if (result === 'win') {
-    // プレイヤー勝利: 中立ファンと敵ファンを奪う
-    const fromNeutral = Math.min(neutralFans, fanStealAmount / 2);
-    const fromEnemy = Math.min(enemyFans, fanStealAmount / 2);
-
-    playerFans += fromNeutral + fromEnemy;
-    neutralFans -= fromNeutral;
-    enemyFans -= fromEnemy;
-  } else if (result === 'lose') {
-    // プレイヤー敗北: プレイヤーファンが離れる
-    const toNeutral = Math.min(playerFans, fanStealAmount / 2);
-    const toEnemy = Math.min(playerFans - toNeutral, fanStealAmount / 2);
-
-    playerFans -= toNeutral + toEnemy;
-    neutralFans += toNeutral;
-    enemyFans += toEnemy;
-  }
-
-  // 合計が1.0になるように正規化
-  const total = playerFans + enemyFans + neutralFans;
-  if (total > 0) {
-    playerFans /= total;
-    enemyFans /= total;
-    neutralFans /= total;
-  }
+  // 敵：毎ターン10%増加
+  const enemyChange = calculateEnemyFanRateChange();
+  const newEnemyFans = Math.max(0, Math.min(1, current.enemyFans + enemyChange));
 
   return {
-    playerFans: Math.max(0, Math.min(1, playerFans)),
-    enemyFans: Math.max(0, Math.min(1, enemyFans)),
-    neutralFans: Math.max(0, Math.min(1, neutralFans)),
+    playerFans: newPlayerFans,
+    enemyFans: newEnemyFans,
   };
 }
 
@@ -180,7 +136,6 @@ export function getAudienceCompositionDescription(
 ): string {
   const playerPercent = (composition.playerFans * 100).toFixed(0);
   const enemyPercent = (composition.enemyFans * 100).toFixed(0);
-  const neutralPercent = (composition.neutralFans * 100).toFixed(0);
 
-  return `プレイヤーファン: ${playerPercent}% / 敵ファン: ${enemyPercent}% / 中立: ${neutralPercent}%`;
+  return `プレイヤーファン: ${playerPercent}% / 敵ファン: ${enemyPercent}%`;
 }
