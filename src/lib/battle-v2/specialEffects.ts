@@ -12,6 +12,7 @@
 import { SpecialEffect, SpecialEffectTriggerParams, EmotionType, Comment } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { getVariantDefinition } from './actionVariants';
+import { getRandomCommentTextForEmotion, getRandomSuperchatText, shouldGenerateSuperchat } from './commentSystem';
 
 // ========================================
 // Extended Types for Variant Effects
@@ -30,6 +31,12 @@ export interface CommentConversionResult {
   comments: Comment[];
   convertedCommentIds: string[];
   targetEmotion: EmotionType;
+}
+
+/** コメントリフレッシュ結果 */
+export interface CommentRefreshResult {
+  comments: Comment[];
+  refreshedCommentIds: string[];
 }
 
 // ========================================
@@ -323,6 +330,43 @@ export function applyEcstasyCommentBoostEffect(
   variant: { magnitude: number }
 ): number {
   return variant.magnitude; // 追加量（例: +1）
+}
+
+/**
+ * Ecstasy Refresh: コメント全体をランダムに再配置
+ */
+export function applyEcstasyRefreshCommentsEffect(
+  params: ExtendedEffectTriggerParams
+): CommentRefreshResult | null {
+  const { comments } = params;
+  if (!comments || comments.length === 0) return null;
+
+  const emotions: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
+
+  const refreshed = comments.map((comment) => {
+    if (shouldGenerateSuperchat()) {
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      return {
+        ...comment,
+        emotion: randomEmotion,
+        text: getRandomSuperchatText(),
+        isSuperchat: true,
+      };
+    }
+
+    const newEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+    return {
+      ...comment,
+      emotion: newEmotion,
+      text: getRandomCommentTextForEmotion(newEmotion),
+      isSuperchat: false,
+    };
+  });
+
+  return {
+    comments: refreshed,
+    refreshedCommentIds: refreshed.map((comment) => comment.id),
+  };
 }
 
 // ========================================

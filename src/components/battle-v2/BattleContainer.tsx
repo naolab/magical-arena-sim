@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap } from '@/lib/battle-v2/types';
+import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap, Comment } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, executeSuperchatTurn, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
 import { getEmotionName, getEmotionColor } from '@/lib/battle-v2/emotionSystem';
@@ -130,6 +130,7 @@ function buildTurnMessages(
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
+    onCommentRefresh?: (nextComments: Comment[]) => void;
   },
   options: {
     playerSkillName: string;
@@ -324,6 +325,16 @@ function buildTurnMessages(
         )
       );
     });
+  }
+
+  if (result.commentRefresh && result.commentRefresh.count > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `コメントがリフレッシュされ、${result.commentRefresh.count}件がランダムに入れ替わった！`,
+        () => handlers.onCommentRefresh?.(result.commentRefresh!.comments)
+      )
+    );
   }
 
   messages.push(
@@ -1016,6 +1027,17 @@ export function BattleContainer() {
         });
       };
 
+      const applyCommentRefresh = (nextComments: Comment[]) => {
+        if (!nextComments || nextComments.length === 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            comments: nextComments.map((comment) => ({ ...comment })),
+          };
+        });
+      };
+
       const playerVariantId = battleState.config.selectedActionVariants[emotion];
       const playerSkillName = getVariantDefinition(emotion, playerVariantId)?.nameJa ?? getEmotionName(emotion);
       const actualEnemyEmotion = enemyEmotion ?? turnResult.enemyAction;
@@ -1043,6 +1065,7 @@ export function BattleContainer() {
           onPlayerEffect: applyPlayerEffect,
           onEnemyEffect: applyEnemyEffect,
           onCommentConversion: applyCommentConversion,
+          onCommentRefresh: applyCommentRefresh,
         },
         {
           playerSkillName,

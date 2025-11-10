@@ -239,6 +239,16 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     hasAttack: false, // 効果のみ
     maxUses: 5,
   },
+  refresh: {
+    id: 'refresh',
+    name: 'コメントリライブ',
+    nameJa: 'コメントリライブ',
+    description: '現在のコメントを全てリフレッシュし、ランダムな感情（スパチャ含む）に変換する',
+    effectType: 'buff',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================

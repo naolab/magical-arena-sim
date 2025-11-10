@@ -32,6 +32,7 @@ import {
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
+  applyEcstasyRefreshCommentsEffect,
   applyGriefRegenEffect,
   updateEffectDurations,
   removeExpiredEffects,
@@ -39,6 +40,7 @@ import {
   calculateCurseDamage,
   calculateRegenHealing,
   type ExtendedEffectTriggerParams,
+  type CommentRefreshResult,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
 
@@ -175,6 +177,7 @@ export function processTurn(
   }
 
   const commentConversions: CommentConversionEvent[] = [];
+  let commentRefreshData: CommentRefreshResult | undefined;
 
   // コメント変換があれば適用
   let currentComments = remainingComments;
@@ -188,6 +191,10 @@ export function processTurn(
       count: playerSpecialEffects.commentConversion.count,
       commentIds: playerSpecialEffects.commentConversion.convertedCommentIds,
     });
+  }
+
+  if (playerSpecialEffects.commentRefresh) {
+    commentRefreshData = playerSpecialEffects.commentRefresh;
   }
 
   // コメントブーストがあれば永続的に適用
@@ -480,6 +487,12 @@ export function processTurn(
     enemyState: updatedEnemy,
     audienceComposition: updatedAudience,
     commentConversions,
+    commentRefresh: commentRefreshData
+      ? {
+          count: commentRefreshData.refreshedCommentIds.length,
+          comments: commentRefreshData.comments,
+        }
+      : undefined,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
     commentBoostApplied: playerSpecialEffects.commentBoost,
@@ -580,6 +593,7 @@ interface SpecialEffectResult {
   enemyEffects: SpecialEffect[];
   convertedComments?: Comment[]; // コメント変換後の配列
   commentConversion?: CommentConversionSummary;
+  commentRefresh?: CommentRefreshResult;
   extraDamageMultiplier?: number;
   commentBoost?: number; // コメント追加量の増加値
   cleansed?: boolean; // デバフが全て解除されたか
@@ -731,6 +745,12 @@ function triggerSpecialEffects(params: {
         }
       } else if (selectedVariant === 'comment_boost') {
         result.commentBoost = applyEcstasyCommentBoostEffect(variantDef);
+      } else if (selectedVariant === 'refresh') {
+        const refresh = applyEcstasyRefreshCommentsEffect(extendedParams);
+        if (refresh) {
+          result.convertedComments = refresh.comments;
+          result.commentRefresh = refresh;
+        }
       }
       break;
   }

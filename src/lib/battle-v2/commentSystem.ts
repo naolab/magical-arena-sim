@@ -241,6 +241,27 @@ export function pruneOldComments(
 export function getCommentPoolSize(pool: Comment[]): number {
   return pool.length;
 }
+
+/**
+ * ランダムなコメントテキストを取得
+ */
+export function getRandomCommentTextForEmotion(emotion: EmotionType): string {
+  return selectRandomCommentText(emotion);
+}
+
+/**
+ * ランダムなスパチャテキストを取得
+ */
+export function getRandomSuperchatText(): string {
+  return selectSuperchatText();
+}
+
+/**
+ * スパチャ生成判定
+ */
+export function shouldGenerateSuperchat(): boolean {
+  return Math.random() < SUPERCHAT_PROBABILITY;
+}
 /** スパチャが生成される確率 */
 const SUPERCHAT_PROBABILITY = 0.07;
 
