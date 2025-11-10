@@ -427,6 +427,8 @@ export function BattleContainer() {
   const [enemyVanishing, setEnemyVanishing] = useState(false);
   const [playerInvisible, setPlayerInvisible] = useState(false);
   const [enemyInvisible, setEnemyInvisible] = useState(false);
+  const [showPlayerHpDetails, setShowPlayerHpDetails] = useState(false);
+  const [showEnemyHpDetails, setShowEnemyHpDetails] = useState(false);
 
   // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
   const accurateHpRef = useRef({ player: 100, enemy: 100 });
@@ -1345,14 +1347,23 @@ export function BattleContainer() {
 
                 {/* 右上：敵HPゲージ */}
                 <div className="absolute top-3 right-12 w-[300px]">
-                  <div className="relative h-7 bg-gray-800 border-2 border-white rounded">
+                  <div
+                    className="relative h-7 bg-gray-800 border-2 border-white rounded cursor-pointer hover:ring-2 hover:ring-red-400/50 transition-all"
+                    onClick={() => setShowEnemyHpDetails(!showEnemyHpDetails)}
+                    title="クリックでHP詳細を表示"
+                  >
                     <div
-                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300 pointer-events-none"
                       style={{
                         width: `${(battleState.enemy.hp / battleState.enemy.maxHp) * 100}%`,
                         backgroundColor: getHpColor(battleState.enemy.hp / battleState.enemy.maxHp)
                       }}
                     />
+                    {showEnemyHpDetails && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white font-mono text-sm font-bold pointer-events-none" style={{ textShadow: '0 0 4px black, 0 0 8px black' }}>
+                        {battleState.enemy.hp} / {battleState.enemy.maxHp}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-1">
                     <ActiveEffectIcons effects={battleState.enemy.activeEffects} />
@@ -1362,14 +1373,23 @@ export function BattleContainer() {
                 {/* 左下：プレイヤーHPゲージ */}
                 <div className="absolute bottom-3 left-12 w-[300px]">
                   <ActiveEffectIcons effects={battleState.player.activeEffects} />
-                  <div className="relative mt-1 h-7 bg-gray-800 border-2 border-white rounded">
+                  <div
+                    className="relative mt-1 h-7 bg-gray-800 border-2 border-white rounded cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all"
+                    onClick={() => setShowPlayerHpDetails(!showPlayerHpDetails)}
+                    title="クリックでHP詳細を表示"
+                  >
                     <div
-                      className="absolute top-0 left-0 h-full rounded transition-all duration-300"
+                      className="absolute top-0 left-0 h-full rounded transition-all duration-300 pointer-events-none"
                       style={{
                         width: `${(battleState.player.hp / battleState.player.maxHp) * 100}%`,
                         backgroundColor: getHpColor(battleState.player.hp / battleState.player.maxHp)
                       }}
                     />
+                    {showPlayerHpDetails && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white font-mono text-sm font-bold pointer-events-none" style={{ textShadow: '0 0 4px black, 0 0 8px black' }}>
+                        {battleState.player.hp} / {battleState.player.maxHp}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
