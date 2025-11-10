@@ -20,7 +20,13 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 // ========================================
 
 /** Rageのバリアント */
-export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike' | 'debuff_scaling';
+export type RageVariant =
+  | 'explosive'
+  | 'percentage'
+  | 'berserk_lowhp'
+  | 'chaos_strike'
+  | 'debuff_scaling'
+  | 'sacrifice';
 
 /** Terrorのバリアント */
 export type TerrorVariant = 'weaken' | 'poison' | 'curse';
@@ -176,6 +182,7 @@ export interface TurnResult {
       poisonDamage: number; // 毒ダメージ
       curseDamage: number; // 呪いダメージ
       regenHealing: number; // リジェネ回復
+      selfDamage: number; // 自傷ダメージ
     };
     enemy: {
       extraDamage: number;
@@ -183,6 +190,7 @@ export interface TurnResult {
       poisonDamage: number; // 毒ダメージ
       curseDamage: number; // 呪いダメージ
       regenHealing: number; // リジェネ回復
+      selfDamage: number; // 自傷ダメージ
     };
   };
   fanChange: {

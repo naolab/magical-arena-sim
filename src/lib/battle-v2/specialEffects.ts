@@ -148,6 +148,28 @@ export function applyRagePercentageEffect(
 }
 
 /**
+ * Rage Sacrifice: 自傷ダメージと高倍率の追加ダメージ
+ * @param params 拡張トリガーパラメータ
+ * @param variant バリアント定義
+ * @param attackerMaxHp 攻撃者の最大HP
+ * @returns 追加ダメージと自傷ダメージ
+ */
+export function applyRageSacrificeEffect(
+  variant: { metadata?: Record<string, unknown> },
+  attackerMaxHp: number
+): { selfDamage: number } {
+  const hpCostPct =
+    typeof variant.metadata?.hpCostPercentage === 'number'
+      ? (variant.metadata.hpCostPercentage as number)
+      : 5;
+  const selfDamage = Math.max(1, Math.round(attackerMaxHp * (hpCostPct / 100)));
+
+  return {
+    selfDamage,
+  };
+}
+
+/**
  * Terror Poison: 毒効果（持続ダメージ）
  * @param params トリガーパラメータ
  * @param variant バリアント定義

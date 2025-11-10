@@ -24,6 +24,7 @@ import {
   applyGriefEffect,
   applyEcstasyEffect,
   applyRagePercentageEffect,
+  applyRageSacrificeEffect,
   applyTerrorPoisonEffect,
   applyTerrorCurseEffect,
   applyGriefDesperateEffect,
@@ -164,6 +165,13 @@ export function processTurn(
     };
   }
 
+  if (playerSpecialEffects.selfDamage && playerSpecialEffects.selfDamage > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage),
+    };
+  }
+
   const commentConversions: CommentConversionEvent[] = [];
 
   // コメント変換があれば適用
@@ -224,6 +232,13 @@ export function processTurn(
     updatedEnemy = {
       ...updatedEnemy,
       hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemySpecialEffects.healing),
+    };
+  }
+
+  if (!isSuperchatTurn && enemySpecialEffects.selfDamage && enemySpecialEffects.selfDamage > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage),
     };
   }
 
@@ -434,6 +449,7 @@ export function processTurn(
         poisonDamage: playerPoisonDamage,
         curseDamage: playerCurseDamage,
         regenHealing: playerRegenHealing,
+        selfDamage: playerSpecialEffects.selfDamage ?? 0,
       },
       enemy: {
         extraDamage: enemyExtraDamage,
@@ -441,6 +457,7 @@ export function processTurn(
         poisonDamage: enemyPoisonDamage,
         curseDamage: enemyCurseDamage,
         regenHealing: enemyRegenHealing,
+        selfDamage: enemySpecialEffects.selfDamage ?? 0,
       },
     },
     fanChange: {
@@ -519,6 +536,13 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     const rand = min + Math.random() * (max - min);
     baseDamage = Math.round(baseDamage * rand);
   }
+  if (variant?.id === 'sacrifice') {
+    const multiplier =
+      typeof variant.metadata?.damageMultiplier === 'number'
+        ? (variant.metadata.damageMultiplier as number)
+        : 2;
+    baseDamage = Math.round(baseDamage * Math.max(1, multiplier));
+  }
 
   const updatedDefender = {
     ...defender,
@@ -547,6 +571,7 @@ interface SpecialEffectResult {
   extraDamageMultiplier?: number;
   commentBoost?: number; // コメント追加量の増加値
   cleansed?: boolean; // デバフが全て解除されたか
+  selfDamage?: number; // 自傷ダメージ
 }
 
 /**
@@ -599,6 +624,9 @@ function triggerSpecialEffects(params: {
         const debuffCount = defender.activeEffects.filter((effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse').length;
         const multiplier = 1 + debuffCount * 0.4;
         result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
+      } else if (selectedVariant === 'sacrifice') {
+        const { selfDamage } = applyRageSacrificeEffect(variantDef, attacker.maxHp);
+        result.selfDamage = selfDamage;
       }
       break;
 

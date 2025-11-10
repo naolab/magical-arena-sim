@@ -74,6 +74,20 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
     hasAttack: true,
     maxUses: 20,
   },
+  sacrifice: {
+    id: 'sacrifice',
+    name: 'ブラッドサクリファイス',
+    nameJa: 'ブラッドサクリファイス',
+    description: '自身のHPを5%削り、攻撃を200%までブーストする',
+    effectType: 'extra_damage',
+    magnitude: 200,
+    hasAttack: true,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 2.0,
+      hpCostPercentage: 5,
+    },
+  },
 };
 
 // ========================================

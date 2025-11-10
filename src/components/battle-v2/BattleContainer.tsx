@@ -119,12 +119,14 @@ function buildTurnMessages(
     onPlayerPoison?: (amount: number) => void;
     onPlayerCurse?: (amount: number) => void;
     onPlayerRegen?: (amount: number) => void;
+    onPlayerSelfDamage?: (amount: number) => void;
     onEnemyBase: (amount: number) => void;
     onEnemyExtra: (amount: number) => void;
     onEnemyHeal: (amount: number) => void;
     onEnemyPoison?: (amount: number) => void;
     onEnemyCurse?: (amount: number) => void;
     onEnemyRegen?: (amount: number) => void;
+    onEnemySelfDamage?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
@@ -192,6 +194,16 @@ function buildTurnMessages(
 
   if (result.cleansed) {
     messages.push(createMessage('system', 'デバフが全て解除された！'));
+  }
+
+  if (secondaryEffects.player.selfDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `代償で ${secondaryEffects.player.selfDamage} のダメージを受けた！`,
+        () => handlers.onPlayerSelfDamage?.(secondaryEffects.player.selfDamage)
+      )
+    );
   }
 
   const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
@@ -330,6 +342,16 @@ function buildTurnMessages(
   messages.push(
     ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
   );
+
+  if (secondaryEffects.enemy.selfDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵は代償で ${secondaryEffects.enemy.selfDamage} のダメージを受けた！`,
+        () => handlers.onEnemySelfDamage?.(secondaryEffects.enemy.selfDamage)
+      )
+    );
+  }
 
   return messages;
 }
@@ -878,6 +900,32 @@ export function BattleContainer() {
         });
       };
 
+      const applyPlayerSelfDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemySelfDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
       const applyPlayerRegenHealing = (amount: number) => {
         if (amount <= 0) return;
         setBattleState((prev) => {
@@ -984,12 +1032,14 @@ export function BattleContainer() {
           onPlayerPoison: applyPlayerPoisonDamage,
           onPlayerCurse: applyPlayerCurseDamage,
           onPlayerRegen: applyPlayerRegenHealing,
+          onPlayerSelfDamage: applyPlayerSelfDamage,
           onEnemyBase: applyEnemyBaseDamage,
           onEnemyExtra: applyEnemyExtraDamage,
           onEnemyHeal: applyEnemyHealing,
           onEnemyPoison: applyEnemyPoisonDamage,
           onEnemyCurse: applyEnemyCurseDamage,
           onEnemyRegen: applyEnemyRegenHealing,
+          onEnemySelfDamage: applyEnemySelfDamage,
           onPlayerEffect: applyPlayerEffect,
           onEnemyEffect: applyEnemyEffect,
           onCommentConversion: applyCommentConversion,
