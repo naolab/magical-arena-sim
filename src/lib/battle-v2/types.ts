@@ -26,7 +26,8 @@ export type RageVariant =
   | 'berserk_lowhp'
   | 'chaos_strike'
   | 'debuff_scaling'
-  | 'sacrifice';
+  | 'sacrifice'
+  | 'blood_pact';
 
 /** Terrorのバリアント */
 export type TerrorVariant = 'weaken' | 'poison' | 'curse';

@@ -88,6 +88,20 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
       hpCostPercentage: 5,
     },
   },
+  blood_pact: {
+    id: 'blood_pact',
+    name: 'カーストブラッド',
+    nameJa: 'カーストブラッド',
+    description: '自身のHPを15%犠牲にし、敵に最大HPの25%ダメージを叩き込む',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      hpCostPercentage: 15,
+      targetHpDamagePercentage: 25,
+    },
+  },
 };
 
 // ========================================

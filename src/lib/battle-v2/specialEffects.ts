@@ -170,6 +170,33 @@ export function applyRageSacrificeEffect(
 }
 
 /**
+ * Rage Blood Pact: 自身HP15%消費で敵最大HPの指定割合ダメージ
+ */
+export function applyRageBloodPactEffect(
+  params: ExtendedEffectTriggerParams,
+  variant: { metadata?: Record<string, unknown> },
+  attackerMaxHp: number
+): { extraDamage: number; selfDamage: number } {
+  const { enemyMaxHp } = params;
+  const hpCostPct =
+    typeof variant.metadata?.hpCostPercentage === 'number'
+      ? (variant.metadata.hpCostPercentage as number)
+      : 15;
+  const targetPct =
+    typeof variant.metadata?.targetHpDamagePercentage === 'number'
+      ? (variant.metadata.targetHpDamagePercentage as number)
+      : 25;
+
+  const extraDamage = enemyMaxHp ? Math.max(0, Math.round(enemyMaxHp * (targetPct / 100))) : 0;
+  const selfDamage = Math.max(1, Math.round(attackerMaxHp * (hpCostPct / 100)));
+
+  return {
+    extraDamage,
+    selfDamage,
+  };
+}
+
+/**
  * Terror Poison: 毒効果（持続ダメージ）
  * @param params トリガーパラメータ
  * @param variant バリアント定義

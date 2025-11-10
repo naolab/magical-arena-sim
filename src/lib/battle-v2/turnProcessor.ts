@@ -25,6 +25,7 @@ import {
   applyEcstasyEffect,
   applyRagePercentageEffect,
   applyRageSacrificeEffect,
+  applyRageBloodPactEffect,
   applyTerrorPoisonEffect,
   applyTerrorCurseEffect,
   applyGriefDesperateEffect,
@@ -626,6 +627,14 @@ function triggerSpecialEffects(params: {
         result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
       } else if (selectedVariant === 'sacrifice') {
         const { selfDamage } = applyRageSacrificeEffect(variantDef, attacker.maxHp);
+        result.selfDamage = selfDamage;
+      } else if (selectedVariant === 'blood_pact') {
+        const { extraDamage, selfDamage } = applyRageBloodPactEffect(
+          extendedParams,
+          variantDef,
+          attacker.maxHp
+        );
+        result.extraDamage = extraDamage;
         result.selfDamage = selfDamage;
       }
       break;
