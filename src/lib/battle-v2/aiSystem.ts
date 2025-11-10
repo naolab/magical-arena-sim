@@ -36,6 +36,9 @@ export function decideEnemyAction(
   if (enemyCharacter.aiStrategy === 'mirror') {
     return decideMirrorAI(state);
   }
+  if (enemyCharacter.aiStrategy === 'aggressive') {
+    return decideAggressiveAI(state);
+  }
 
   // 通常の難易度ベースのAI
   switch (difficulty) {
@@ -116,6 +119,30 @@ function decideMirrorAI(state: BattleState): EmotionType {
   }
 
   // 使用できない場合は利用可能な中からランダム
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+// ========================================
+// Aggressive AI (Always Attack)
+// ========================================
+
+/**
+ * 超攻撃的AI: 常にrageを最優先で選択
+ * @param state バトル状態
+ * @returns 選択されたアクション
+ */
+function decideAggressiveAI(state: BattleState): EmotionType {
+  const available = getEnemyAvailableEmotions(state);
+  if (available.length === 0) {
+    return 'rage';
+  }
+
+  // rageが使用可能なら常にrageを選ぶ
+  if (available.includes('rage')) {
+    return 'rage';
+  }
+
+  // rage が使えない場合は利用可能な中からランダム
   return available[Math.floor(Math.random() * available.length)];
 }
 
