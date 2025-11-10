@@ -18,6 +18,7 @@ import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
 import { HealingEffect } from './HealingEffect';
 import { getVariantDefinition, DEFAULT_VARIANTS } from '@/lib/battle-v2/actionVariants';
+import { getEnemyCharacter } from '@/lib/battle-v2/enemyCharacters';
 import { Button } from '@/components/ui/Button';
 
 const BASE_STAGE_WIDTH = 1600;
@@ -95,21 +96,28 @@ function createMessage(speaker: BattleMessageSpeaker, text: string, apply?: () =
   return { id, speaker, text, apply };
 }
 
-const formatDamageText = (amount: number, target: 'enemy' | 'player'): string => {
+const formatDamageText = (
+  amount: number,
+  target: 'enemy' | 'player',
+  enemyName = '敵'
+): string => {
   if (amount <= 0) return '';
   return target === 'enemy'
-    ? `敵に ${amount} のダメージ！`
+    ? `${enemyName}に ${amount} のダメージ！`
     : `あなたは ${amount} のダメージを受けた！`;
 };
 
 function buildEffectMessages(
   effects: TurnResult['specialEffects']['player'],
   target: 'player' | 'enemy',
-  applyEffect?: (effect: SpecialEffect) => void
+  applyEffect?: (effect: SpecialEffect) => void,
+  options?: {
+    enemyName?: string;
+  }
 ): BattleMessage[] {
   if (effects.length === 0) return [];
 
-  const targetLabel = target === 'player' ? 'あなた' : '敵';
+  const targetLabel = target === 'player' ? 'あなた' : options?.enemyName ?? '敵';
 
   return effects.map((effect) =>
     createMessage('system', `${targetLabel}に効果「${getEffectDescription(effect)}」が付与された！`, () => {
@@ -146,13 +154,21 @@ function buildTurnMessages(
     playerEmotion: EmotionType;
     enemyEmotion: EmotionType;
     isSuperchatTurn?: boolean;
+    enemyName: string;
   }
 ): BattleMessage[] {
   const messages: BattleMessage[] = [];
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
-  const { playerSkillName, enemySkillName, playerEmotion, enemyEmotion, isSuperchatTurn = false } = options;
+  const {
+    playerSkillName,
+    enemySkillName,
+    playerEmotion,
+    enemyEmotion,
+    isSuperchatTurn = false,
+    enemyName,
+  } = options;
   const playerColor = getEmotionColor(playerEmotion);
   const enemyColor = getEmotionColor(enemyEmotion);
   const { damage, secondaryEffects, specialEffects } = result;
@@ -164,7 +180,7 @@ function buildTurnMessages(
     messages.push(createMessage('system', 'スパチャ追撃ターン！'));
   }
 
-  const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy');
+  const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy', enemyName);
   const playerOpening =
     playerSkillName.length > 0
       ? `あなたは <span style="color: ${playerColor}; font-weight: bold;">${playerSkillName}</span> を発動！`
@@ -185,7 +201,7 @@ function buildTurnMessages(
     messages.push(
       createMessage(
         'player',
-        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy')}`,
+        `追加攻撃が発動！${formatDamageText(damage.extraToEnemy, 'enemy', enemyName)}`,
         () => handlers.onPlayerExtra(damage.extraToEnemy)
       )
     );
@@ -218,8 +234,8 @@ function buildTurnMessages(
   const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
   const enemyOpening =
     enemySkillName.length > 0
-      ? `敵は <span style="color: ${enemyColor}; font-weight: bold;">${enemySkillName}</span> を発動！`
-      : `敵は ${enemyEmotionName} を繰り出した！`;
+      ? `${enemyName}は <span style="color: ${enemyColor}; font-weight: bold;">${enemySkillName}</span> を発動！`
+      : `${enemyName}は ${enemyEmotionName} を繰り出した！`;
   const enemyMessageText = enemyDamageText
     ? `${enemyOpening} ${enemyDamageText}`
     : enemyOpening;
@@ -237,7 +253,7 @@ function buildTurnMessages(
       messages.push(
         createMessage(
           'enemy',
-          `敵の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
+          `${enemyName}の追撃！${formatDamageText(damage.extraToPlayer, 'player')}`,
           () => handlers.onEnemyExtra(damage.extraToPlayer)
         )
       );
@@ -247,7 +263,7 @@ function buildTurnMessages(
       messages.push(
         createMessage(
           'enemy',
-          `敵は ${secondaryEffects.enemy.healing} 回復した！`,
+        `${enemyName}は ${secondaryEffects.enemy.healing} 回復した！`,
           () => handlers.onEnemyHeal(secondaryEffects.enemy.healing)
         )
       );
@@ -269,7 +285,7 @@ function buildTurnMessages(
     messages.push(
       createMessage(
         'system',
-        `敵は毒で ${secondaryEffects.enemy.poisonDamage} のダメージを受けた！`,
+        `${enemyName}は毒で ${secondaryEffects.enemy.poisonDamage} のダメージを受けた！`,
         () => handlers.onEnemyPoison?.(secondaryEffects.enemy.poisonDamage)
       )
     );
@@ -290,7 +306,7 @@ function buildTurnMessages(
     messages.push(
       createMessage(
         'system',
-        `敵は呪いで ${secondaryEffects.enemy.curseDamage} のダメージを受けた！`,
+        `${enemyName}は呪いで ${secondaryEffects.enemy.curseDamage} のダメージを受けた！`,
         () => handlers.onEnemyCurse?.(secondaryEffects.enemy.curseDamage)
       )
     );
@@ -311,7 +327,7 @@ function buildTurnMessages(
     messages.push(
       createMessage(
         'system',
-        `敵はリジェネで ${secondaryEffects.enemy.regenHealing} 回復した！`,
+        `${enemyName}はリジェネで ${secondaryEffects.enemy.regenHealing} 回復した！`,
         () => handlers.onEnemyRegen?.(secondaryEffects.enemy.regenHealing)
       )
     );
@@ -323,7 +339,7 @@ function buildTurnMessages(
 
   if (result.commentConversions && result.commentConversions.length > 0) {
     result.commentConversions.forEach((conversion) => {
-      const targetLabel = conversion.target === 'player' ? 'あなた' : '敵';
+      const targetLabel = conversion.target === 'player' ? 'あなた' : enemyName;
       const emotionName = getEmotionName(conversion.emotion);
       messages.push(
         createMessage(
@@ -379,7 +395,7 @@ function buildTurnMessages(
       result.commentVictory === 'both'
         ? 'コメントが枯れ、双方が倒れた！'
         : result.commentVictory === 'player'
-          ? 'コメントが枯れ、敵が倒れた！'
+        ? `コメントが枯れ、${enemyName}が倒れた！`
           : 'コメントが枯れ、あなたが倒れた！';
     const applyVictoryDamage = () => {
       const fatal = 9999;
@@ -394,14 +410,14 @@ function buildTurnMessages(
   }
 
   messages.push(
-    ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
+    ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect, { enemyName })
   );
 
   if (secondaryEffects.enemy.selfDamage > 0) {
     messages.push(
       createMessage(
         'system',
-        `敵は代償で ${secondaryEffects.enemy.selfDamage} のダメージを受けた！`,
+        `${enemyName}は代償で ${secondaryEffects.enemy.selfDamage} のダメージを受けた！`,
         () => handlers.onEnemySelfDamage?.(secondaryEffects.enemy.selfDamage)
       )
     );
@@ -443,6 +459,11 @@ export function BattleContainer() {
   const [enemyInvisible, setEnemyInvisible] = useState(false);
   const [showPlayerHpDetails, setShowPlayerHpDetails] = useState(false);
   const [showEnemyHpDetails, setShowEnemyHpDetails] = useState(false);
+  const enemyCharacterId = battleState?.config.enemyCharacterId ?? params.enemyCharacterId;
+  const enemyDisplayName = useMemo(
+    () => getEnemyCharacter(enemyCharacterId).name,
+    [enemyCharacterId]
+  );
 
   // HP追跡用ref（setStateの非同期性に影響されない正確なHP）
   const accurateHpRef = useRef({ player: 100, enemy: 100 });
@@ -1162,6 +1183,7 @@ export function BattleContainer() {
           playerEmotion: emotion,
           enemyEmotion: actualEnemyEmotion,
           isSuperchatTurn: isSuperchatMode,
+          enemyName: enemyDisplayName,
         }
       );
       // ロジック側の勝敗判定は無視し、UI側のHP（apply関数で更新）で判定する
