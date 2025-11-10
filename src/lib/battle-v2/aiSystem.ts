@@ -6,6 +6,7 @@
 import { EmotionType, BattleState, Comment } from './types';
 import { getAllEmotions, getWinningEmotion, getLosingEmotion } from './emotionSystem';
 import { getCommentCountByEmotion } from './commentSystem';
+import { getEnemyCharacter, type AIStrategyType } from './enemyCharacters';
 
 // ========================================
 // AI Difficulty Levels
@@ -27,6 +28,13 @@ export function decideEnemyAction(
   state: BattleState,
   difficulty: AIDifficulty = 'normal'
 ): EmotionType {
+  // キャラクター固有のAI戦略をチェック
+  const enemyCharacter = getEnemyCharacter(state.config.enemyCharacterId);
+  if (enemyCharacter.aiStrategy === 'adaptive') {
+    return decideAdaptiveAI(state);
+  }
+
+  // 通常の難易度ベースのAI
   switch (difficulty) {
     case 'easy':
       return decideEasyAI(state);
@@ -37,6 +45,42 @@ export function decideEnemyAction(
     default:
       return decideNormalAI(state);
   }
+}
+
+// ========================================
+// Adaptive AI (Top 2 Comment Emotions)
+// ========================================
+
+/**
+ * 適応型AI: コメントプールで最も多い2つの属性から選択
+ * @param state バトル状態
+ * @returns 選択されたアクション
+ */
+function decideAdaptiveAI(state: BattleState): EmotionType {
+  const available = getEnemyAvailableEmotions(state);
+  if (available.length === 0) {
+    return 'rage';
+  }
+
+  const commentCounts = getCommentCountByEmotion(state.comments);
+
+  // コメント数でソート（多い順）
+  const sortedEmotions = Object.entries(commentCounts)
+    .sort(([, a], [, b]) => b - a)
+    .map(([emotion]) => emotion as EmotionType);
+
+  // 上位2つの属性を取得
+  const top2 = sortedEmotions.slice(0, 2).filter(emotion =>
+    available.includes(emotion) && (commentCounts[emotion] ?? 0) > 0
+  );
+
+  // 上位2つからランダムに選択
+  if (top2.length > 0) {
+    return top2[Math.floor(Math.random() * top2.length)];
+  }
+
+  // コメントがない場合や使用可能な技がない場合は、利用可能な中からランダム
+  return available[Math.floor(Math.random() * available.length)];
 }
 
 // ========================================
