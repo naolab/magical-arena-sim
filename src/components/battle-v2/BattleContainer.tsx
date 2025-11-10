@@ -364,7 +364,16 @@ function buildTurnMessages(
         : result.commentVictory === 'player'
           ? 'コメントが枯れ、敵が倒れた！'
           : 'コメントが枯れ、あなたが倒れた！';
-    messages.push(createMessage('system', text));
+    const applyVictoryDamage = () => {
+      const fatal = 9999;
+      if (result.commentVictory === 'player' || result.commentVictory === 'both') {
+        handlers.onPlayerBase(fatal);
+      }
+      if (result.commentVictory === 'enemy' || result.commentVictory === 'both') {
+        handlers.onEnemyBase(fatal);
+      }
+    };
+    messages.push(createMessage('system', text, applyVictoryDamage));
   }
 
   messages.push(
