@@ -75,6 +75,8 @@ export function processTurn(
       superchatBoostMultiplier = 1;
     }
   }
+  const currentAttackMultiplier = state.nextAttackMultiplier ?? { player: 1, enemy: 1 };
+  let nextAttackMultiplierState = { player: 1, enemy: 1 };
 
   const createEmptySkillUses = () => ({
     rage: 0,
@@ -119,6 +121,7 @@ export function processTurn(
         config: state.config,
         variant: playerVariantDef,
         attackerState: state.player,
+        attackMultiplier: currentAttackMultiplier.player ?? 1,
       })
     : {
         damage: 0,
@@ -136,6 +139,7 @@ export function processTurn(
         config: state.config,
         variant: enemyVariantDef,
         attackerState: state.enemy,
+        attackMultiplier: currentAttackMultiplier.enemy ?? 1,
       })
     : {
         damage: 0,
@@ -220,6 +224,14 @@ export function processTurn(
     superchatBoostMultiplier = playerSpecialEffects.superchatBoost.multiplier;
   } else if (superchatBoostTurns === 0) {
     superchatBoostMultiplier = Math.min(superchatBoostMultiplier, 1);
+  }
+
+  if (playerSpecialEffects.attackCharge) {
+    if (playerSpecialEffects.attackCharge.target === 'player') {
+      nextAttackMultiplierState.player = playerSpecialEffects.attackCharge.multiplier;
+    } else {
+      nextAttackMultiplierState.enemy = playerSpecialEffects.attackCharge.multiplier;
+    }
   }
 
   // 5. 敵側の特殊効果を発動
@@ -555,6 +567,7 @@ export function processTurn(
     permanentCommentBoost: updatedPermanentCommentBoost,
     superchatBoostTurns,
     superchatBoostMultiplier,
+    nextAttackMultiplier: nextAttackMultiplierState,
   };
 }
 
@@ -571,6 +584,7 @@ interface DamageCalculationParams {
   config: BattleParamsV2;
   variant?: ActionVariantDefinition;
   attackerState?: PlayerState | EnemyState;
+  attackMultiplier?: number;
 }
 
 interface DamageResult {
@@ -582,7 +596,17 @@ interface DamageResult {
  * ダメージを計算して適用
  */
 function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult {
-  const { attacker, defender, action, judgement, consumedComments, config, variant, attackerState } = params;
+  const {
+    attacker,
+    defender,
+    action,
+    judgement,
+    consumedComments,
+    config,
+    variant,
+    attackerState,
+    attackMultiplier = 1,
+  } = params;
 
   let baseDamage = calculateDamage({
     action,
@@ -611,6 +635,8 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
         : 2;
     baseDamage = Math.round(baseDamage * Math.max(1, multiplier));
   }
+
+  baseDamage = Math.round(baseDamage * Math.max(0, attackMultiplier));
 
   const updatedDefender = {
     ...defender,
@@ -643,6 +669,10 @@ interface SpecialEffectResult {
   selfDamage?: number; // 自傷ダメージ
   superchatBoost?: {
     duration: number;
+    multiplier: number;
+  };
+  attackCharge?: {
+    target: 'player' | 'enemy';
     multiplier: number;
   };
 }
@@ -804,6 +834,19 @@ function triggerSpecialEffects(params: {
           result.convertedComments = dualRefresh.comments;
           result.commentRefresh = dualRefresh;
         }
+      } else if (selectedVariant === 'attack_charge') {
+        const attackMultiplier = (variantDef.metadata?.attackMultiplier as number | undefined) ?? 2;
+        result.attackCharge = {
+          target,
+          multiplier: attackMultiplier,
+        };
+        result.playerEffects.push({
+          type: 'buff',
+          emotion,
+          duration: variantDef.duration ?? 2,
+          magnitude: variantDef.magnitude,
+          target,
+        });
       } else if (selectedVariant === 'superchat_boost') {
         result.playerEffects.push({
           type: 'superchat_boost',

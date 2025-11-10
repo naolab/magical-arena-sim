@@ -42,7 +42,8 @@ export type EcstasyVariant =
   | 'comment_boost'
   | 'refresh'
   | 'dual_refresh'
-  | 'superchat_boost';
+  | 'superchat_boost'
+  | 'attack_charge';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -241,6 +242,10 @@ export interface BattleState {
   pendingSuperchatTurn: boolean; // スパチャ追撃待機
   superchatBoostTurns?: number; // スパチャ確率上昇ターン残数
   superchatBoostMultiplier?: number; // スパチャ確率の倍率
+  nextAttackMultiplier?: {
+    player: number;
+    enemy: number;
+  }; // 次ターンの攻撃力倍率
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;

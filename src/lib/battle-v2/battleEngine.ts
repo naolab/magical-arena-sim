@@ -93,6 +93,10 @@ export function initBattle(params?: BattleParamsV2): BattleState {
     permanentCommentBoost: 0,
     superchatBoostTurns: 0,
     superchatBoostMultiplier: 1,
+    nextAttackMultiplier: {
+      player: 1,
+      enemy: 1,
+    },
   };
 }
 

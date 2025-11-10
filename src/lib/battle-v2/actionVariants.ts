@@ -270,6 +270,20 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     hasAttack: false,
     maxUses: 20,
   },
+  attack_charge: {
+    id: 'attack_charge',
+    name: 'ハイテンポチャージ',
+    nameJa: 'ハイテンポチャージ',
+    description: '次のターンの攻撃力を+80%にする（重ね掛け不可）',
+    effectType: 'buff',
+    magnitude: 80,
+    duration: 1,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      attackMultiplier: 1.8,
+    },
+  },
 };
 
 // ========================================
