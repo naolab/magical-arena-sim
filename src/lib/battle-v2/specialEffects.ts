@@ -476,7 +476,7 @@ export function checkActiveBuffsDebuffs(effects: SpecialEffect[]): {
   hasDebuff: boolean;
 } {
   return {
-    hasBuff: effects.some((e) => e.type === 'buff'),
+    hasBuff: effects.some((e) => e.type === 'buff' || e.type === 'superchat_boost'),
     hasDebuff: effects.some((e) => e.type === 'debuff' || e.type === 'fan_block'),
   };
 }

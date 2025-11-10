@@ -10,6 +10,7 @@ import {
   PlayerState,
   EnemyState,
   SpecialEffect,
+  SpecialEffectType,
   Comment,
   CommentConversionEvent,
   ActionVariantDefinition,
@@ -347,19 +348,40 @@ export function processTurn(
   const annotateNewEffects = (effects: SpecialEffect[]): ActiveEffectExtended[] =>
     effects.map((effect) => ({ ...effect, appliedTurn: turnNumber }));
 
+  const removeDuplicateEffects = (
+    effects: ActiveEffectExtended[],
+    type: SpecialEffectType
+  ): ActiveEffectExtended[] => effects.filter((effect) => effect.type !== type);
+
   const playerEffectsAfterTick = tickExistingEffects(playerEffectsBeforeTurn);
   const enemyEffectsAfterTick = tickExistingEffects(enemyEffectsBeforeTurn);
 
+  const newPlayerEffects = annotateNewEffects(playerSpecialEffects.playerEffects);
+  const newEnemyOnPlayerEffects = annotateNewEffects(enemySpecialEffects.playerEffects);
+
+  const playerEffectsAfterRemoval =
+    newPlayerEffects.some((effect) => effect.type === 'superchat_boost')
+      ? removeDuplicateEffects(playerEffectsAfterTick, 'superchat_boost')
+      : playerEffectsAfterTick;
+
   const finalPlayerEffects: ActiveEffectExtended[] = [
-    ...playerEffectsAfterTick,
-    ...annotateNewEffects(playerSpecialEffects.playerEffects),
-    ...annotateNewEffects(enemySpecialEffects.playerEffects),
+    ...playerEffectsAfterRemoval,
+    ...newPlayerEffects,
+    ...newEnemyOnPlayerEffects,
   ];
 
+  const newEnemyEffects = annotateNewEffects(playerSpecialEffects.enemyEffects);
+  const newPlayerOnEnemyEffects = annotateNewEffects(enemySpecialEffects.enemyEffects);
+
+  const enemyEffectsAfterRemoval =
+    newEnemyEffects.some((effect) => effect.type === 'superchat_boost')
+      ? removeDuplicateEffects(enemyEffectsAfterTick, 'superchat_boost')
+      : enemyEffectsAfterTick;
+
   const finalEnemyEffects: ActiveEffectExtended[] = [
-    ...enemyEffectsAfterTick,
-    ...annotateNewEffects(playerSpecialEffects.enemyEffects),
-    ...annotateNewEffects(enemySpecialEffects.enemyEffects),
+    ...enemyEffectsAfterRemoval,
+    ...newEnemyEffects,
+    ...newPlayerOnEnemyEffects,
   ];
 
   const playerCleansed = playerSpecialEffects.cleansed || finalPlayerEffects.some(
