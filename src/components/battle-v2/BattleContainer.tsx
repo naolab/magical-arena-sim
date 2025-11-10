@@ -12,6 +12,7 @@ import { TypewriterText } from './TypewriterText';
 import { BattleResult } from './BattleResult';
 import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
+import { ActionVariantModal } from './ActionVariantModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
@@ -1499,9 +1500,10 @@ export function BattleContainer() {
               </div>
             </div>
 
-            {/* 左下：設定メニューとルール */}
+            {/* 左下：設定メニュー、アクションバリアント、ルール */}
             <div className="absolute bottom-6 left-8 flex gap-4">
               <SettingsMenu onRestart={handleRestart} />
+              <ActionVariantModal onRestart={handleRestart} />
               <RulesModal />
             </div>
 

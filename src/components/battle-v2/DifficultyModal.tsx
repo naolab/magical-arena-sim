@@ -1,9 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
-import { ActionVariantSelector } from './ActionVariantSelector';
-import { EmotionType } from '@/lib/battle-v2/types';
 
 interface DifficultyModalProps {
   isOpen: boolean;
@@ -13,7 +10,6 @@ interface DifficultyModalProps {
 
 export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalProps) {
   const { params, setParams, resetParams } = useBattleParamsV2();
-  const [activeTab, setActiveTab] = useState<'basic' | 'variants'>('basic');
 
   if (!isOpen) return null;
 
@@ -32,7 +28,7 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm">
-      <div className="relative max-h-[85vh] w-[min(600px,90vw)] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
+      <div className="relative max-h-[90vh] w-[min(800px,95vw)] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-black/60 via-black/70 to-black/90 p-8 shadow-[0_45px_75px_rgba(10,6,30,0.75)]">
         <div className="relative flex flex-col flex-1 min-h-0">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-3xl font-black text-white">難易度設定</h2>
@@ -52,33 +48,8 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
           </div>
 
           <div className="flex flex-col flex-1 min-h-0 text-white/90">
-            <div className="mb-4 grid grid-cols-2 gap-2">
-              <button
-                className={`py-2 text-sm font-bold rounded-full border transition ${
-                  activeTab === 'basic'
-                    ? 'bg-cyan-500/90 border-cyan-300 text-white'
-                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                }`}
-                onClick={() => setActiveTab('basic')}
-              >
-                基本設定
-              </button>
-              <button
-                className={`py-2 text-sm font-bold rounded-full border transition ${
-                  activeTab === 'variants'
-                    ? 'bg-pink-500/90 border-pink-300 text-white'
-                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                }`}
-                onClick={() => setActiveTab('variants')}
-              >
-                アクションバリアント
-              </button>
-            </div>
-
             <div className="flex-1 overflow-y-auto pr-2 space-y-6 min-h-0">
-              {activeTab === 'basic' ? (
-                <>
-                  {/* 基本設定 */}
+              {/* 基本設定 */}
                   <section>
                     <h3 className="text-lg font-bold mb-3 text-cyan-400">基本設定</h3>
 
@@ -230,26 +201,6 @@ export function DifficultyModal({ isOpen, onClose, onRestart }: DifficultyModalP
                 </div>
               </div>
             </section>
-                </>
-              ) : (
-                <div className="space-y-4">
-                  {(['rage', 'terror', 'grief', 'ecstasy'] as EmotionType[]).map((emotion) => (
-                    <ActionVariantSelector
-                      key={emotion}
-                      emotion={emotion}
-                      selectedVariant={params.selectedActionVariants[emotion]}
-                      onChange={(variant) =>
-                        setParams({
-                          selectedActionVariants: {
-                            ...params.selectedActionVariants,
-                            [emotion]: variant,
-                          },
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
