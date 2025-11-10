@@ -52,54 +52,56 @@ export function EnemySelectModal({ onRestart }: EnemySelectModalProps = {}) {
                 </p>
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 space-y-4 min-h-0">
-                {enemyIds.map((id) => {
-                  const enemy = ENEMY_CHARACTERS[id];
-                  const isSelected = params.enemyCharacterId === id;
+              <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {enemyIds.map((id) => {
+                    const enemy = ENEMY_CHARACTERS[id];
+                    const isSelected = params.enemyCharacterId === id;
 
-                  return (
-                    <div
-                      key={id}
-                      className={`relative rounded-xl p-4 border-2 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-cyan-400 bg-cyan-500/20'
-                          : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
-                      }`}
-                      onClick={() => setParams({ enemyCharacterId: id })}
-                    >
-                      <div className="flex gap-4 items-center">
+                    return (
+                      <div
+                        key={id}
+                        className={`relative rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group ${
+                          isSelected
+                            ? 'border-cyan-400 bg-cyan-500/20 shadow-[0_0_30px_rgba(34,211,238,0.3)]'
+                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+                        }`}
+                        onClick={() => setParams({ enemyCharacterId: id })}
+                      >
                         {/* キャラクターイラスト */}
-                        <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-black/30 flex-shrink-0">
+                        <div className="relative w-full aspect-square overflow-hidden bg-black/30">
                           <Image
                             src={enemy.imagePath}
                             alt={enemy.name}
                             fill
-                            className="object-cover"
+                            className="object-cover transition-transform group-hover:scale-105"
                           />
+                          {/* 選択中バッジ */}
+                          {isSelected && (
+                            <div className="absolute top-3 right-3 z-10">
+                              <span className="text-xs px-3 py-1 rounded-full bg-cyan-400 text-black font-bold shadow-lg">
+                                選択中
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* キャラクター情報 */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-xl font-bold text-white">{enemy.name}</h3>
-                            {isSelected && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-400 text-black font-bold">
-                                選択中
-                              </span>
-                            )}
-                          </div>
+                        <div className="p-4">
+                          <h3 className="text-xl font-bold text-white mb-2">{enemy.name}</h3>
                           {enemy.description && (
-                            <p className="text-sm text-white/70 mb-2">{enemy.description}</p>
+                            <p className="text-sm text-white/70 mb-3 leading-relaxed">{enemy.description}</p>
                           )}
-                          <div className="text-xs text-white/50">
-                            <span className="font-semibold">AI戦略: </span>
-                            {enemy.aiStrategy === 'adaptive' ? '適応型' : '通常'}
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs px-2 py-1 rounded-md bg-white/10 text-white/70 font-medium">
+                              AI戦略: {enemy.aiStrategy === 'adaptive' ? '適応型' : '通常'}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-white/10 flex gap-3 shrink-0">
