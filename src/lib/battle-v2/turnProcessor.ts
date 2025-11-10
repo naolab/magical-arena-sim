@@ -10,6 +10,7 @@ import {
   PlayerState,
   EnemyState,
   SpecialEffect,
+  SpecialEffectType,
   Comment,
   CommentConversionEvent,
   ActionVariantDefinition,
@@ -24,15 +25,38 @@ import {
   applyGriefEffect,
   applyEcstasyEffect,
   applyRagePercentageEffect,
+  applyRageSacrificeEffect,
+  applyRageBloodPactEffect,
   applyTerrorPoisonEffect,
+  applyTerrorCurseEffect,
+  applyTerrorFanBlockEffect,
+  generateChaoticPlagueEffects,
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
+  applyEcstasyCommentBoostEffect,
+  applyEcstasyRefreshCommentsEffect,
+  applyEcstasyDualRefreshCommentsEffect,
+  applyEcstasySuperchatBoostEffect,
+  applyGriefRegenEffect,
   updateEffectDurations,
   removeExpiredEffects,
   calculatePoisonDamage,
+  calculateCurseDamage,
+  calculateRegenHealing,
   type ExtendedEffectTriggerParams,
+  type CommentRefreshResult,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
+
+function getDamageTakenMultiplierFromEffects(effects?: SpecialEffect[]): number {
+  if (!effects || effects.length === 0) return 1;
+  const relevant = effects.filter((effect) => effect.type === 'damage_amp');
+  if (relevant.length === 0) return 1;
+  return relevant.reduce(
+    (total, effect) => total * Math.max(0, 1 + (effect.magnitude ?? 0) / 100),
+    1
+  );
+}
 
 // ========================================
 // Turn Processing
@@ -53,7 +77,22 @@ export function processTurn(
 ): BattleState {
   const turnNumber = state.currentTurn + 1;
   const isSuperchatTurn = options?.isSuperchatTurn ?? false;
-
+  const shouldTickSuperchatBoost = !isSuperchatTurn;
+  let superchatBoostTurns = state.superchatBoostTurns ?? 0;
+  let superchatBoostMultiplier = state.superchatBoostMultiplier ?? 1;
+  if (shouldTickSuperchatBoost && superchatBoostTurns > 0) {
+    superchatBoostTurns -= 1;
+    if (superchatBoostTurns === 0) {
+      superchatBoostMultiplier = 1;
+    }
+  }
+  const currentAttackMultiplier = state.nextAttackMultiplier ?? { player: 1, enemy: 1 };
+  let nextAttackMultiplierState = { player: 1, enemy: 1 };
+  const currentDamageTakenMultiplier = {
+    player: getDamageTakenMultiplierFromEffects(state.player.activeEffects),
+    enemy: getDamageTakenMultiplierFromEffects(state.enemy.activeEffects),
+  };
+  let nextDamageMultiplierState = { player: 1, enemy: 1 };
   const createEmptySkillUses = () => ({
     rage: 0,
     terror: 0,
@@ -97,6 +136,7 @@ export function processTurn(
         config: state.config,
         variant: playerVariantDef,
         attackerState: state.player,
+        attackMultiplier: currentAttackMultiplier.player ?? 1,
       })
     : {
         damage: 0,
@@ -114,6 +154,7 @@ export function processTurn(
         config: state.config,
         variant: enemyVariantDef,
         attackerState: state.enemy,
+        attackMultiplier: currentAttackMultiplier.enemy ?? 1,
       })
     : {
         damage: 0,
@@ -140,14 +181,22 @@ export function processTurn(
     config: state.config,
   });
 
+  const enemyDamageTakenMultiplier = getDamageTakenMultiplierFromEffects(
+    updatedEnemy.activeEffects
+  );
+  const playerDamageTakenMultiplier = getDamageTakenMultiplierFromEffects(
+    updatedPlayer.activeEffects
+  );
+
   let playerExtraDamage = 0;
   let playerHealing = 0;
 
   if (playerSpecialEffects.extraDamage > 0) {
-    playerExtraDamage = playerSpecialEffects.extraDamage;
+    const scaledExtra = Math.round(playerSpecialEffects.extraDamage * enemyDamageTakenMultiplier);
+    playerExtraDamage = scaledExtra;
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - playerSpecialEffects.extraDamage),
+      hp: Math.max(0, updatedEnemy.hp - scaledExtra),
     };
   }
 
@@ -159,7 +208,15 @@ export function processTurn(
     };
   }
 
+  if (playerSpecialEffects.selfDamage && playerSpecialEffects.selfDamage > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage),
+    };
+  }
+
   const commentConversions: CommentConversionEvent[] = [];
+  let commentRefreshData: CommentRefreshResult | undefined;
 
   // コメント変換があれば適用
   let currentComments = remainingComments;
@@ -173,6 +230,31 @@ export function processTurn(
       count: playerSpecialEffects.commentConversion.count,
       commentIds: playerSpecialEffects.commentConversion.convertedCommentIds,
     });
+  }
+
+  if (playerSpecialEffects.commentRefresh) {
+    commentRefreshData = playerSpecialEffects.commentRefresh;
+  }
+
+  // コメントブーストがあれば永続的に適用
+  let updatedPermanentCommentBoost = state.permanentCommentBoost ?? 0;
+  if (playerSpecialEffects.commentBoost && playerSpecialEffects.commentBoost > 0) {
+    updatedPermanentCommentBoost += playerSpecialEffects.commentBoost;
+  }
+
+  if (playerSpecialEffects.superchatBoost) {
+    superchatBoostTurns = playerSpecialEffects.superchatBoost.duration;
+    superchatBoostMultiplier = playerSpecialEffects.superchatBoost.multiplier;
+  } else if (superchatBoostTurns === 0) {
+    superchatBoostMultiplier = Math.min(superchatBoostMultiplier, 1);
+  }
+
+  if (playerSpecialEffects.attackCharge) {
+    if (playerSpecialEffects.attackCharge.target === 'player') {
+      nextAttackMultiplierState.player = playerSpecialEffects.attackCharge.multiplier;
+    } else {
+      nextAttackMultiplierState.enemy = playerSpecialEffects.attackCharge.multiplier;
+    }
   }
 
   // 5. 敵側の特殊効果を発動
@@ -201,10 +283,11 @@ export function processTurn(
   let enemyHealing = 0;
 
   if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
-    enemyExtraDamage = enemySpecialEffects.extraDamage;
+    const scaledExtra = Math.round(enemySpecialEffects.extraDamage * playerDamageTakenMultiplier);
+    enemyExtraDamage = scaledExtra;
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - enemySpecialEffects.extraDamage),
+      hp: Math.max(0, updatedPlayer.hp - scaledExtra),
     };
   }
 
@@ -216,9 +299,18 @@ export function processTurn(
     };
   }
 
+  if (!isSuperchatTurn && enemySpecialEffects.selfDamage && enemySpecialEffects.selfDamage > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage),
+    };
+  }
+
   // 5.5. 毒ダメージの適用（ターン開始時の効果）
-  const playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
-  const enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+  let playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
+  let enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
+  playerPoisonDamage = Math.round(playerPoisonDamage * playerDamageTakenMultiplier);
+  enemyPoisonDamage = Math.round(enemyPoisonDamage * enemyDamageTakenMultiplier);
 
   console.log('[DEBUG] Poison Damage:', {
     playerActiveEffects: updatedPlayer.activeEffects,
@@ -241,6 +333,44 @@ export function processTurn(
     };
   }
 
+  // 5.6. 呪いダメージの適用（ターン開始時の効果）
+  let playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
+  let enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
+  playerCurseDamage = Math.round(playerCurseDamage * playerDamageTakenMultiplier);
+  enemyCurseDamage = Math.round(enemyCurseDamage * enemyDamageTakenMultiplier);
+
+  if (playerCurseDamage > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.max(0, updatedPlayer.hp - playerCurseDamage),
+    };
+  }
+
+  if (enemyCurseDamage > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.max(0, updatedEnemy.hp - enemyCurseDamage),
+    };
+  }
+
+  // 5.7. リジェネ回復の適用（ターン開始時の効果）
+  const playerRegenHealing = calculateRegenHealing(updatedPlayer.activeEffects);
+  const enemyRegenHealing = calculateRegenHealing(updatedEnemy.activeEffects);
+
+  if (playerRegenHealing > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerRegenHealing),
+    };
+  }
+
+  if (enemyRegenHealing > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemyRegenHealing),
+    };
+  }
+
   // 6. 既存効果の更新と新規効果の追加
   const tickExistingEffects = (effects: ActiveEffectExtended[]) =>
     removeExpiredEffects(
@@ -258,20 +388,72 @@ export function processTurn(
   const annotateNewEffects = (effects: SpecialEffect[]): ActiveEffectExtended[] =>
     effects.map((effect) => ({ ...effect, appliedTurn: turnNumber }));
 
+  const removeDuplicateEffects = (
+    effects: ActiveEffectExtended[],
+    types: SpecialEffectType[]
+  ): ActiveEffectExtended[] => effects.filter((effect) => !types.includes(effect.type as SpecialEffectType));
+
   const playerEffectsAfterTick = tickExistingEffects(playerEffectsBeforeTurn);
   const enemyEffectsAfterTick = tickExistingEffects(enemyEffectsBeforeTurn);
 
+  const newPlayerEffects = annotateNewEffects(playerSpecialEffects.playerEffects);
+  const newEnemyOnPlayerEffects = annotateNewEffects(enemySpecialEffects.playerEffects);
+
+  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp'];
+  const playerNeedsRemoval = [...newPlayerEffects, ...newEnemyOnPlayerEffects].some((effect) =>
+    dedupTypes.includes(effect.type as SpecialEffectType)
+  );
+  const playerEffectsAfterRemoval = playerNeedsRemoval
+    ? removeDuplicateEffects(playerEffectsAfterTick, dedupTypes)
+    : playerEffectsAfterTick;
+
   const finalPlayerEffects: ActiveEffectExtended[] = [
-    ...playerEffectsAfterTick,
-    ...annotateNewEffects(playerSpecialEffects.playerEffects),
-    ...annotateNewEffects(enemySpecialEffects.playerEffects),
+    ...playerEffectsAfterRemoval,
+    ...newPlayerEffects,
+    ...newEnemyOnPlayerEffects,
   ];
 
+  const newEnemyEffects = annotateNewEffects(playerSpecialEffects.enemyEffects);
+  const newPlayerOnEnemyEffects = annotateNewEffects(enemySpecialEffects.enemyEffects);
+
+  const enemyNeedsRemoval = [...newEnemyEffects, ...newPlayerOnEnemyEffects].some((effect) =>
+    dedupTypes.includes(effect.type as SpecialEffectType)
+  );
+  const enemyEffectsAfterRemoval = enemyNeedsRemoval
+    ? removeDuplicateEffects(enemyEffectsAfterTick, dedupTypes)
+    : enemyEffectsAfterTick;
+
   const finalEnemyEffects: ActiveEffectExtended[] = [
-    ...enemyEffectsAfterTick,
-    ...annotateNewEffects(playerSpecialEffects.enemyEffects),
-    ...annotateNewEffects(enemySpecialEffects.enemyEffects),
+    ...enemyEffectsAfterRemoval,
+    ...newEnemyEffects,
+    ...newPlayerOnEnemyEffects,
   ];
+
+  const playerCleansed = playerSpecialEffects.cleansed || finalPlayerEffects.some(
+    (effect) => effect.type === 'cleanse' && effect.target === 'player'
+  );
+  const enemyCleansed = finalEnemyEffects.some(
+    (effect) => effect.type === 'cleanse' && effect.target === 'enemy'
+  );
+
+  const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
+    !(
+      (effect.type === 'cleanse' ||
+        effect.type === 'debuff' ||
+        effect.type === 'poison' ||
+        effect.type === 'curse' ||
+        effect.type === 'fan_block' ||
+        effect.type === 'damage_amp') &&
+      effect.target === target
+    );
+
+  const cleanedPlayerEffects = playerCleansed
+    ? finalPlayerEffects.filter((effect) => cleanseEffectFilter(effect, 'player'))
+    : finalPlayerEffects;
+
+  const cleanedEnemyEffects = enemyCleansed
+    ? finalEnemyEffects.filter((effect) => cleanseEffectFilter(effect, 'enemy'))
+    : finalEnemyEffects;
 
   console.log('[DEBUG] Final Effects:', {
     playerSpecialEffects_playerEffects: playerSpecialEffects.playerEffects,
@@ -284,27 +466,33 @@ export function processTurn(
 
   updatedPlayer = {
     ...updatedPlayer,
-    activeEffects: finalPlayerEffects,
+    activeEffects: cleanedPlayerEffects,
   };
 
   updatedEnemy = {
     ...updatedEnemy,
-    activeEffects: finalEnemyEffects,
+    activeEffects: cleanedEnemyEffects,
   };
 
   // 7. ファン率の変化量を計算
-  const fanChanges = calculateFanChanges({
+  const rawFanChanges = calculateFanChanges({
     judgement,
     consumedCommentCount: consumedPlayerComments.length,
     playerFanRate: updatedPlayer.fanRate,
     enemyFanRate: updatedEnemy.fanRate,
   });
 
+  const playerFanBlocked = updatedPlayer.activeEffects.some((effect) => effect.type === 'fan_block');
+  const enemyFanBlocked = updatedEnemy.activeEffects.some((effect) => effect.type === 'fan_block');
+
+  const playerFanChange = playerFanBlocked ? 0 : rawFanChanges.playerChange;
+  const enemyFanChange = enemyFanBlocked ? 0 : rawFanChanges.enemyChange;
+
   // 8. 観客構成を更新（中立ファンから獲得）
   const updatedAudience = updateAudienceComposition(
     state.audience,
-    fanChanges.playerChange,
-    fanChanges.enemyChange
+    playerFanChange,
+    enemyFanChange
   );
 
   // 9. ファン率を観客構成から設定
@@ -364,23 +552,39 @@ export function processTurn(
         extraDamage: playerExtraDamage,
         healing: playerHealing,
         poisonDamage: playerPoisonDamage,
+        curseDamage: playerCurseDamage,
+        regenHealing: playerRegenHealing,
+        selfDamage: playerSpecialEffects.selfDamage ?? 0,
       },
       enemy: {
         extraDamage: enemyExtraDamage,
         healing: enemyHealing,
         poisonDamage: enemyPoisonDamage,
+        curseDamage: enemyCurseDamage,
+        regenHealing: enemyRegenHealing,
+        selfDamage: enemySpecialEffects.selfDamage ?? 0,
       },
     },
     fanChange: {
-      player: fanChanges.playerChange,
-      enemy: fanChanges.enemyChange,
+      player: playerFanChange,
+      enemy: enemyFanChange,
     },
     playerState: updatedPlayer,
     enemyState: updatedEnemy,
     audienceComposition: updatedAudience,
     commentConversions,
+    commentRefresh: commentRefreshData
+      ? {
+          count: commentRefreshData.refreshedCommentIds.length,
+          comments: commentRefreshData.comments,
+          limitedEmotions: commentRefreshData.limitedEmotions,
+        }
+      : undefined,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
+    commentBoostApplied: playerSpecialEffects.commentBoost,
+    currentCommentBoost: updatedPermanentCommentBoost,
+    cleansed: playerSpecialEffects.cleansed,
   };
 
   // 11. 状態を更新して返す
@@ -394,6 +598,11 @@ export function processTurn(
     skillUses: updatedSkillUses,
     turnHistory: [...state.turnHistory, turnResult],
     pendingSuperchatTurn: earnedSuperchatTurn,
+    permanentCommentBoost: updatedPermanentCommentBoost,
+    superchatBoostTurns,
+    superchatBoostMultiplier,
+    nextAttackMultiplier: nextAttackMultiplierState,
+    nextDamageMultiplier: nextDamageMultiplierState,
   };
 }
 
@@ -410,6 +619,7 @@ interface DamageCalculationParams {
   config: BattleParamsV2;
   variant?: ActionVariantDefinition;
   attackerState?: PlayerState | EnemyState;
+  attackMultiplier?: number;
 }
 
 interface DamageResult {
@@ -421,7 +631,17 @@ interface DamageResult {
  * ダメージを計算して適用
  */
 function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult {
-  const { attacker, defender, action, judgement, consumedComments, config, variant, attackerState } = params;
+  const {
+    attacker,
+    defender,
+    action,
+    judgement,
+    consumedComments,
+    config,
+    variant,
+    attackerState,
+    attackMultiplier = 1,
+  } = params;
 
   let baseDamage = calculateDamage({
     action,
@@ -443,6 +663,17 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     const rand = min + Math.random() * (max - min);
     baseDamage = Math.round(baseDamage * rand);
   }
+  if (variant?.id === 'sacrifice') {
+    const multiplier =
+      typeof variant.metadata?.damageMultiplier === 'number'
+        ? (variant.metadata.damageMultiplier as number)
+        : 2;
+    baseDamage = Math.round(baseDamage * Math.max(1, multiplier));
+  }
+
+  baseDamage = Math.round(baseDamage * Math.max(0, attackMultiplier));
+  const damageTakenMultiplier = getDamageTakenMultiplierFromEffects(defender.activeEffects);
+  baseDamage = Math.round(baseDamage * damageTakenMultiplier);
 
   const updatedDefender = {
     ...defender,
@@ -468,7 +699,19 @@ interface SpecialEffectResult {
   enemyEffects: SpecialEffect[];
   convertedComments?: Comment[]; // コメント変換後の配列
   commentConversion?: CommentConversionSummary;
+  commentRefresh?: CommentRefreshResult;
   extraDamageMultiplier?: number;
+  commentBoost?: number; // コメント追加量の増加値
+  cleansed?: boolean; // デバフが全て解除されたか
+  selfDamage?: number; // 自傷ダメージ
+  superchatBoost?: {
+    duration: number;
+    multiplier: number;
+  };
+  attackCharge?: {
+    target: 'player' | 'enemy';
+    multiplier: number;
+  };
 }
 
 /**
@@ -517,6 +760,28 @@ function triggerSpecialEffects(params: {
         result.extraDamage = applyRageEffect({ emotion, target, damage }, config);
       } else if (selectedVariant === 'percentage') {
         result.extraDamage = applyRagePercentageEffect(extendedParams, variantDef);
+      } else if (selectedVariant === 'debuff_scaling') {
+        const debuffCount = defender.activeEffects.filter(
+          (effect) =>
+            effect.type === 'debuff' ||
+            effect.type === 'poison' ||
+            effect.type === 'curse' ||
+            effect.type === 'fan_block' ||
+            effect.type === 'damage_amp'
+        ).length;
+        const multiplier = 1 + debuffCount * 0.4;
+        result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
+      } else if (selectedVariant === 'sacrifice') {
+        const { selfDamage } = applyRageSacrificeEffect(variantDef, attacker.maxHp);
+        result.selfDamage = selfDamage;
+      } else if (selectedVariant === 'blood_pact') {
+        const { extraDamage, selfDamage } = applyRageBloodPactEffect(
+          extendedParams,
+          variantDef,
+          attacker.maxHp
+        );
+        result.extraDamage = extraDamage;
+        result.selfDamage = selfDamage;
       }
       break;
 
@@ -540,6 +805,42 @@ function triggerSpecialEffects(params: {
         } else {
           result.enemyEffects.push(poison);
         }
+      } else if (selectedVariant === 'curse') {
+        const curse = applyTerrorCurseEffect({ emotion, target, damage }, variantDef);
+        if (curse.target === 'player') {
+          result.playerEffects.push(curse);
+        } else {
+          result.enemyEffects.push(curse);
+        }
+      } else if (selectedVariant === 'fan_block') {
+        const fanBlock = applyTerrorFanBlockEffect({ emotion, target, damage }, variantDef);
+        if (fanBlock.target === 'player') {
+          result.playerEffects.push(fanBlock);
+        } else {
+          result.enemyEffects.push(fanBlock);
+        }
+      } else if (selectedVariant === 'chaotic_plague') {
+      } else if (selectedVariant === 'damage_amplify') {
+        const damageAmp: SpecialEffect = {
+          type: 'damage_amp',
+          emotion,
+          duration: variantDef.duration ?? 3,
+          magnitude: variantDef.magnitude ?? 20,
+          target: target === 'player' ? 'enemy' : 'player',
+        };
+        if (damageAmp.target === 'player') {
+          result.playerEffects.push(damageAmp);
+        } else {
+          result.enemyEffects.push(damageAmp);
+        }
+      } else if (selectedVariant === 'chaotic_plague') {
+        const effects = generateChaoticPlagueEffects(
+          { emotion, target, damage },
+          variantDef.magnitude ?? 5,
+          config
+        );
+        result.playerEffects.push(...effects.player);
+        result.enemyEffects.push(...effects.enemy);
       }
       break;
 
@@ -548,6 +849,16 @@ function triggerSpecialEffects(params: {
         result.healing = applyGriefEffect({ emotion, target, damage }, config);
       } else if (selectedVariant === 'desperate') {
         result.healing = applyGriefDesperateEffect(extendedParams, variantDef);
+      } else if (selectedVariant === 'cleanse_heal') {
+        result.healing = variantDef.magnitude;
+        result.cleansed = true; // デバフ解除フラグを立てる（アイコン表示しない）
+      } else if (selectedVariant === 'regen') {
+        const regen = applyGriefRegenEffect({ emotion, target, damage }, variantDef);
+        if (regen.target === 'player') {
+          result.playerEffects.push(regen);
+        } else {
+          result.enemyEffects.push(regen);
+        }
       }
       break;
 
@@ -569,6 +880,57 @@ function triggerSpecialEffects(params: {
             count: conversion.convertedCommentIds.length,
           };
         }
+      } else if (selectedVariant === 'comment_boost') {
+        result.commentBoost = applyEcstasyCommentBoostEffect(variantDef);
+      } else if (selectedVariant === 'refresh') {
+        const refresh = applyEcstasyRefreshCommentsEffect(extendedParams);
+        if (refresh) {
+          result.convertedComments = refresh.comments;
+          result.commentRefresh = refresh;
+        }
+      } else if (selectedVariant === 'dual_refresh') {
+        const dualRefresh = applyEcstasyDualRefreshCommentsEffect(extendedParams);
+        if (dualRefresh) {
+          result.convertedComments = dualRefresh.comments;
+          result.commentRefresh = dualRefresh;
+        }
+      } else if (selectedVariant === 'damage_resonance') {
+        const damageMultiplier =
+          (variantDef.metadata?.damageMultiplier as number | undefined) ?? 1.5;
+        const damageAmp: SpecialEffect = {
+          type: 'damage_amp',
+          emotion,
+          duration: variantDef.duration ?? 1,
+          magnitude: variantDef.magnitude,
+          target: target === 'player' ? 'enemy' : 'player',
+        };
+        if (damageAmp.target === 'player') {
+          result.playerEffects.push(damageAmp);
+        } else {
+          result.enemyEffects.push(damageAmp);
+        }
+      } else if (selectedVariant === 'attack_charge') {
+        const attackMultiplier = (variantDef.metadata?.attackMultiplier as number | undefined) ?? 2;
+        result.attackCharge = {
+          target,
+          multiplier: attackMultiplier,
+        };
+        result.playerEffects.push({
+          type: 'buff',
+          emotion,
+          duration: variantDef.duration ?? 2,
+          magnitude: variantDef.magnitude,
+          target,
+        });
+      } else if (selectedVariant === 'superchat_boost') {
+        result.playerEffects.push({
+          type: 'superchat_boost',
+          emotion,
+          duration: variantDef.duration ?? 3,
+          magnitude: variantDef.magnitude,
+          target,
+        });
+        result.superchatBoost = applyEcstasySuperchatBoostEffect(variantDef);
       }
       break;
   }

@@ -62,11 +62,13 @@ export function generateComments(
   params: CommentGenerationParams,
   currentTurn: number
 ): Comment[] {
-  const { count, emotionWeights } = params;
+  const { count, emotionWeights, superchatMultiplier } = params;
   const comments: Comment[] = [];
+  const multiplier = Math.max(0, superchatMultiplier ?? 1);
+  const superchatChance = Math.min(1, SUPERCHAT_PROBABILITY * multiplier);
 
   for (let i = 0; i < count; i++) {
-    const isSuperchat = Math.random() < SUPERCHAT_PROBABILITY;
+    const isSuperchat = Math.random() < superchatChance;
     const emotion = selectRandomEmotion(emotionWeights);
     const text = isSuperchat ? selectSuperchatText() : selectRandomCommentText(emotion);
 
@@ -240,6 +242,27 @@ export function pruneOldComments(
  */
 export function getCommentPoolSize(pool: Comment[]): number {
   return pool.length;
+}
+
+/**
+ * ランダムなコメントテキストを取得
+ */
+export function getRandomCommentTextForEmotion(emotion: EmotionType): string {
+  return selectRandomCommentText(emotion);
+}
+
+/**
+ * ランダムなスパチャテキストを取得
+ */
+export function getRandomSuperchatText(): string {
+  return selectSuperchatText();
+}
+
+/**
+ * スパチャ生成判定
+ */
+export function shouldGenerateSuperchat(): boolean {
+  return Math.random() < SUPERCHAT_PROBABILITY;
 }
 /** スパチャが生成される確率 */
 const SUPERCHAT_PROBABILITY = 0.07;

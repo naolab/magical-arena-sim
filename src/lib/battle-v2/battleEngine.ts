@@ -90,6 +90,13 @@ export function initBattle(params?: BattleParamsV2): BattleState {
       enemy: enemySkillUses,
     },
     pendingSuperchatTurn: false,
+    permanentCommentBoost: 0,
+    superchatBoostTurns: 0,
+    superchatBoostMultiplier: 1,
+    nextAttackMultiplier: {
+      player: 1,
+      enemy: 1,
+    },
   };
 }
 
@@ -127,9 +134,11 @@ export function executePlayerAction(
   // 1. ターン処理を実行
   let updatedState = processTurn(state, playerAction, enemyAction);
 
-  // 2. 新しいコメントを生成して追加
+  // 2. 新しいコメントを生成して追加（永続的なコメントブーストを適用）
+  const commentCount = updatedState.config.commentsPerTurn + (updatedState.permanentCommentBoost ?? 0);
+  const superchatMultiplier = updatedState.superchatBoostMultiplier ?? 1;
   const newComments = generateComments(
-    { count: updatedState.config.commentsPerTurn },
+    { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
   updatedState = {
@@ -157,8 +166,11 @@ export function executeSuperchatTurn(
     isSuperchatTurn: true,
   });
 
+  // 永続的なコメントブーストを適用
+  const commentCount = updatedState.config.commentsPerTurn + (updatedState.permanentCommentBoost ?? 0);
+  const superchatMultiplier = updatedState.superchatBoostMultiplier ?? 1;
   const newComments = generateComments(
-    { count: updatedState.config.commentsPerTurn },
+    { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
   updatedState = {

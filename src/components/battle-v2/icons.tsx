@@ -18,7 +18,7 @@ export function SparkIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SkullIcon(props: SVGProps<SVGSVGElement>) {
+export function AttackDownIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -29,10 +29,18 @@ export function SkullIcon(props: SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M12 2C7.6 2 4 5.6 4 10c0 2.4 1.2 4.5 3 5.9V19c0 .6.4 1 1 1h1v2h6v-2h1c.6 0 1-.4 1-1v-3.1c1.8-1.4 3-3.5 3-5.9 0-4.4-3.6-8-8-8z" />
-      <path d="M9 13h6" />
-      <circle cx="9" cy="10" r="1" />
-      <circle cx="15" cy="10" r="1" />
+      {/* Minus sign to represent reduced damage */}
+      <path d="M6 7h12" />
+
+      {/* Down arrow */}
+      <path d="M12 10v8" />
+      <path d="M9 15l3 3 3-3" />
+
+      {/* Cross mark for damage negation */}
+      <path d="M7 5l4 4" />
+      <path d="M11 5L7 9" />
+      <path d="M17 5l-4 4" />
+      <path d="M13 5l4 4" />
     </svg>
   );
 }
@@ -79,6 +87,94 @@ export function PoisonIcon(props: SVGProps<SVGSVGElement>) {
 
       {/* 水滴の中のハイライト */}
       <ellipse cx="10" cy="8" rx="1.5" ry="2" fill="white" opacity="0.4" />
+    </svg>
+  );
+}
+
+export function CurseIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="0.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* 頭蓋骨の上部 */}
+      <ellipse cx="12" cy="9" rx="6" ry="7" opacity="0.9" />
+
+      {/* 目のくぼみ（左） */}
+      <ellipse cx="9.5" cy="9" rx="1.5" ry="2" fill="black" opacity="1" />
+
+      {/* 目のくぼみ（右） */}
+      <ellipse cx="14.5" cy="9" rx="1.5" ry="2" fill="black" opacity="1" />
+
+      {/* 鼻の穴 */}
+      <path d="M11 12l1-1.5 1 1.5z" fill="black" opacity="0.8" />
+
+      {/* 歯（上） */}
+      <rect x="9" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+      <rect x="11.25" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+      <rect x="13.5" y="15" width="1.5" height="2" fill="black" opacity="0.7" />
+
+      {/* 不吉なオーラ（ぼんやりした円） */}
+      <circle cx="12" cy="10" r="8.5" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
+    </svg>
+  );
+}
+
+export function RegenIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* 水滴ベース */}
+      <path
+        d="M12 2C8.5 6 6.5 9.5 6.5 13c0 4 2.8 7 5.5 7s5.5-3 5.5-7c0-3.5-2-7-5.5-11z"
+        fill="currentColor"
+        fillOpacity="0.18"
+      />
+
+      {/* 内側のハイライト */}
+      <path
+        d="M10 7c-1.2 1.6-2 3.1-2 4.8 0 2.6 1.7 4.7 4 4.7"
+        strokeWidth="1.2"
+        strokeOpacity="0.6"
+      />
+
+      {/* 回復十字 */}
+      <path d="M12 10v4" />
+      <path d="M10.5 12h3" />
+    </svg>
+  );
+}
+
+export function FanBlockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* メガホン */}
+      <path d="M4 10l10-4v12l-10-4z" />
+      <path d="M14 8l4-3" />
+      <path d="M14 16l4 3" />
+
+      {/* 斜線 */}
+      <path d="M5 19L19 5" />
     </svg>
   );
 }

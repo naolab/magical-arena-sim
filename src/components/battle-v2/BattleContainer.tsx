@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap } from '@/lib/battle-v2/types';
+import { BattleState, EmotionType, TurnResult, SpecialEffect, CommentConversionEvent, SkillUsageMap, Comment } from '@/lib/battle-v2/types';
 import { initBattle, executePlayerAction, executeSuperchatTurn, isBattleOver, checkWinner } from '@/lib/battle-v2/battleEngine';
 import { decideEnemyAction } from '@/lib/battle-v2/aiSystem';
-import { getEmotionName } from '@/lib/battle-v2/emotionSystem';
+import { getEmotionName, getEmotionColor } from '@/lib/battle-v2/emotionSystem';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { CommentPool } from './CommentPool';
 import { EmotionActionButtons } from './EmotionActionButtons';
@@ -15,6 +15,7 @@ import { RulesModal } from './RulesModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
+import { HealingEffect } from './HealingEffect';
 import { getVariantDefinition, DEFAULT_VARIANTS } from '@/lib/battle-v2/actionVariants';
 
 const BASE_STAGE_WIDTH = 1600;
@@ -54,7 +55,7 @@ interface BattleMessage {
 
 interface EffectAnimation {
   id: string;
-  type: 'buff' | 'debuff';
+  type: 'buff' | 'debuff' | 'regen';
   target: 'player' | 'enemy';
   timestamp: number;
 }
@@ -116,17 +117,26 @@ function buildTurnMessages(
     onPlayerExtra: (amount: number) => void;
     onPlayerHeal: (amount: number) => void;
     onPlayerPoison?: (amount: number) => void;
+    onPlayerCurse?: (amount: number) => void;
+    onPlayerRegen?: (amount: number) => void;
+    onPlayerSelfDamage?: (amount: number) => void;
     onEnemyBase: (amount: number) => void;
     onEnemyExtra: (amount: number) => void;
     onEnemyHeal: (amount: number) => void;
     onEnemyPoison?: (amount: number) => void;
+    onEnemyCurse?: (amount: number) => void;
+    onEnemyRegen?: (amount: number) => void;
+    onEnemySelfDamage?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
+    onCommentRefresh?: (nextComments: Comment[]) => void;
   },
   options: {
     playerSkillName: string;
     enemySkillName: string;
+    playerEmotion: EmotionType;
+    enemyEmotion: EmotionType;
     isSuperchatTurn?: boolean;
   }
 ): BattleMessage[] {
@@ -134,7 +144,9 @@ function buildTurnMessages(
 
   const playerEmotionName = getEmotionName(result.playerAction);
   const enemyEmotionName = getEmotionName(result.enemyAction);
-  const { playerSkillName, enemySkillName, isSuperchatTurn = false } = options;
+  const { playerSkillName, enemySkillName, playerEmotion, enemyEmotion, isSuperchatTurn = false } = options;
+  const playerColor = getEmotionColor(playerEmotion);
+  const enemyColor = getEmotionColor(enemyEmotion);
   const { damage, secondaryEffects, specialEffects } = result;
   const baseDamageToEnemy = Math.max(0, damage.toEnemy - damage.extraToEnemy);
   const baseDamageToPlayer = Math.max(0, damage.toPlayer - damage.extraToPlayer);
@@ -147,7 +159,7 @@ function buildTurnMessages(
   const playerDamageText = formatDamageText(baseDamageToEnemy, 'enemy');
   const playerOpening =
     playerSkillName.length > 0
-      ? `あなたは ${playerSkillName} を発動！`
+      ? `あなたは <span style="color: ${playerColor}; font-weight: bold;">${playerSkillName}</span> を発動！`
       : `あなたは ${playerEmotionName} を繰り出した！`;
   const playerMessageText = playerDamageText
     ? `${playerOpening} ${playerDamageText}`
@@ -181,10 +193,24 @@ function buildTurnMessages(
     );
   }
 
+  if (result.cleansed) {
+    messages.push(createMessage('system', 'デバフが全て解除された！'));
+  }
+
+  if (secondaryEffects.player.selfDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `代償で ${secondaryEffects.player.selfDamage} のダメージを受けた！`,
+        () => handlers.onPlayerSelfDamage?.(secondaryEffects.player.selfDamage)
+      )
+    );
+  }
+
   const enemyDamageText = formatDamageText(baseDamageToPlayer, 'player');
   const enemyOpening =
     enemySkillName.length > 0
-      ? `敵は ${enemySkillName} を発動！`
+      ? `敵は <span style="color: ${enemyColor}; font-weight: bold;">${enemySkillName}</span> を発動！`
       : `敵は ${enemyEmotionName} を繰り出した！`;
   const enemyMessageText = enemyDamageText
     ? `${enemyOpening} ${enemyDamageText}`
@@ -241,6 +267,48 @@ function buildTurnMessages(
     );
   }
 
+  // 呪いダメージのメッセージ
+  if (secondaryEffects.player.curseDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `あなたは呪いで ${secondaryEffects.player.curseDamage} のダメージを受けた！`,
+        () => handlers.onPlayerCurse?.(secondaryEffects.player.curseDamage)
+      )
+    );
+  }
+
+  if (!isSuperchatTurn && secondaryEffects.enemy.curseDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵は呪いで ${secondaryEffects.enemy.curseDamage} のダメージを受けた！`,
+        () => handlers.onEnemyCurse?.(secondaryEffects.enemy.curseDamage)
+      )
+    );
+  }
+
+  // リジェネ回復のメッセージ
+  if (secondaryEffects.player.regenHealing > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `あなたはリジェネで ${secondaryEffects.player.regenHealing} 回復した！`,
+        () => handlers.onPlayerRegen?.(secondaryEffects.player.regenHealing)
+      )
+    );
+  }
+
+  if (!isSuperchatTurn && secondaryEffects.enemy.regenHealing > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵はリジェネで ${secondaryEffects.enemy.regenHealing} 回復した！`,
+        () => handlers.onEnemyRegen?.(secondaryEffects.enemy.regenHealing)
+      )
+    );
+  }
+
   if (result.superchatAwarded) {
     messages.push(createMessage('system', 'スパチャの力で追撃ターンを獲得した！'));
   }
@@ -262,9 +330,46 @@ function buildTurnMessages(
   messages.push(
     ...buildEffectMessages(specialEffects.player, 'player', handlers.onPlayerEffect)
   );
+
+  if (result.commentBoostApplied && result.commentBoostApplied > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `コメント追加量が+${result.commentBoostApplied}増加した！（現在+${result.currentCommentBoost}）`
+      )
+    );
+  }
+
+  if (result.commentRefresh && result.commentRefresh.count > 0) {
+    const limited =
+      result.commentRefresh &&
+      'limitedEmotions' in result.commentRefresh &&
+      result.commentRefresh.limitedEmotions &&
+      result.commentRefresh.limitedEmotions.length > 0
+        ? `（${result.commentRefresh.limitedEmotions.map((emotion) => getEmotionName(emotion)).join(' / ')}のみ）`
+        : '';
+    messages.push(
+      createMessage(
+        'system',
+        `コメントがシャッフルされ、${result.commentRefresh.count}件が再配置された！${limited}`,
+        () => handlers.onCommentRefresh?.(result.commentRefresh!.comments)
+      )
+    );
+  }
+
   messages.push(
     ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
   );
+
+  if (secondaryEffects.enemy.selfDamage > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵は代償で ${secondaryEffects.enemy.selfDamage} のダメージを受けた！`,
+        () => handlers.onEnemySelfDamage?.(secondaryEffects.enemy.selfDamage)
+      )
+    );
+  }
 
   return messages;
 }
@@ -787,9 +892,89 @@ export function BattleContainer() {
         });
       };
 
+      const applyPlayerCurseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemyCurseDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerSelfDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.player.hp - amount);
+          accurateHpRef.current.player = nextHp;
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+      };
+
+      const applyEnemySelfDamage = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.max(0, prev.enemy.hp - amount);
+          accurateHpRef.current.enemy = nextHp;
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+      };
+
+      const applyPlayerRegenHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+        triggerPlayerBounce();
+      };
+
+      const applyEnemyRegenHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+        triggerEnemyBounce();
+      };
+
       const applyPlayerEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
-        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const effectType = resolveEffectAnimationType(effect);
         const newAnimation: EffectAnimation = {
           id: `player-${effectType}-${Date.now()}`,
           type: effectType,
@@ -812,7 +997,7 @@ export function BattleContainer() {
 
       const applyEnemyEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
-        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const effectType = resolveEffectAnimationType(effect);
         const newAnimation: EffectAnimation = {
           id: `enemy-${effectType}-${Date.now()}`,
           type: effectType,
@@ -849,6 +1034,17 @@ export function BattleContainer() {
         });
       };
 
+      const applyCommentRefresh = (nextComments: Comment[]) => {
+        if (!nextComments || nextComments.length === 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            comments: nextComments.map((comment) => ({ ...comment })),
+          };
+        });
+      };
+
       const playerVariantId = battleState.config.selectedActionVariants[emotion];
       const playerSkillName = getVariantDefinition(emotion, playerVariantId)?.nameJa ?? getEmotionName(emotion);
       const actualEnemyEmotion = enemyEmotion ?? turnResult.enemyAction;
@@ -863,17 +1059,26 @@ export function BattleContainer() {
           onPlayerExtra: applyPlayerExtraDamage,
           onPlayerHeal: applyPlayerHealing,
           onPlayerPoison: applyPlayerPoisonDamage,
+          onPlayerCurse: applyPlayerCurseDamage,
+          onPlayerRegen: applyPlayerRegenHealing,
+          onPlayerSelfDamage: applyPlayerSelfDamage,
           onEnemyBase: applyEnemyBaseDamage,
           onEnemyExtra: applyEnemyExtraDamage,
           onEnemyHeal: applyEnemyHealing,
           onEnemyPoison: applyEnemyPoisonDamage,
+          onEnemyCurse: applyEnemyCurseDamage,
+          onEnemyRegen: applyEnemyRegenHealing,
+          onEnemySelfDamage: applyEnemySelfDamage,
           onPlayerEffect: applyPlayerEffect,
           onEnemyEffect: applyEnemyEffect,
           onCommentConversion: applyCommentConversion,
+          onCommentRefresh: applyCommentRefresh,
         },
         {
           playerSkillName,
           enemySkillName,
+          playerEmotion: emotion,
+          enemyEmotion: actualEnemyEmotion,
           isSuperchatTurn: isSuperchatMode,
         }
       );
@@ -1067,11 +1272,15 @@ export function BattleContainer() {
                         height: '400px',
                       }}
                     >
-                      <BuffDebuffEffect
-                        type={anim.type}
-                        target={anim.target}
-                        onComplete={() => handleEffectComplete(anim.id)}
-                      />
+                      {anim.type === 'regen' ? (
+                        <HealingEffect target={anim.target} onComplete={() => handleEffectComplete(anim.id)} />
+                      ) : (
+                        <BuffDebuffEffect
+                          type={anim.type}
+                          target={anim.target}
+                          onComplete={() => handleEffectComplete(anim.id)}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -1262,3 +1471,8 @@ export function BattleContainer() {
   );
 
 }
+const resolveEffectAnimationType = (effect: SpecialEffect): EffectAnimation['type'] => {
+  if (effect.type === 'buff') return 'buff';
+  if (effect.type === 'regen') return 'regen';
+  return 'debuff';
+};

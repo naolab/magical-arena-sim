@@ -12,6 +12,7 @@
 import { SpecialEffect, SpecialEffectTriggerParams, EmotionType, Comment } from './types';
 import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 import { getVariantDefinition } from './actionVariants';
+import { getRandomCommentTextForEmotion, getRandomSuperchatText, shouldGenerateSuperchat } from './commentSystem';
 
 // ========================================
 // Extended Types for Variant Effects
@@ -30,6 +31,13 @@ export interface CommentConversionResult {
   comments: Comment[];
   convertedCommentIds: string[];
   targetEmotion: EmotionType;
+}
+
+/** コメントリフレッシュ結果 */
+export interface CommentRefreshResult {
+  comments: Comment[];
+  refreshedCommentIds: string[];
+  limitedEmotions?: EmotionType[];
 }
 
 // ========================================
@@ -148,6 +156,55 @@ export function applyRagePercentageEffect(
 }
 
 /**
+ * Rage Sacrifice: 自傷ダメージと高倍率の追加ダメージ
+ * @param params 拡張トリガーパラメータ
+ * @param variant バリアント定義
+ * @param attackerMaxHp 攻撃者の最大HP
+ * @returns 追加ダメージと自傷ダメージ
+ */
+export function applyRageSacrificeEffect(
+  variant: { metadata?: Record<string, unknown> },
+  attackerMaxHp: number
+): { selfDamage: number } {
+  const hpCostPct =
+    typeof variant.metadata?.hpCostPercentage === 'number'
+      ? (variant.metadata.hpCostPercentage as number)
+      : 5;
+  const selfDamage = Math.max(1, Math.round(attackerMaxHp * (hpCostPct / 100)));
+
+  return {
+    selfDamage,
+  };
+}
+
+/**
+ * Rage Blood Pact: 自身HP15%消費で敵最大HPの指定割合ダメージ
+ */
+export function applyRageBloodPactEffect(
+  params: ExtendedEffectTriggerParams,
+  variant: { metadata?: Record<string, unknown> },
+  attackerMaxHp: number
+): { extraDamage: number; selfDamage: number } {
+  const { enemyMaxHp } = params;
+  const hpCostPct =
+    typeof variant.metadata?.hpCostPercentage === 'number'
+      ? (variant.metadata.hpCostPercentage as number)
+      : 15;
+  const targetPct =
+    typeof variant.metadata?.targetHpDamagePercentage === 'number'
+      ? (variant.metadata.targetHpDamagePercentage as number)
+      : 25;
+
+  const extraDamage = enemyMaxHp ? Math.max(0, Math.round(enemyMaxHp * (targetPct / 100))) : 0;
+  const selfDamage = Math.max(1, Math.round(attackerMaxHp * (hpCostPct / 100)));
+
+  return {
+    extraDamage,
+    selfDamage,
+  };
+}
+
+/**
  * Terror Poison: 毒効果（持続ダメージ）
  * @param params トリガーパラメータ
  * @param variant バリアント定義
@@ -165,6 +222,79 @@ export function applyTerrorPoisonEffect(
     duration: variant.duration || 3,
     magnitude: variant.magnitude, // 毎ターンのダメージ量
     target: target === 'player' ? 'enemy' : 'player', // 相手に付与
+  };
+}
+
+/**
+ * Terror - 呪い効果: 割合持続ダメージ
+ * @param params トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns 呪い効果
+ */
+export function applyTerrorCurseEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { magnitude: number; duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'curse',
+    emotion,
+    duration: variant.duration || 3,
+    magnitude: variant.magnitude, // 最大HPの%
+    target: target === 'player' ? 'enemy' : 'player', // 相手に付与
+  };
+}
+
+export function generateChaoticPlagueEffects(
+  params: SpecialEffectTriggerParams,
+  count: number,
+  config: BattleParamsV2
+): { player: SpecialEffect[]; enemy: SpecialEffect[] } {
+  const effects: { player: SpecialEffect[]; enemy: SpecialEffect[] } = { player: [], enemy: [] };
+  const debuffGenerators = [
+    () =>
+      applyTerrorEffect(params, config), // attack debuff
+    () =>
+      applyTerrorPoisonEffect(params, {
+        magnitude: config.terrorPoisonMagnitude ?? 100,
+        duration: config.terrorPoisonDuration ?? 3,
+      }),
+    () =>
+      applyTerrorCurseEffect(params, {
+        magnitude: config.terrorCurseMagnitude ?? 5,
+        duration: config.terrorCurseDuration ?? 3,
+      }),
+  ];
+
+  for (let i = 0; i < count; i++) {
+    const generator = debuffGenerators[Math.floor(Math.random() * debuffGenerators.length)];
+    const target: 'player' | 'enemy' = Math.random() < 0.5 ? 'player' : 'enemy';
+    const effect = generator();
+    effects[target].push({
+      ...effect,
+      target,
+    });
+  }
+
+  return effects;
+}
+
+/**
+ * Terror Fan Block: ファン増加を阻害するデバフ
+ */
+export function applyTerrorFanBlockEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'fan_block',
+    emotion,
+    duration: variant.duration || 2,
+    magnitude: 0,
+    target: target === 'player' ? 'enemy' : 'player',
   };
 }
 
@@ -223,6 +353,95 @@ export function applyEcstasyConvertEffect(
     comments: convertedComments,
     convertedCommentIds: convertedIndices.map((index) => comments[index].id),
     targetEmotion,
+  };
+}
+
+/**
+ * Ecstasy - コメントブースト効果: 永続的にコメント追加量を増やす
+ * @param variant バリアント定義
+ * @returns コメント追加量の増加値
+ */
+export function applyEcstasyCommentBoostEffect(
+  variant: { magnitude: number }
+): number {
+  return variant.magnitude; // 追加量（例: +1）
+}
+
+/**
+ * Ecstasy Refresh: コメント全体をランダムに再配置
+ */
+export function applyEcstasyRefreshCommentsEffect(
+  params: ExtendedEffectTriggerParams
+): CommentRefreshResult | null {
+  const { comments } = params;
+  if (!comments || comments.length === 0) return null;
+
+  const emotions: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
+
+  const refreshed = comments.map((comment) => {
+    if (shouldGenerateSuperchat()) {
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      return {
+        ...comment,
+        emotion: randomEmotion,
+        text: getRandomSuperchatText(),
+        isSuperchat: true,
+      };
+    }
+
+    const newEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+    return {
+      ...comment,
+      emotion: newEmotion,
+      text: getRandomCommentTextForEmotion(newEmotion),
+      isSuperchat: false,
+    };
+  });
+
+  return {
+    comments: refreshed,
+    refreshedCommentIds: refreshed.map((comment) => comment.id),
+  };
+}
+
+/**
+ * Ecstasy Superchat Boost: スパチャ確率を上げるバフ
+ */
+export function applyEcstasySuperchatBoostEffect(
+  variant: { duration?: number; magnitude: number }
+): { duration: number; multiplier: number } {
+  const duration = variant.duration ?? 3;
+  const multiplier = variant.magnitude || 2;
+  return { duration, multiplier };
+}
+
+/**
+ * Ecstasy Dual Refresh: 2属性のみでランダム配置（スパチャなし）
+ */
+export function applyEcstasyDualRefreshCommentsEffect(
+  params: ExtendedEffectTriggerParams
+): CommentRefreshResult | null {
+  const { comments } = params;
+  if (!comments || comments.length === 0) return null;
+
+  const emotions: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
+  const shuffled = [...emotions].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, 2);
+
+  const refreshed = comments.map((comment) => {
+    const newEmotion = selected[Math.floor(Math.random() * selected.length)];
+    return {
+      ...comment,
+      emotion: newEmotion,
+      text: getRandomCommentTextForEmotion(newEmotion),
+      isSuperchat: false,
+    };
+  });
+
+  return {
+    comments: refreshed,
+    refreshedCommentIds: refreshed.map((comment) => comment.id),
+    limitedEmotions: selected,
   };
 }
 
@@ -291,8 +510,15 @@ export function checkActiveBuffsDebuffs(effects: SpecialEffect[]): {
   hasDebuff: boolean;
 } {
   return {
-    hasBuff: effects.some((e) => e.type === 'buff'),
-    hasDebuff: effects.some((e) => e.type === 'debuff'),
+    hasBuff: effects.some((e) => e.type === 'buff' || e.type === 'superchat_boost'),
+    hasDebuff: effects.some(
+      (e) =>
+        e.type === 'debuff' ||
+        e.type === 'fan_block' ||
+        e.type === 'poison' ||
+        e.type === 'curse' ||
+        e.type === 'damage_amp'
+    ),
   };
 }
 
@@ -313,11 +539,21 @@ export function getEffectDescription(effect: SpecialEffect): string {
 
   switch (effect.type) {
     case 'buff':
-      return `${emotionName}: 攻撃力+${effect.magnitude}% (残り${effect.duration}ターン)`;
+      return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'debuff':
       return `${emotionName}: 攻撃力-${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'poison':
       return `${emotionName}: 毒 (${effect.magnitude}ダメージ/ターン, 残り${effect.duration}ターン)`;
+    case 'curse':
+      return `${emotionName}: 呪い (最大HPの${effect.magnitude}%ダメージ/ターン, 残り${effect.duration}ターン)`;
+    case 'regen':
+      return `${emotionName}: リジェネ (${effect.magnitude}回復/ターン, 残り${effect.duration}ターン)`;
+    case 'fan_block':
+      return `${emotionName}: ファン増加阻害 (残り${effect.duration}ターン)`;
+    case 'superchat_boost':
+      return `${emotionName}: スパチャ率上昇 (残り${effect.duration}ターン)`;
+    case 'damage_amp':
+      return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':
@@ -335,4 +571,47 @@ export function getEffectDescription(effect: SpecialEffect): string {
 export function calculatePoisonDamage(effects: SpecialEffect[]): number {
   const poisonEffects = effects.filter((e) => e.type === 'poison');
   return poisonEffects.reduce((total, effect) => total + effect.magnitude, 0);
+}
+
+/**
+ * 呪い効果によるダメージを計算・適用（割合ダメージ）
+ * @param effects 有効な効果リスト
+ * @param maxHp 対象の最大HP
+ * @returns 呪いダメージの合計
+ */
+export function calculateCurseDamage(effects: SpecialEffect[], maxHp: number): number {
+  const curseEffects = effects.filter((e) => e.type === 'curse');
+  const totalPercentage = curseEffects.reduce((total, effect) => total + effect.magnitude, 0);
+  return Math.round(maxHp * (totalPercentage / 100));
+}
+
+/**
+ * Grief - リジェネ効果: 持続回復効果を付与
+ * @param params トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns リジェネ効果
+ */
+export function applyGriefRegenEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { magnitude: number; duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'regen',
+    emotion,
+    duration: variant.duration || 3,
+    magnitude: variant.magnitude, // 毎ターンの回復量
+    target, // 自分に付与
+  };
+}
+
+/**
+ * リジェネ効果による回復を計算
+ * @param effects 有効な効果リスト
+ * @returns リジェネ回復の合計
+ */
+export function calculateRegenHealing(effects: SpecialEffect[]): number {
+  const regenEffects = effects.filter((e) => e.type === 'regen');
+  return regenEffects.reduce((total, effect) => total + effect.magnitude, 0);
 }

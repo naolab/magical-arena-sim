@@ -64,6 +64,44 @@ export const RAGE_VARIANTS: Record<RageVariant, ActionVariantDefinition> = {
       randomRange: [0.5, 2.0],
     },
   },
+  debuff_scaling: {
+    id: 'debuff_scaling',
+    name: 'ヘルファイア・スパイク',
+    nameJa: 'ヘルファイア・スパイク',
+    description: '敵のデバフ/毒の数に応じて追撃ダメージ（1個ごとに+40%）',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: true,
+    maxUses: 20,
+  },
+  sacrifice: {
+    id: 'sacrifice',
+    name: 'ブラッドサクリファイス',
+    nameJa: 'ブラッドサクリファイス',
+    description: '自身のHPを5%削り、攻撃を200%までブーストする',
+    effectType: 'extra_damage',
+    magnitude: 200,
+    hasAttack: true,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 2.0,
+      hpCostPercentage: 5,
+    },
+  },
+  blood_pact: {
+    id: 'blood_pact',
+    name: 'カーストブラッド',
+    nameJa: 'カーストブラッド',
+    description: '自身のHPを15%犠牲にし、敵に最大HPの24%ダメージを叩き込む',
+    effectType: 'extra_damage',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      hpCostPercentage: 15,
+      targetHpDamagePercentage: 24,
+    },
+  },
 };
 
 // ========================================
@@ -93,6 +131,52 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  curse: {
+    id: 'curse',
+    name: 'カースドシャドウ',
+    nameJa: 'カースドシャドウ',
+    description: '呪いで相手を蝕む（毎ターン最大HPの5%ダメージ、3ターン）',
+    effectType: 'curse',
+    magnitude: 5, // 最大HPの5%
+    duration: 3, // 3ターン持続
+    hasAttack: false,
+    maxUses: 20,
+  },
+  fan_block: {
+    id: 'fan_block',
+    name: 'サイレントチェイン',
+    nameJa: 'サイレントチェイン',
+    description: '2ターンの間、相手のファンが一切増えなくなる呪縛を与える',
+    effectType: 'fan_block',
+    magnitude: 0,
+    duration: 2,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  chaotic_plague: {
+    id: 'chaotic_plague',
+    name: 'カオティックプレイグ',
+    nameJa: 'カオティックプレイグ',
+    description: '敵味方にランダムで5つのデバフ（毒/呪い/攻撃力低下）をばら撒く',
+    effectType: 'debuff',
+    magnitude: 5,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  damage_amplify: {
+    id: 'damage_amplify',
+    name: 'アゴニープロミス',
+    nameJa: 'アゴニープロミス',
+    description: '敵が受ける全ダメージを3ターンの間+20%にする（重ね掛け不可）',
+    effectType: 'debuff',
+    magnitude: 20,
+    duration: 3,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 1.2,
+    },
+  },
 };
 
 // ========================================
@@ -118,6 +202,27 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     effectType: 'drain',
     magnitude: 15, // 最大HPの15%
     hasAttack: false, // 回復のみ
+    maxUses: 20,
+  },
+  cleanse_heal: {
+    id: 'cleanse_heal',
+    name: 'ピュアリファイン',
+    nameJa: 'ピュアリファイン',
+    description: '150回復し、自分のデバフをすべて解除する',
+    effectType: 'drain',
+    magnitude: 150,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  regen: {
+    id: 'regen',
+    name: 'リジェネレイト',
+    nameJa: 'リジェネレイト',
+    description: '3ターン継続で、毎ターン90回復する効果を自分に付与',
+    effectType: 'regen',
+    magnitude: 90, // 毎ターン90回復
+    duration: 3, // 3ターン持続
+    hasAttack: false,
     maxUses: 20,
   },
 };
@@ -147,6 +252,75 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     magnitude: 3, // 変換数
     hasAttack: false, // 変換のみ
     maxUses: 20,
+  },
+  comment_boost: {
+    id: 'comment_boost',
+    name: 'コメントブースト',
+    nameJa: 'コメントブースト',
+    description: '毎ターンのコメント追加量を永続的に+1（5回まで使用可能）',
+    effectType: 'buff',
+    magnitude: 1, // コメント追加量+1
+    hasAttack: false, // 効果のみ
+    maxUses: 5,
+  },
+  refresh: {
+    id: 'refresh',
+    name: 'コメントリライブ',
+    nameJa: 'コメントリライブ',
+    description: '現在のコメントを全てリフレッシュし、ランダムな感情（スパチャ含む）に変換する',
+    effectType: 'buff',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  dual_refresh: {
+    id: 'dual_refresh',
+    name: 'デュアルシャッフル',
+    nameJa: 'デュアルシャッフル',
+    description: '現在のコメントをすべてランダムな2属性に付け替える（スパチャは含めない）',
+    effectType: 'buff',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  superchat_boost: {
+    id: 'superchat_boost',
+    name: 'ミラージュスパーク',
+    nameJa: 'ミラージュスパーク',
+    description: '3ターンの間、スパチャ出現率が2倍になる祝祭の波を呼び込む（重ね掛け不可）',
+    effectType: 'buff',
+    magnitude: 2,
+    duration: 3,
+    hasAttack: false,
+    maxUses: 20,
+  },
+  attack_charge: {
+    id: 'attack_charge',
+    name: 'ハイテンポチャージ',
+    nameJa: 'ハイテンポチャージ',
+    description: '次のターンの攻撃力を+80%にする（重ね掛け不可）',
+    effectType: 'buff',
+    magnitude: 80,
+    duration: 1,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      attackMultiplier: 1.8,
+    },
+  },
+  damage_resonance: {
+    id: 'damage_resonance',
+    name: 'レゾナンスブレイク',
+    nameJa: 'レゾナンスブレイク',
+    description: '次のターンの与ダメージを+50%にする（継続ダメージ含む, 重ね掛け不可）',
+    effectType: 'buff',
+    magnitude: 50,
+    duration: 1,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 1.5,
+    },
   },
 };
 

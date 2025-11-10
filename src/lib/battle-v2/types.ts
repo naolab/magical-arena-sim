@@ -20,16 +20,37 @@ export type BattleResult = 'win' | 'draw' | 'lose';
 // ========================================
 
 /** Rageのバリアント */
-export type RageVariant = 'explosive' | 'percentage' | 'berserk_lowhp' | 'chaos_strike';
+export type RageVariant =
+  | 'explosive'
+  | 'percentage'
+  | 'berserk_lowhp'
+  | 'chaos_strike'
+  | 'debuff_scaling'
+  | 'sacrifice'
+  | 'blood_pact';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken' | 'poison';
+export type TerrorVariant =
+  | 'weaken'
+  | 'poison'
+  | 'curse'
+  | 'fan_block'
+  | 'chaotic_plague'
+  | 'damage_amplify';
 
 /** Griefのバリアント */
-export type GriefVariant = 'drain' | 'desperate';
+export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
 
 /** Ecstasyのバリアント */
-export type EcstasyVariant = 'inspire' | 'convert';
+export type EcstasyVariant =
+  | 'inspire'
+  | 'convert'
+  | 'comment_boost'
+  | 'refresh'
+  | 'dual_refresh'
+  | 'superchat_boost'
+  | 'attack_charge'
+  | 'damage_resonance';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -80,6 +101,7 @@ export interface Comment {
 export interface CommentGenerationParams {
   count: number; // 生成数
   emotionWeights?: Record<EmotionType, number>; // 感情の重み（省略時は均等）
+  superchatMultiplier?: number; // スパチャ確率の倍率
 }
 
 /** コメント変換イベント */
@@ -100,7 +122,13 @@ export type SpecialEffectType =
   | 'debuff'        // Terror: デバフ（攻撃力低下）
   | 'drain'         // Grief: HP吸収
   | 'buff'          // Ecstasy: バフ（攻撃力上昇）
-  | 'poison';       // Terror: 毒（持続ダメージ）
+  | 'poison'        // Terror: 毒（持続ダメージ）
+  | 'curse'         // Terror: 呪い（割合持続ダメージ）
+  | 'cleanse'       // Grief: デバフ解除
+  | 'regen'         // Grief: リジェネ（持続回復）
+  | 'fan_block'     // Terror: ファン増加阻害
+  | 'superchat_boost' // Ecstasy: スパチャ率上昇
+  | 'damage_amp';   // 与ダメ倍率アップ（対象は被ダメ増加）
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -171,11 +199,17 @@ export interface TurnResult {
       extraDamage: number;
       healing: number;
       poisonDamage: number; // 毒ダメージ
+      curseDamage: number; // 呪いダメージ
+      regenHealing: number; // リジェネ回復
+      selfDamage: number; // 自傷ダメージ
     };
     enemy: {
       extraDamage: number;
       healing: number;
       poisonDamage: number; // 毒ダメージ
+      curseDamage: number; // 呪いダメージ
+      regenHealing: number; // リジェネ回復
+      selfDamage: number; // 自傷ダメージ
     };
   };
   fanChange: {
@@ -187,7 +221,15 @@ export interface TurnResult {
   audienceComposition: AudienceComposition; // ターン終了時の観客構成
   message: string; // ターンの説明メッセージ
   commentConversions?: CommentConversionEvent[]; // コメント変換イベント
+  commentRefresh?: {
+    count: number;
+    comments: Comment[];
+    limitedEmotions?: EmotionType[];
+  }; // コメントリフレッシュイベント
   superchatAwarded?: boolean; // スパチャ追撃獲得
+  commentBoostApplied?: number; // このターンで増加したコメントブースト量
+  currentCommentBoost?: number; // 現在の累積コメントブースト量
+  cleansed?: boolean; // プレイヤーのデバフが全て解除されたか
 }
 
 // ========================================
@@ -206,10 +248,17 @@ export interface BattleState {
   winner: 'player' | 'enemy' | 'draw' | null; // 勝者
   config: BattleParamsV2; // バトル設定パラメータ
   pendingSuperchatTurn: boolean; // スパチャ追撃待機
+  superchatBoostTurns?: number; // スパチャ確率上昇ターン残数
+  superchatBoostMultiplier?: number; // スパチャ確率の倍率
+  nextAttackMultiplier?: {
+    player: number;
+    enemy: number;
+  }; // 次ターンの攻撃力倍率
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;
   };
+  permanentCommentBoost: number; // 永続的なコメント追加量補正（+1, +2など）
 }
 
 // ========================================
