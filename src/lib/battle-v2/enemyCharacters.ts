@@ -5,7 +5,7 @@
 
 import type { ActionVariant } from './types';
 
-export type AIStrategyType = 'normal' | 'adaptive';
+export type AIStrategyType = 'normal' | 'adaptive' | 'mirror';
 
 export interface EnemyCharacter {
   id: string;
@@ -67,6 +67,26 @@ export const ENEMY_CHARACTERS: Record<string, EnemyCharacter> = {
       'えっと…これで合ってる？みんな喜んでくれるかな？',
       'わあ！いっぱいコメント来てる！嬉しいな！',
       'みんなのために、精一杯頑張るね！',
+    ],
+  },
+  clio: {
+    id: 'clio',
+    name: 'クリオ',
+    description: '相手の動きを映す鏡の魔法少女',
+    imagePath: '/images/enemies/clio.png',
+    actionVariants: {
+      rage: 'explosive',
+      terror: 'weaken',
+      grief: 'drain',
+      ecstasy: 'inspire',
+    },
+    aiStrategy: 'mirror',
+    dialogues: [
+      '……あなたの動き、見えてる',
+      '別に…真似してるわけじゃないから',
+      'その手、次はどう動くの……',
+      '……同じことするの、嫌いじゃない',
+      'あなたのこと…少しわかってきた、かも',
     ],
   },
 };

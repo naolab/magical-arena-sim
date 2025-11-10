@@ -33,6 +33,9 @@ export function decideEnemyAction(
   if (enemyCharacter.aiStrategy === 'adaptive') {
     return decideAdaptiveAI(state);
   }
+  if (enemyCharacter.aiStrategy === 'mirror') {
+    return decideMirrorAI(state);
+  }
 
   // 通常の難易度ベースのAI
   switch (difficulty) {
@@ -80,6 +83,39 @@ function decideAdaptiveAI(state: BattleState): EmotionType {
   }
 
   // コメントがない場合や使用可能な技がない場合は、利用可能な中からランダム
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+// ========================================
+// Mirror AI (Copy Previous Player Action)
+// ========================================
+
+/**
+ * ミラーAI: 前のターンにプレイヤーが使用した属性を使用
+ * @param state バトル状態
+ * @returns 選択されたアクション
+ */
+function decideMirrorAI(state: BattleState): EmotionType {
+  const available = getEnemyAvailableEmotions(state);
+  if (available.length === 0) {
+    return 'rage';
+  }
+
+  // 初ターン（履歴がない）場合はランダム
+  if (state.turnHistory.length === 0) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // 前のターンのプレイヤーアクションを取得
+  const lastTurn = state.turnHistory[state.turnHistory.length - 1];
+  const playerLastAction = lastTurn.playerAction;
+
+  // プレイヤーの前のアクションが使用可能かチェック
+  if (available.includes(playerLastAction)) {
+    return playerLastAction;
+  }
+
+  // 使用できない場合は利用可能な中からランダム
   return available[Math.floor(Math.random() * available.length)];
 }
 
