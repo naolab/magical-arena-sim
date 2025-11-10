@@ -124,3 +124,35 @@ export function CurseIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function RegenIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* 水滴ベース */}
+      <path
+        d="M12 2C8.5 6 6.5 9.5 6.5 13c0 4 2.8 7 5.5 7s5.5-3 5.5-7c0-3.5-2-7-5.5-11z"
+        fill="currentColor"
+        fillOpacity="0.18"
+      />
+
+      {/* 内側のハイライト */}
+      <path
+        d="M10 7c-1.2 1.6-2 3.1-2 4.8 0 2.6 1.7 4.7 4 4.7"
+        strokeWidth="1.2"
+        strokeOpacity="0.6"
+      />
+
+      {/* 回復十字 */}
+      <path d="M12 10v4" />
+      <path d="M10.5 12h3" />
+    </svg>
+  );
+}

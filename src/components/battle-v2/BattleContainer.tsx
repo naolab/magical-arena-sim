@@ -15,6 +15,7 @@ import { RulesModal } from './RulesModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
+import { HealingEffect } from './HealingEffect';
 import { getVariantDefinition, DEFAULT_VARIANTS } from '@/lib/battle-v2/actionVariants';
 
 const BASE_STAGE_WIDTH = 1600;
@@ -54,7 +55,7 @@ interface BattleMessage {
 
 interface EffectAnimation {
   id: string;
-  type: 'buff' | 'debuff';
+  type: 'buff' | 'debuff' | 'regen';
   target: 'player' | 'enemy';
   timestamp: number;
 }
@@ -117,11 +118,13 @@ function buildTurnMessages(
     onPlayerHeal: (amount: number) => void;
     onPlayerPoison?: (amount: number) => void;
     onPlayerCurse?: (amount: number) => void;
+    onPlayerRegen?: (amount: number) => void;
     onEnemyBase: (amount: number) => void;
     onEnemyExtra: (amount: number) => void;
     onEnemyHeal: (amount: number) => void;
     onEnemyPoison?: (amount: number) => void;
     onEnemyCurse?: (amount: number) => void;
+    onEnemyRegen?: (amount: number) => void;
     onPlayerEffect: (effect: SpecialEffect) => void;
     onEnemyEffect: (effect: SpecialEffect) => void;
     onCommentConversion?: (conversion: CommentConversionEvent) => void;
@@ -268,6 +271,27 @@ function buildTurnMessages(
         'system',
         `敵は呪いで ${secondaryEffects.enemy.curseDamage} のダメージを受けた！`,
         () => handlers.onEnemyCurse?.(secondaryEffects.enemy.curseDamage)
+      )
+    );
+  }
+
+  // リジェネ回復のメッセージ
+  if (secondaryEffects.player.regenHealing > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `あなたはリジェネで ${secondaryEffects.player.regenHealing} 回復した！`,
+        () => handlers.onPlayerRegen?.(secondaryEffects.player.regenHealing)
+      )
+    );
+  }
+
+  if (!isSuperchatTurn && secondaryEffects.enemy.regenHealing > 0) {
+    messages.push(
+      createMessage(
+        'system',
+        `敵はリジェネで ${secondaryEffects.enemy.regenHealing} 回復した！`,
+        () => handlers.onEnemyRegen?.(secondaryEffects.enemy.regenHealing)
       )
     );
   }
@@ -854,9 +878,37 @@ export function BattleContainer() {
         });
       };
 
+      const applyPlayerRegenHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.player.maxHp, prev.player.hp + amount);
+          accurateHpRef.current.player = nextHp;  // refも更新
+          return {
+            ...prev,
+            player: { ...prev.player, hp: nextHp },
+          };
+        });
+        triggerPlayerBounce();
+      };
+
+      const applyEnemyRegenHealing = (amount: number) => {
+        if (amount <= 0) return;
+        setBattleState((prev) => {
+          if (!prev) return prev;
+          const nextHp = Math.min(prev.enemy.maxHp, prev.enemy.hp + amount);
+          accurateHpRef.current.enemy = nextHp;  // refも更新
+          return {
+            ...prev,
+            enemy: { ...prev.enemy, hp: nextHp },
+          };
+        });
+        triggerEnemyBounce();
+      };
+
       const applyPlayerEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
-        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const effectType = resolveEffectAnimationType(effect);
         const newAnimation: EffectAnimation = {
           id: `player-${effectType}-${Date.now()}`,
           type: effectType,
@@ -879,7 +931,7 @@ export function BattleContainer() {
 
       const applyEnemyEffect = (effect: SpecialEffect) => {
         // エフェクトアニメーションをトリガー
-        const effectType = effect.type === 'buff' ? 'buff' : 'debuff';
+        const effectType = resolveEffectAnimationType(effect);
         const newAnimation: EffectAnimation = {
           id: `enemy-${effectType}-${Date.now()}`,
           type: effectType,
@@ -931,11 +983,13 @@ export function BattleContainer() {
           onPlayerHeal: applyPlayerHealing,
           onPlayerPoison: applyPlayerPoisonDamage,
           onPlayerCurse: applyPlayerCurseDamage,
+          onPlayerRegen: applyPlayerRegenHealing,
           onEnemyBase: applyEnemyBaseDamage,
           onEnemyExtra: applyEnemyExtraDamage,
           onEnemyHeal: applyEnemyHealing,
           onEnemyPoison: applyEnemyPoisonDamage,
           onEnemyCurse: applyEnemyCurseDamage,
+          onEnemyRegen: applyEnemyRegenHealing,
           onPlayerEffect: applyPlayerEffect,
           onEnemyEffect: applyEnemyEffect,
           onCommentConversion: applyCommentConversion,
@@ -1138,11 +1192,15 @@ export function BattleContainer() {
                         height: '400px',
                       }}
                     >
-                      <BuffDebuffEffect
-                        type={anim.type}
-                        target={anim.target}
-                        onComplete={() => handleEffectComplete(anim.id)}
-                      />
+                      {anim.type === 'regen' ? (
+                        <HealingEffect target={anim.target} onComplete={() => handleEffectComplete(anim.id)} />
+                      ) : (
+                        <BuffDebuffEffect
+                          type={anim.type}
+                          target={anim.target}
+                          onComplete={() => handleEffectComplete(anim.id)}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -1333,3 +1391,8 @@ export function BattleContainer() {
   );
 
 }
+const resolveEffectAnimationType = (effect: SpecialEffect): EffectAnimation['type'] => {
+  if (effect.type === 'buff') return 'buff';
+  if (effect.type === 'regen') return 'regen';
+  return 'debuff';
+};
