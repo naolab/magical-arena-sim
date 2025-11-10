@@ -155,6 +155,7 @@ export interface Combatant {
   hp: number;
   maxHp: number;
   basePower: number; // 基本攻撃力
+  isDead?: boolean; // 一度HPが0以下になったら復活不可
 }
 
 /** プレイヤー状態 */

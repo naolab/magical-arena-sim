@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { PlayerState } from '@/lib/battle-v2/types';
 import { getHpRatio } from '@/lib/battle-v2/battleEngine';
 import { getFanRateRank } from '@/lib/battle-v2/fanSystem';
@@ -9,6 +10,7 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player }: PlayerStatusProps) {
+  const [showHpDetails, setShowHpDetails] = useState(false);
   const hpRatio = getHpRatio(player.hp, player.maxHp);
   const fanRatePercent = Math.round(player.fanRate * 100);
   const fanRank = getFanRateRank(player.fanRate);
@@ -25,13 +27,19 @@ export function PlayerStatus({ player }: PlayerStatusProps) {
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between text-sm">
           <span className="text-white/80">HP</span>
-          <span className="font-mono text-white">
-            {player.hp} / {player.maxHp}
-          </span>
+          {showHpDetails && (
+            <span className="font-mono text-white">
+              {player.hp} / {player.maxHp}
+            </span>
+          )}
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-black/40">
+        <div
+          className="h-3 w-full overflow-hidden rounded-full bg-black/40 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all"
+          onClick={() => setShowHpDetails(!showHpDetails)}
+          title="クリックでHP詳細を表示"
+        >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300"
+            className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-300 pointer-events-none"
             style={{ width: `${hpRatio * 100}%` }}
           />
         </div>

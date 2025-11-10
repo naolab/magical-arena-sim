@@ -35,6 +35,9 @@ export interface BattleParamsV2 {
   // アクションバリアント
   selectedActionVariants: ActionVariants;
 
+  // 敵キャラクター
+  enemyCharacterId: string;
+
   // ファンシステム
   fanRateChangeOnWin: number;
   fanRateChangeOnLose: number;
@@ -81,6 +84,9 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
     grief: 'drain',
     ecstasy: 'inspire',
   },
+
+  // 敵キャラクター
+  enemyCharacterId: 'marina',
 
   // ファンシステム
   fanRateChangeOnWin: 0.1,

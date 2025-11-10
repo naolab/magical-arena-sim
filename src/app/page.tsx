@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { VersionSelector } from '@/components/ui/VersionSelector';
 import { RulesModal } from '@/components/RulesModal';
+import { UpdatesModal } from '@/components/UpdatesModal';
 import { DifficultyModal as V1DifficultyModal } from '@/components/settings/DifficultyModal';
 import { V2DifficultyInfoModal } from '@/components/settings/V2DifficultyInfoModal';
 
@@ -14,6 +15,7 @@ const BASE_STAGE_HEIGHT = 900;
 export default function Home() {
   const [selectedVersion, setSelectedVersion] = useState<'v2' | 'v1'>('v2');
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isUpdatesOpen, setIsUpdatesOpen] = useState(false);
   const [isDifficultyOpen, setIsDifficultyOpen] = useState(false);
   const [viewportSize, setViewportSize] = useState({
     width: BASE_STAGE_WIDTH,
@@ -94,13 +96,24 @@ export default function Home() {
               >
                 ルール
               </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => setIsDifficultyOpen(true)}
-              >
-                難易度設定
-              </Button>
+              {selectedVersion === 'v2' && (
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setIsUpdatesOpen(true)}
+                >
+                  アプデ情報
+                </Button>
+              )}
+              {selectedVersion === 'v1' && (
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setIsDifficultyOpen(true)}
+                >
+                  難易度設定
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -110,6 +123,11 @@ export default function Home() {
         isOpen={isRulesOpen}
         onClose={() => setIsRulesOpen(false)}
         version={selectedVersion}
+      />
+
+      <UpdatesModal
+        isOpen={isUpdatesOpen}
+        onClose={() => setIsUpdatesOpen(false)}
       />
 
       {selectedVersion === 'v1' ? (

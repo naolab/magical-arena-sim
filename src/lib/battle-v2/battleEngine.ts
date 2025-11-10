@@ -12,6 +12,7 @@ import {
 } from './commentSystem';
 import { initializeAudienceComposition } from './fanSystem';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
+import { getEnemyCharacter } from './enemyCharacters';
 
 const ALL_EMOTIONS: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
 
@@ -65,12 +66,15 @@ export function initBattle(params?: BattleParamsV2): BattleState {
     ecstasy: 0,
   };
 
+  // 敵キャラクターの取得
+  const enemyCharacter = getEnemyCharacter(config.enemyCharacterId);
+
   for (const emotion of ALL_EMOTIONS) {
     const playerVariant = config.selectedActionVariants[emotion];
     const playerVariantDef = getVariantDefinition(emotion, playerVariant);
     playerSkillUses[emotion] = playerVariantDef.maxUses;
 
-    const enemyVariant = DEFAULT_VARIANTS[emotion];
+    const enemyVariant = enemyCharacter.actionVariants[emotion];
     const enemyVariantDef = getVariantDefinition(emotion, enemyVariant);
     enemySkillUses[emotion] = enemyVariantDef.maxUses;
   }
@@ -202,8 +206,8 @@ export function executeSuperchatTurn(
 export function checkWinner(
   state: BattleState
 ): 'player' | 'enemy' | 'draw' | null {
-  const playerDead = state.player.hp <= 0;
-  const enemyDead = state.enemy.hp <= 0;
+  const playerDead = state.player.hp <= 0 || state.player.isDead;
+  const enemyDead = state.enemy.hp <= 0 || state.enemy.isDead;
 
   if (playerDead && enemyDead) {
     return 'draw'; // 相打ち

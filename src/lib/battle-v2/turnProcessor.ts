@@ -47,6 +47,7 @@ import {
   type CommentRefreshResult,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
+import { getEnemyCharacter } from './enemyCharacters';
 
 function getDamageTakenMultiplierFromEffects(effects?: SpecialEffect[]): number {
   if (!effects || effects.length === 0) return 1;
@@ -107,6 +108,9 @@ export function processTurn(
     enemy: createEmptySkillUses(),
   };
 
+  // 敵キャラクターの取得
+  const enemyCharacter = getEnemyCharacter(state.config.enemyCharacterId);
+
   const effectiveEnemyAction = isSuperchatTurn ? playerAction : enemyAction;
 
   // 1. 感情の相性判定
@@ -123,7 +127,7 @@ export function processTurn(
   const playerVariantDef = getVariantDefinition(playerAction, playerVariant);
   const playerHasAttack = playerVariantDef.hasAttack !== false;
 
-  const enemyVariant = DEFAULT_VARIANTS[enemyAction];
+  const enemyVariant = enemyCharacter.actionVariants[enemyAction];
   const enemyVariantDef = getVariantDefinition(enemyAction, enemyVariant);
   const enemyHasAttack = !isSuperchatTurn && enemyVariantDef.hasAttack !== false;
 
@@ -196,13 +200,15 @@ export function processTurn(
   if (playerSpecialEffects.extraDamage > 0) {
     const scaledExtra = Math.round(playerSpecialEffects.extraDamage * enemyDamageTakenMultiplier);
     playerExtraDamage = scaledExtra;
+    const newHp = Math.max(0, updatedEnemy.hp - scaledExtra);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - scaledExtra),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
-  if (playerSpecialEffects.healing > 0) {
+  if (playerSpecialEffects.healing > 0 && !updatedPlayer.isDead) {
     playerHealing = playerSpecialEffects.healing;
     updatedPlayer = {
       ...updatedPlayer,
@@ -211,9 +217,11 @@ export function processTurn(
   }
 
   if (playerSpecialEffects.selfDamage && playerSpecialEffects.selfDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerSpecialEffects.selfDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
@@ -296,13 +304,15 @@ export function processTurn(
   if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
     const scaledExtra = Math.round(enemySpecialEffects.extraDamage * playerDamageTakenMultiplier);
     enemyExtraDamage = scaledExtra;
+    const newHp = Math.max(0, updatedPlayer.hp - scaledExtra);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - scaledExtra),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
-  if (!isSuperchatTurn && enemySpecialEffects.healing > 0) {
+  if (!isSuperchatTurn && enemySpecialEffects.healing > 0 && !updatedEnemy.isDead) {
     enemyHealing = enemySpecialEffects.healing;
     updatedEnemy = {
       ...updatedEnemy,
@@ -311,9 +321,11 @@ export function processTurn(
   }
 
   if (!isSuperchatTurn && enemySpecialEffects.selfDamage && enemySpecialEffects.selfDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemySpecialEffects.selfDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -331,16 +343,20 @@ export function processTurn(
   });
 
   if (playerPoisonDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerPoisonDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerPoisonDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
   if (enemyPoisonDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemyPoisonDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemyPoisonDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -351,16 +367,20 @@ export function processTurn(
   enemyCurseDamage = Math.round(enemyCurseDamage * enemyDamageTakenMultiplier);
 
   if (playerCurseDamage > 0) {
+    const newHp = Math.max(0, updatedPlayer.hp - playerCurseDamage);
     updatedPlayer = {
       ...updatedPlayer,
-      hp: Math.max(0, updatedPlayer.hp - playerCurseDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedPlayer.isDead,
     };
   }
 
   if (enemyCurseDamage > 0) {
+    const newHp = Math.max(0, updatedEnemy.hp - enemyCurseDamage);
     updatedEnemy = {
       ...updatedEnemy,
-      hp: Math.max(0, updatedEnemy.hp - enemyCurseDamage),
+      hp: newHp,
+      isDead: newHp <= 0 ? true : updatedEnemy.isDead,
     };
   }
 
@@ -368,14 +388,14 @@ export function processTurn(
   const playerRegenHealing = calculateRegenHealing(updatedPlayer.activeEffects);
   const enemyRegenHealing = calculateRegenHealing(updatedEnemy.activeEffects);
 
-  if (playerRegenHealing > 0) {
+  if (playerRegenHealing > 0 && !updatedPlayer.isDead) {
     updatedPlayer = {
       ...updatedPlayer,
       hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerRegenHealing),
     };
   }
 
-  if (enemyRegenHealing > 0) {
+  if (enemyRegenHealing > 0 && !updatedEnemy.isDead) {
     updatedEnemy = {
       ...updatedEnemy,
       hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemyRegenHealing),
@@ -504,12 +524,14 @@ export function processTurn(
       updatedEnemy = {
         ...updatedEnemy,
         hp: 0,
+        isDead: true,
       };
     }
     if (hasEnemyVictoryTrigger) {
       updatedPlayer = {
         ...updatedPlayer,
         hp: 0,
+        isDead: true,
       };
     }
     if (hasPlayerVictoryTrigger || hasEnemyVictoryTrigger) {
@@ -729,9 +751,11 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
   const damageTakenMultiplier = getDamageTakenMultiplierFromEffects(defender.activeEffects);
   baseDamage = Math.round(baseDamage * damageTakenMultiplier);
 
+  const newHp = Math.max(0, defender.hp - baseDamage);
   const updatedDefender = {
     ...defender,
-    hp: Math.max(0, defender.hp - baseDamage),
+    hp: newHp,
+    isDead: newHp <= 0 ? true : defender.isDead,
   };
 
   return {
@@ -791,9 +815,10 @@ function triggerSpecialEffects(params: {
   };
 
   // 選択されたバリアントを取得
-  // 敵の場合は常にデフォルトバリアント、プレイヤーの場合は選択されたバリアント
+  // 敵の場合は敵キャラクターのバリアント、プレイヤーの場合は選択されたバリアント
+  const enemyCharacter = getEnemyCharacter(config.enemyCharacterId);
   const selectedVariant = target === 'enemy'
-    ? DEFAULT_VARIANTS[emotion]
+    ? enemyCharacter.actionVariants[emotion]
     : config.selectedActionVariants[emotion];
   const variantDef = getVariantDefinition(emotion, selectedVariant);
 
