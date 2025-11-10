@@ -357,6 +357,34 @@ function buildTurnMessages(
     );
   }
 
+  if (result.commentLimitChanged) {
+    messages.push(
+      createMessage(
+        'system',
+        `コメント上限が${result.commentLimitChanged.newMax}になった！`
+      )
+    );
+  }
+
+  if (result.commentVictory) {
+    const text =
+      result.commentVictory === 'both'
+        ? 'コメントが枯れ、双方が倒れた！'
+        : result.commentVictory === 'player'
+          ? 'コメントが枯れ、敵が倒れた！'
+          : 'コメントが枯れ、あなたが倒れた！';
+    const applyVictoryDamage = () => {
+      const fatal = 9999;
+      if (result.commentVictory === 'player' || result.commentVictory === 'both') {
+        handlers.onPlayerBase(fatal);
+      }
+      if (result.commentVictory === 'enemy' || result.commentVictory === 'both') {
+        handlers.onEnemyBase(fatal);
+      }
+    };
+    messages.push(createMessage('system', text, applyVictoryDamage));
+  }
+
   messages.push(
     ...buildEffectMessages(specialEffects.enemy, 'enemy', handlers.onEnemyEffect)
   );

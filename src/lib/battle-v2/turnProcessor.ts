@@ -92,7 +92,9 @@ export function processTurn(
     player: getDamageTakenMultiplierFromEffects(state.player.activeEffects),
     enemy: getDamageTakenMultiplierFromEffects(state.enemy.activeEffects),
   };
-  let nextDamageMultiplierState = { player: 1, enemy: 1 };
+  let commentPoolReduction = state.commentPoolReduction ?? 0;
+  let commentLimitChanged = 0;
+  const maxReduction = Math.max(0, state.config.maxCommentPoolSize - 1);
   const createEmptySkillUses = () => ({
     rage: 0,
     terror: 0,
@@ -257,6 +259,15 @@ export function processTurn(
     }
   }
 
+  if (playerSpecialEffects.commentLimitReduction && commentPoolReduction < maxReduction) {
+    const prev = commentPoolReduction;
+    commentPoolReduction = Math.min(
+      maxReduction,
+      commentPoolReduction + playerSpecialEffects.commentLimitReduction
+    );
+    commentLimitChanged = commentPoolReduction - prev;
+  }
+
   // 5. 敵側の特殊効果を発動
   let enemySpecialEffects: SpecialEffectResult;
   if (isSuperchatTurn) {
@@ -399,7 +410,7 @@ export function processTurn(
   const newPlayerEffects = annotateNewEffects(playerSpecialEffects.playerEffects);
   const newEnemyOnPlayerEffects = annotateNewEffects(enemySpecialEffects.playerEffects);
 
-  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp'];
+  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp', 'victory_trigger'];
   const playerNeedsRemoval = [...newPlayerEffects, ...newEnemyOnPlayerEffects].some((effect) =>
     dedupTypes.includes(effect.type as SpecialEffectType)
   );
@@ -474,6 +485,43 @@ export function processTurn(
     activeEffects: cleanedEnemyEffects,
   };
 
+  const maxCommentPool = Math.max(1, state.config.maxCommentPoolSize - commentPoolReduction);
+  if (currentComments.length > maxCommentPool) {
+    currentComments = currentComments.slice(currentComments.length - maxCommentPool);
+  }
+
+  const nextComments = currentComments;
+
+  let commentVictory: 'player' | 'enemy' | 'both' | undefined;
+  if (nextComments.length === 0) {
+    const hasPlayerVictoryTrigger = cleanedPlayerEffects.some(
+      (effect) => effect.type === 'victory_trigger' && effect.target === 'player'
+    );
+    const hasEnemyVictoryTrigger = cleanedEnemyEffects.some(
+      (effect) => effect.type === 'victory_trigger' && effect.target === 'enemy'
+    );
+    if (hasPlayerVictoryTrigger) {
+      updatedEnemy = {
+        ...updatedEnemy,
+        hp: 0,
+      };
+    }
+    if (hasEnemyVictoryTrigger) {
+      updatedPlayer = {
+        ...updatedPlayer,
+        hp: 0,
+      };
+    }
+    if (hasPlayerVictoryTrigger || hasEnemyVictoryTrigger) {
+      commentVictory =
+        hasPlayerVictoryTrigger && hasEnemyVictoryTrigger
+          ? 'both'
+          : hasPlayerVictoryTrigger
+            ? 'player'
+            : 'enemy';
+    }
+  }
+
   // 7. ファン率の変化量を計算
   const rawFanChanges = calculateFanChanges({
     judgement,
@@ -521,8 +569,6 @@ export function processTurn(
     player: updatedSkillUsesPlayer,
     enemy: updatedSkillUsesEnemy,
   };
-
-  const nextComments = currentComments;
 
   // 10. ターン結果を作成
   const turnResult: TurnResult = {
@@ -580,6 +626,14 @@ export function processTurn(
           limitedEmotions: commentRefreshData.limitedEmotions,
         }
       : undefined,
+    commentLimitChanged:
+      commentLimitChanged > 0
+        ? {
+            newMax: maxCommentPool,
+            reduction: commentLimitChanged,
+          }
+        : undefined,
+    commentVictory,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
     superchatAwarded: !isSuperchatTurn && earnedSuperchatTurn,
     commentBoostApplied: playerSpecialEffects.commentBoost,
@@ -602,7 +656,7 @@ export function processTurn(
     superchatBoostTurns,
     superchatBoostMultiplier,
     nextAttackMultiplier: nextAttackMultiplierState,
-    nextDamageMultiplier: nextDamageMultiplierState,
+    commentPoolReduction,
   };
 }
 
@@ -712,6 +766,7 @@ interface SpecialEffectResult {
     target: 'player' | 'enemy';
     multiplier: number;
   };
+  commentLimitReduction?: number;
 }
 
 /**
@@ -819,7 +874,6 @@ function triggerSpecialEffects(params: {
         } else {
           result.enemyEffects.push(fanBlock);
         }
-      } else if (selectedVariant === 'chaotic_plague') {
       } else if (selectedVariant === 'damage_amplify') {
         const damageAmp: SpecialEffect = {
           type: 'damage_amp',
@@ -832,6 +886,19 @@ function triggerSpecialEffects(params: {
           result.playerEffects.push(damageAmp);
         } else {
           result.enemyEffects.push(damageAmp);
+        }
+      } else if (selectedVariant === 'victory_trigger') {
+        const victoryEffect: SpecialEffect = {
+          type: 'victory_trigger',
+          emotion,
+          duration: Number.POSITIVE_INFINITY,
+          magnitude: 0,
+          target,
+        };
+        if (target === 'player') {
+          result.playerEffects.push(victoryEffect);
+        } else {
+          result.enemyEffects.push(victoryEffect);
         }
       } else if (selectedVariant === 'chaotic_plague') {
         const effects = generateChaoticPlagueEffects(
@@ -859,6 +926,27 @@ function triggerSpecialEffects(params: {
         } else {
           result.enemyEffects.push(regen);
         }
+      } else if (selectedVariant === 'limit_heal') {
+        result.healing = variantDef.magnitude;
+        result.commentLimitReduction = 1;
+      } else if (selectedVariant === 'debuff_heal') {
+        const perDebuff =
+          (variantDef.metadata?.perDebuff as number | undefined) ?? 50;
+        const maxStack =
+          (variantDef.metadata?.maxStack as number | undefined) ?? 5;
+        const activeEffects =
+          target === 'player' ? attacker.activeEffects : defender.activeEffects;
+        const debuffCount = activeEffects.filter(
+          (effect) =>
+            effect.target === target &&
+            (effect.type === 'debuff' ||
+              effect.type === 'poison' ||
+              effect.type === 'curse' ||
+              effect.type === 'fan_block' ||
+              effect.type === 'damage_amp')
+        ).length;
+        const stacks = Math.min(debuffCount, maxStack);
+        result.healing = variantDef.magnitude + stacks * perDebuff;
       }
       break;
 

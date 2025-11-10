@@ -425,15 +425,32 @@ export function applyEcstasyDualRefreshCommentsEffect(
   if (!comments || comments.length === 0) return null;
 
   const emotions: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
-  const shuffled = [...emotions].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, 2);
+  const selectedSet = new Set<EmotionType | 'superchat'>();
+  while (selectedSet.size < 2) {
+    const roll = Math.random();
+    const pick: EmotionType | 'superchat' =
+      roll < 0.15 ? 'superchat' : emotions[Math.floor(Math.random() * emotions.length)];
+    selectedSet.add(pick);
+  }
+  const selected = Array.from(selectedSet);
+  const limitedEmotions = selected.filter((entry): entry is EmotionType => entry !== 'superchat');
 
   const refreshed = comments.map((comment) => {
-    const newEmotion = selected[Math.floor(Math.random() * selected.length)];
+    const pick = selected[Math.floor(Math.random() * selected.length)];
+    if (pick === 'superchat') {
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      return {
+        ...comment,
+        emotion: randomEmotion,
+        text: getRandomSuperchatText(),
+        isSuperchat: true,
+      };
+    }
+
     return {
       ...comment,
-      emotion: newEmotion,
-      text: getRandomCommentTextForEmotion(newEmotion),
+      emotion: pick,
+      text: getRandomCommentTextForEmotion(pick),
       isSuperchat: false,
     };
   });
@@ -441,7 +458,7 @@ export function applyEcstasyDualRefreshCommentsEffect(
   return {
     comments: refreshed,
     refreshedCommentIds: refreshed.map((comment) => comment.id),
-    limitedEmotions: selected,
+    limitedEmotions,
   };
 }
 
@@ -554,6 +571,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: スパチャ率上昇 (残り${effect.duration}ターン)`;
     case 'damage_amp':
       return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
+    case 'victory_trigger':
+      return `${emotionName}: コメント枯渇勝利 (永続)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':

@@ -39,7 +39,13 @@ export type TerrorVariant =
   | 'damage_amplify';
 
 /** Griefのバリアント */
-export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
+export type GriefVariant =
+  | 'drain'
+  | 'desperate'
+  | 'cleanse_heal'
+  | 'regen'
+  | 'limit_heal'
+  | 'debuff_heal';
 
 /** Ecstasyのバリアント */
 export type EcstasyVariant =
@@ -128,7 +134,8 @@ export type SpecialEffectType =
   | 'regen'         // Grief: リジェネ（持続回復）
   | 'fan_block'     // Terror: ファン増加阻害
   | 'superchat_boost' // Ecstasy: スパチャ率上昇
-  | 'damage_amp';   // 与ダメ倍率アップ（対象は被ダメ増加）
+  | 'damage_amp'    // 与ダメージ増幅（被ダメ増加）
+  | 'victory_trigger'; // コメント枯渇勝利トリガー
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -226,6 +233,11 @@ export interface TurnResult {
     comments: Comment[];
     limitedEmotions?: EmotionType[];
   }; // コメントリフレッシュイベント
+  commentLimitChanged?: {
+    newMax: number;
+    reduction: number;
+  };
+  commentVictory?: 'player' | 'enemy' | 'both'; // コメント枯渇勝利イベント
   superchatAwarded?: boolean; // スパチャ追撃獲得
   commentBoostApplied?: number; // このターンで増加したコメントブースト量
   currentCommentBoost?: number; // 現在の累積コメントブースト量
@@ -254,6 +266,7 @@ export interface BattleState {
     player: number;
     enemy: number;
   }; // 次ターンの攻撃力倍率
+  commentPoolReduction?: number; // 減少したコメント上限
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;

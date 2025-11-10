@@ -97,6 +97,7 @@ export function initBattle(params?: BattleParamsV2): BattleState {
       player: 1,
       enemy: 1,
     },
+    commentPoolReduction: 0,
   };
 }
 
@@ -141,9 +142,13 @@ export function executePlayerAction(
     { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
+  const maxPoolSize = Math.max(
+    1,
+    updatedState.config.maxCommentPoolSize - (updatedState.commentPoolReduction ?? 0)
+  );
   updatedState = {
     ...updatedState,
-    comments: addCommentsToPool(updatedState.comments, newComments, updatedState.config.maxCommentPoolSize),
+    comments: addCommentsToPool(updatedState.comments, newComments, maxPoolSize),
   };
 
   // 勝敗判定はUI側で行う（メッセージアニメーション完了後、UI側のHPが完全に反映された後）
@@ -173,13 +178,13 @@ export function executeSuperchatTurn(
     { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
+  const maxPoolSize = Math.max(
+    1,
+    updatedState.config.maxCommentPoolSize - (updatedState.commentPoolReduction ?? 0)
+  );
   updatedState = {
     ...updatedState,
-    comments: addCommentsToPool(
-      updatedState.comments,
-      newComments,
-      updatedState.config.maxCommentPoolSize
-    ),
+    comments: addCommentsToPool(updatedState.comments, newComments, maxPoolSize),
   };
 
   return updatedState;

@@ -177,6 +177,16 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
       damageMultiplier: 1.2,
     },
   },
+  victory_trigger: {
+    id: 'victory_trigger',
+    name: '奈落のフィナーレ',
+    nameJa: '奈落のフィナーレ',
+    description: 'コメントがひとつ残らず消えた瞬間、呪いが現実を終焉させ敵を滅ぼす（永続・重ね掛け不可）',
+    effectType: 'victory_trigger',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 1,
+  },
 };
 
 // ========================================
@@ -224,6 +234,30 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     duration: 3, // 3ターン持続
     hasAttack: false,
     maxUses: 20,
+  },
+  limit_heal: {
+    id: 'limit_heal',
+    name: 'サクリファイス・ウォール',
+    nameJa: 'サクリファイス・ウォール',
+    description: 'コメント上限を1減らす代わりにHPを300回復（最大5回）',
+    effectType: 'drain',
+    magnitude: 300,
+    hasAttack: false,
+    maxUses: 5,
+  },
+  debuff_heal: {
+    id: 'debuff_heal',
+    name: 'ペインコンバージョン',
+    nameJa: 'ペインコンバージョン',
+    description: '自分にかかったデバフ1つにつき+50回復（基礎200回復, 上限5個）',
+    effectType: 'drain',
+    magnitude: 200,
+    hasAttack: false,
+    maxUses: 10,
+    metadata: {
+      perDebuff: 50,
+      maxStack: 5,
+    },
   },
 };
 
@@ -277,7 +311,7 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     id: 'dual_refresh',
     name: 'デュアルシャッフル',
     nameJa: 'デュアルシャッフル',
-    description: '現在のコメントをすべてランダムな2属性に付け替える（スパチャは含めない）',
+    description: '現在のコメントをすべてランダムな2属性に付け替え、低確率でスパチャも紛れ込む',
     effectType: 'buff',
     magnitude: 0,
     hasAttack: false,
