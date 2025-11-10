@@ -30,6 +30,7 @@ import {
   applyTerrorPoisonEffect,
   applyTerrorCurseEffect,
   applyTerrorFanBlockEffect,
+  generateChaoticPlagueEffects,
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
@@ -819,6 +820,14 @@ function triggerSpecialEffects(params: {
         } else {
           result.enemyEffects.push(fanBlock);
         }
+      } else if (selectedVariant === 'chaotic_plague') {
+        const effects = generateChaoticPlagueEffects(
+          { emotion, target, damage },
+          variantDef.magnitude ?? 5,
+          config
+        );
+        result.playerEffects.push(...effects.player);
+        result.enemyEffects.push(...effects.enemy);
       }
       break;
 

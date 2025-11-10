@@ -246,6 +246,40 @@ export function applyTerrorCurseEffect(
   };
 }
 
+export function generateChaoticPlagueEffects(
+  params: SpecialEffectTriggerParams,
+  count: number,
+  config: BattleParamsV2
+): { player: SpecialEffect[]; enemy: SpecialEffect[] } {
+  const effects: { player: SpecialEffect[]; enemy: SpecialEffect[] } = { player: [], enemy: [] };
+  const debuffGenerators = [
+    () =>
+      applyTerrorEffect(params, config), // attack debuff
+    () =>
+      applyTerrorPoisonEffect(params, {
+        magnitude: config.terrorPoisonMagnitude ?? 100,
+        duration: config.terrorPoisonDuration ?? 3,
+      }),
+    () =>
+      applyTerrorCurseEffect(params, {
+        magnitude: config.terrorCurseMagnitude ?? 5,
+        duration: config.terrorCurseDuration ?? 3,
+      }),
+  ];
+
+  for (let i = 0; i < count; i++) {
+    const generator = debuffGenerators[Math.floor(Math.random() * debuffGenerators.length)];
+    const target: 'player' | 'enemy' = Math.random() < 0.5 ? 'player' : 'enemy';
+    const effect = generator();
+    effects[target].push({
+      ...effect,
+      target,
+    });
+  }
+
+  return effects;
+}
+
 /**
  * Terror Fan Block: ファン増加を阻害するデバフ
  */

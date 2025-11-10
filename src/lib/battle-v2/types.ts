@@ -30,7 +30,7 @@ export type RageVariant =
   | 'blood_pact';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block';
+export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block' | 'chaotic_plague';
 
 /** Griefのバリアント */
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';

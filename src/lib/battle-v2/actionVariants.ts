@@ -153,6 +153,16 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  chaotic_plague: {
+    id: 'chaotic_plague',
+    name: 'カオティックプレイグ',
+    nameJa: 'カオティックプレイグ',
+    description: '敵味方にランダムで5つのデバフ（毒/呪い/攻撃力低下）をばら撒く',
+    effectType: 'debuff',
+    magnitude: 5,
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================
