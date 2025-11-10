@@ -13,6 +13,7 @@ import { TypewriterText } from './TypewriterText';
 import { SettingsMenu } from './SettingsMenu';
 import { RulesModal } from './RulesModal';
 import { ActionVariantModal } from './ActionVariantModal';
+import { EnemySelectModal } from './EnemySelectModal';
 import { ActiveEffectIcons } from './ActiveEffectIcons';
 import { getEffectDescription } from '@/lib/battle-v2/specialEffects';
 import { BuffDebuffEffect } from './BuffDebuffEffect';
@@ -1337,7 +1338,7 @@ export function BattleContainer() {
                 </div>
                 <div className="absolute top-1/2 right-[-240px] w-[1020px] h-[1020px] -translate-y-[27%]">
                   <img
-                    src="/images/enemy-placeholder.png"
+                    src={battleState ? getEnemyCharacter(battleState.config.enemyCharacterId).imagePath : '/images/enemy-placeholder.png'}
                     alt="Enemy stand-in"
                     className={`h-full w-full rounded-3xl object-cover ${enemyShake ? 'hit-shake' : ''} ${enemyBounce ? 'heal-bounce' : ''} ${enemyVanishing ? 'vanish-out' : ''} ${enemyInvisible ? 'opacity-0 pointer-events-none' : ''}`}
                   />
@@ -1630,10 +1631,11 @@ export function BattleContainer() {
               </div>
             </div>
 
-            {/* 左下：設定メニュー、アクションバリアント、ルール */}
+            {/* 左下：設定メニュー、アクションバリアント、敵選択、ルール */}
             <div className="absolute bottom-6 left-8 flex gap-4">
               <SettingsMenu onRestart={handleRestart} />
               <ActionVariantModal onRestart={handleRestart} />
+              <EnemySelectModal onRestart={handleRestart} />
               <RulesModal />
             </div>
 
@@ -1666,7 +1668,7 @@ export function BattleContainer() {
                     <span className="text-sm uppercase tracking-[0.6em] text-white/60">ENEMY</span>
                     <div className="w-[540px] h-[540px]">
                       <img
-                        src="/images/enemy-placeholder.png"
+                        src={getEnemyCharacter(battleState.config.enemyCharacterId).imagePath}
                         alt="Enemy"
                         className="h-full w-full object-cover rounded-[15%]"
                       />
