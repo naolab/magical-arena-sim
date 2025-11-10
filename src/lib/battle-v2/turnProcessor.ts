@@ -29,10 +29,12 @@ import {
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
+  applyGriefRegenEffect,
   updateEffectDurations,
   removeExpiredEffects,
   calculatePoisonDamage,
   calculateCurseDamage,
+  calculateRegenHealing,
   type ExtendedEffectTriggerParams,
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
@@ -268,6 +270,24 @@ export function processTurn(
     };
   }
 
+  // 5.7. リジェネ回復の適用（ターン開始時の効果）
+  const playerRegenHealing = calculateRegenHealing(updatedPlayer.activeEffects);
+  const enemyRegenHealing = calculateRegenHealing(updatedEnemy.activeEffects);
+
+  if (playerRegenHealing > 0) {
+    updatedPlayer = {
+      ...updatedPlayer,
+      hp: Math.min(updatedPlayer.maxHp, updatedPlayer.hp + playerRegenHealing),
+    };
+  }
+
+  if (enemyRegenHealing > 0) {
+    updatedEnemy = {
+      ...updatedEnemy,
+      hp: Math.min(updatedEnemy.maxHp, updatedEnemy.hp + enemyRegenHealing),
+    };
+  }
+
   // 6. 既存効果の更新と新規効果の追加
   const tickExistingEffects = (effects: ActiveEffectExtended[]) =>
     removeExpiredEffects(
@@ -413,12 +433,14 @@ export function processTurn(
         healing: playerHealing,
         poisonDamage: playerPoisonDamage,
         curseDamage: playerCurseDamage,
+        regenHealing: playerRegenHealing,
       },
       enemy: {
         extraDamage: enemyExtraDamage,
         healing: enemyHealing,
         poisonDamage: enemyPoisonDamage,
         curseDamage: enemyCurseDamage,
+        regenHealing: enemyRegenHealing,
       },
     },
     fanChange: {
@@ -618,6 +640,13 @@ function triggerSpecialEffects(params: {
       } else if (selectedVariant === 'cleanse_heal') {
         result.healing = variantDef.magnitude;
         result.cleansed = true; // デバフ解除フラグを立てる（アイコン表示しない）
+      } else if (selectedVariant === 'regen') {
+        const regen = applyGriefRegenEffect({ emotion, target, damage }, variantDef);
+        if (regen.target === 'player') {
+          result.playerEffects.push(regen);
+        } else {
+          result.enemyEffects.push(regen);
+        }
       }
       break;
 

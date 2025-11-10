@@ -352,6 +352,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: 毒 (${effect.magnitude}ダメージ/ターン, 残り${effect.duration}ターン)`;
     case 'curse':
       return `${emotionName}: 呪い (最大HPの${effect.magnitude}%ダメージ/ターン, 残り${effect.duration}ターン)`;
+    case 'regen':
+      return `${emotionName}: リジェネ (${effect.magnitude}回復/ターン, 残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':
@@ -381,4 +383,35 @@ export function calculateCurseDamage(effects: SpecialEffect[], maxHp: number): n
   const curseEffects = effects.filter((e) => e.type === 'curse');
   const totalPercentage = curseEffects.reduce((total, effect) => total + effect.magnitude, 0);
   return Math.round(maxHp * (totalPercentage / 100));
+}
+
+/**
+ * Grief - リジェネ効果: 持続回復効果を付与
+ * @param params トリガーパラメータ
+ * @param variant バリアント定義
+ * @returns リジェネ効果
+ */
+export function applyGriefRegenEffect(
+  params: SpecialEffectTriggerParams,
+  variant: { magnitude: number; duration?: number }
+): SpecialEffect {
+  const { emotion, target } = params;
+
+  return {
+    type: 'regen',
+    emotion,
+    duration: variant.duration || 3,
+    magnitude: variant.magnitude, // 毎ターンの回復量
+    target, // 自分に付与
+  };
+}
+
+/**
+ * リジェネ効果による回復を計算
+ * @param effects 有効な効果リスト
+ * @returns リジェネ回復の合計
+ */
+export function calculateRegenHealing(effects: SpecialEffect[]): number {
+  const regenEffects = effects.filter((e) => e.type === 'regen');
+  return regenEffects.reduce((total, effect) => total + effect.magnitude, 0);
 }

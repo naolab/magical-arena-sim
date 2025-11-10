@@ -151,6 +151,17 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  regen: {
+    id: 'regen',
+    name: 'リジェネレイト',
+    nameJa: 'リジェネレイト',
+    description: '3ターン継続で、毎ターン90回復する効果を自分に付与',
+    effectType: 'regen',
+    magnitude: 90, // 毎ターン90回復
+    duration: 3, // 3ターン持続
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================
