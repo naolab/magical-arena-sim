@@ -234,6 +234,7 @@ const newComments = generateComments(
 **表示タイミング**:
 - ダメージ系: プレイヤー/敵の攻撃メッセージの直後
 - バフ/デバフ系: `buildEffectMessages`と同じタイミング
+- 持続ダメージ系（毒・呪いなど）: **毒ダメージの直後**
 - その他: 効果の性質に応じて適切な位置
 
 **コメントブーストの例**（バフメッセージの直後）:
@@ -252,6 +253,78 @@ if (result.commentBoostApplied && result.commentBoostApplied > 0) {
   );
 }
 ```
+
+**持続ダメージの例**（毒ダメージの直後）:
+
+```typescript
+// 毒ダメージのメッセージ
+if (secondaryEffects.player.poisonDamage > 0) {
+  messages.push(
+    createMessage(
+      'system',
+      `あなたは毒で ${secondaryEffects.player.poisonDamage} のダメージを受けた！`,
+      () => handlers.onPlayerPoison?.(secondaryEffects.player.poisonDamage)
+    )
+  );
+}
+
+// 呪いダメージのメッセージ
+if (secondaryEffects.player.curseDamage > 0) {
+  messages.push(
+    createMessage(
+      'system',
+      `あなたは呪いで ${secondaryEffects.player.curseDamage} のダメージを受けた！`,
+      () => handlers.onPlayerCurse?.(secondaryEffects.player.curseDamage)
+    )
+  );
+}
+```
+
+#### 6.2 ダメージ処理関数の追加（持続ダメージの場合）
+
+持続ダメージ効果の場合、専用のダメージ処理関数を追加：
+
+```typescript
+const applyPlayerCurseDamage = (amount: number) => {
+  if (amount <= 0) return;
+  setBattleState((prev) => {
+    if (!prev) return prev;
+    const nextHp = Math.max(0, prev.player.hp - amount);
+    accurateHpRef.current.player = nextHp;
+    return {
+      ...prev,
+      player: { ...prev.player, hp: nextHp },
+    };
+  });
+};
+```
+
+そして`buildTurnMessages`の`handlers`に渡す：
+
+```typescript
+const turnMessages = buildTurnMessages(
+  turnResult,
+  {
+    // 既存...
+    onPlayerCurse: applyPlayerCurseDamage,
+    onEnemyCurse: applyEnemyCurseDamage,
+  },
+  // ...
+);
+```
+
+#### 6.3 技名の色付け表示
+
+技名を感情カラーで色付け表示する場合、HTMLタグを使用：
+
+```typescript
+const playerOpening =
+  playerSkillName.length > 0
+    ? `あなたは <span style="color: ${playerColor}; font-weight: bold;">${playerSkillName}</span> を発動！`
+    : `あなたは ${playerEmotionName} を繰り出した！`;
+```
+
+**重要**: `TypewriterText`コンポーネントはHTML対応しているため、`<span>`タグなどが正しくレンダリングされます。
 
 #### メッセージの口調
 - 「〜した！」「〜を受けた！」「〜が発動！」など、既存メッセージと統一
@@ -325,6 +398,160 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
 
 ---
 
+### 8. 持続ダメージ効果の実装（毒・呪いなど）
+
+持続ダメージ効果を実装する場合、以下の手順で実装します。
+
+#### 8.1 型定義の追加
+
+**ファイル**: `src/lib/battle-v2/types.ts`
+
+1. `SpecialEffectType`に新しい効果タイプを追加：
+
+```typescript
+export type SpecialEffectType =
+  | 'extra_damage'
+  | 'debuff'
+  | 'drain'
+  | 'buff'
+  | 'poison'
+  | 'curse'  // 新規追加
+  | 'cleanse';
+```
+
+2. `TurnResult.secondaryEffects`に専用フィールドを追加：
+
+```typescript
+secondaryEffects: {
+  player: {
+    extraDamage: number;
+    healing: number;
+    poisonDamage: number;
+    curseDamage: number;  // 新規追加
+  };
+  enemy: {
+    extraDamage: number;
+    healing: number;
+    poisonDamage: number;
+    curseDamage: number;  // 新規追加
+  };
+};
+```
+
+#### 8.2 計算関数の追加
+
+**ファイル**: `src/lib/battle-v2/specialEffects.ts`
+
+ダメージ計算関数を追加：
+
+```typescript
+/**
+ * 呪い効果によるダメージを計算・適用（割合ダメージ）
+ * @param effects 有効な効果リスト
+ * @param maxHp 対象の最大HP
+ * @returns 呪いダメージの合計
+ */
+export function calculateCurseDamage(effects: SpecialEffect[], maxHp: number): number {
+  const curseEffects = effects.filter((e) => e.type === 'curse');
+  const totalPercentage = curseEffects.reduce((total, effect) => total + effect.magnitude, 0);
+  return Math.round(maxHp * (totalPercentage / 100));
+}
+```
+
+#### 8.3 ターン処理での適用
+
+**ファイル**: `src/lib/battle-v2/turnProcessor.ts`
+
+1. インポートに追加：
+
+```typescript
+import {
+  // 既存...
+  calculateCurseDamage,
+} from './specialEffects';
+```
+
+2. `processTurn`関数内でダメージ計算と適用（毒ダメージの直後）：
+
+```typescript
+// 5.6. 呪いダメージの適用（ターン開始時の効果）
+const playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
+const enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
+
+if (playerCurseDamage > 0) {
+  updatedPlayer = {
+    ...updatedPlayer,
+    hp: Math.max(0, updatedPlayer.hp - playerCurseDamage),
+  };
+}
+
+if (enemyCurseDamage > 0) {
+  updatedEnemy = {
+    ...updatedEnemy,
+    hp: Math.max(0, updatedEnemy.hp - enemyCurseDamage),
+  };
+}
+```
+
+3. `TurnResult`オブジェクトに追加：
+
+```typescript
+secondaryEffects: {
+  player: {
+    extraDamage: playerExtraDamage,
+    healing: playerHealing,
+    poisonDamage: playerPoisonDamage,
+    curseDamage: playerCurseDamage,  // 追加
+  },
+  enemy: {
+    extraDamage: enemyExtraDamage,
+    healing: enemyHealing,
+    poisonDamage: enemyPoisonDamage,
+    curseDamage: enemyCurseDamage,  // 追加
+  },
+},
+```
+
+#### 8.4 デバフ扱いの効果の場合
+
+呪いなどをデバフとして扱う場合、以下も追加：
+
+1. **Hellfireなどデバフカウント技への追加**：
+
+```typescript
+// debuff_scaling (Hellfire)
+const debuffCount = defender.activeEffects.filter(
+  (effect) => effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse'
+).length;
+```
+
+2. **Pure Refineなどのクレンジング対象への追加**：
+
+```typescript
+const cleanseEffectFilter = (effect: ActiveEffectExtended, target: 'player' | 'enemy') =>
+  !(
+    (effect.type === 'cleanse' || effect.type === 'debuff' || effect.type === 'poison' || effect.type === 'curse') &&
+    effect.target === target
+  );
+```
+
+#### 8.5 説明文の追加
+
+**ファイル**: `src/lib/battle-v2/specialEffects.ts`
+
+`getEffectDescription`関数に説明を追加：
+
+```typescript
+switch (effect.type) {
+  // 既存...
+  case 'curse':
+    return `${emotionName}: 呪い (最大HPの${effect.magnitude}%ダメージ/ターン, 残り${effect.duration}ターン)`;
+  // ...
+}
+```
+
+---
+
 ## チェックリスト
 
 新しいバリアントを実装する際は、以下を確認：
@@ -344,6 +571,23 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
 - [ ] `icons.tsx`: アイコンSVGコンポーネントを追加
 - [ ] `ActiveEffectIcons.tsx`: アイコンをインポート
 - [ ] `ActiveEffectIcons.tsx`: `ICON_CONFIG`に設定を追加
+- [ ] `ActiveEffectIcons.tsx`: ツールチップ表示に効果タイプを追加
+
+### 持続ダメージ技の場合（追加項目）
+- [ ] `types.ts`: `SpecialEffectType`に新効果タイプを追加
+- [ ] `types.ts`: `TurnResult.secondaryEffects`に専用フィールド追加
+- [ ] `specialEffects.ts`: ダメージ計算関数を追加（例: `calculateCurseDamage`）
+- [ ] `turnProcessor.ts`: ターン開始時のダメージ計算・適用処理を追加
+- [ ] `turnProcessor.ts`: `TurnResult`オブジェクトにダメージ値を追加
+- [ ] `BattleContainer.tsx`: `buildTurnMessages`の`handlers`型定義を拡張
+- [ ] `BattleContainer.tsx`: ダメージ処理関数を追加（例: `applyPlayerCurseDamage`）
+- [ ] `BattleContainer.tsx`: メッセージ表示を追加（毒ダメージの直後）
+- [ ] `BattleContainer.tsx`: `buildTurnMessages`呼び出しで`handlers`に追加
+- [ ] デバフ扱いの場合: `turnProcessor.ts`の`cleanseEffectFilter`に追加
+- [ ] デバフ扱いの場合: Hellfireなど関連技のデバフカウントに追加
+- [ ] `specialEffects.ts`: `getEffectDescription`に説明を追加
+- [ ] `icons.tsx`: アイコンSVGコンポーネントを追加
+- [ ] `ActiveEffectIcons.tsx`: アイコン設定を追加
 
 ### オプション項目
 - [ ] `types.ts`: `BattleState`に永続状態を追加（必要な場合）
@@ -405,6 +649,15 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
 - `CommentConversionEvent`でUI表示
 - アイコン: **不要**
 
+### パターン5: 持続ダメージ効果（毒・呪いなど）
+- 効果タイプ: `poison` / `curse` など新規型
+- `TurnResult.secondaryEffects`に専用フィールド追加（例: `curseDamage`）
+- `specialEffects.ts`に計算関数追加（例: `calculateCurseDamage`）
+- `turnProcessor.ts`でターン開始時にダメージ計算・適用
+- `BattleContainer.tsx`でダメージ処理関数とメッセージ表示
+- デバフ扱いの場合: `cleanseEffectFilter`に追加、Hellfireなど関連技にも追加
+- アイコン: **必須**（持続効果として表示）
+
 ---
 
 ## トラブルシューティング
@@ -425,6 +678,21 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
 → `maxUses`が正しく設定されているか確認
 → バリアント定義の`id`が型定義と一致しているか確認
 
+### 持続ダメージが適用されない
+→ `calculateXXXDamage`関数を`turnProcessor.ts`にインポートしたか確認
+→ ダメージ計算処理を`processTurn`の適切な位置に追加したか確認
+→ `TurnResult`に専用フィールドを追加したか確認
+
+### 技名が色付けされない / HTMLタグがそのまま表示される
+→ `TypewriterText`コンポーネントはHTML対応済みなので正しくレンダリングされるはず
+→ `<span>`タグの記述が正しいか確認（閉じタグ漏れなど）
+→ `buildTurnMessages`の`options`に`playerEmotion`, `enemyEmotion`を渡しているか確認
+
+### アイコンが表示されない
+→ `ICON_CONFIG`に追加したか確認
+→ アイコンコンポーネントを正しくインポートしたか確認
+→ `SpecialEffectType`と`ICON_CONFIG`のキーが一致しているか確認
+
 ---
 
 ## 参考実装例
@@ -437,7 +705,16 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
 - コミット: `11f0945`, `95fa2f0`
 - 永続状態、UIメッセージ、継続効果の全てを含む
 
+### 持続ダメージの例: Terror - 呪い
+- コミット: `5a69945`
+- 割合ダメージ、デバフ扱い、アイコン表示、技名色付けを含む
+
 ---
 
 ## 更新履歴
 - 2025-11-10: 初版作成（コメントブースト実装経験を元に作成）
+- 2025-11-10: セクション6追加（技名色付け表示のHTMLタグ対応）
+- 2025-11-10: セクション8追加（持続ダメージ効果の実装手順）
+- 2025-11-10: チェックリスト追加（持続ダメージ技の場合）
+- 2025-11-10: トラブルシューティング追加（色付け、アイコン関連）
+- 2025-11-10: パターン5追加（持続ダメージ効果）
