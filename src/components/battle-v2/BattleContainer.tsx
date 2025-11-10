@@ -1384,7 +1384,7 @@ export function BattleContainer() {
                 {/* 2本のファンゲージ（左右対称配置） */}
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center gap-0 pointer-events-none">
                   {/* プレイヤーゲージ（左・ピンク） */}
-                  <div className="relative w-[56px] h-[140%]">
+                  <div className="relative w-[50px] h-[140%]">
                     <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-pink-500 bg-black/50 shadow-[0_0_30px_rgba(236,72,153,0.45)] overflow-hidden">
                       <div className="absolute inset-0 flex flex-col justify-end">
                         <div
@@ -1404,7 +1404,7 @@ export function BattleContainer() {
                   </div>
 
                   {/* 敵ゲージ（右・シアン） */}
-                  <div className="relative w-[56px] h-[140%]">
+                  <div className="relative w-[50px] h-[140%]">
                     <div className="absolute inset-0 rotate-[-15deg] rounded-lg border-2 border-cyan-400 bg-black/50 shadow-[0_0_30px_rgba(34,211,238,0.45)] overflow-hidden">
                       <div className="absolute inset-0 flex flex-col justify-end">
                         <div

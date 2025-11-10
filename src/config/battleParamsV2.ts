@@ -35,8 +35,8 @@ export const DAMAGE_CONFIG = {
   /** コメント1つあたりの補正（+20%） */
   commentBonusPerCount: 0.2,
 
-  /** ファン率の最大補正（ファン率100%で+100% = 2倍） */
-  fanRateMaxBonus: 1.0,
+  /** ファン率の最大補正（ファン率100%で+200% = 3倍） */
+  fanRateMaxBonus: 2.0,
 
   /** 相性補正 */
   matchupBonus: {

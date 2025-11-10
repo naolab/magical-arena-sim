@@ -14,8 +14,8 @@ import type { BattleParamsV2 } from '@/contexts/BattleParamsV2Context';
 /** コメント1つあたりの補正（+20%） */
 const COMMENT_BONUS_PER_COUNT = 0.2;
 
-/** ファン率の最大補正（ファン率100%で+100% = 2倍） */
-const FAN_RATE_MAX_BONUS = 1.0;
+/** ファン率の最大補正（ファン率100%で+200% = 3倍） */
+const FAN_RATE_MAX_BONUS = 2.0;
 
 // ========================================
 // Damage Calculation
