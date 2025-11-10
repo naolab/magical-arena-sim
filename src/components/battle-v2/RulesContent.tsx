@@ -17,16 +17,16 @@ export function RulesContent() {
         </p>
         <ul className="space-y-2 text-white/80">
           <li>
-            <span className="font-bold text-red-400">RAGE (怒り)</span> - 追加ダメージや高火力攻撃
+            <span className="font-bold" style={{ color: '#ef4444' }}>RAGE (怒り)</span> - 追加ダメージや高火力攻撃
           </li>
           <li>
-            <span className="font-bold text-purple-400">TERROR (恐怖)</span> - デバフ・毒・呪いで敵を弱体化
+            <span className="font-bold" style={{ color: '#22c55e' }}>TERROR (恐怖)</span> - デバフ・毒・呪いで敵を弱体化
           </li>
           <li>
-            <span className="font-bold text-blue-400">GRIEF (悲しみ)</span> - HP回復・吸収・リジェネ
+            <span className="font-bold" style={{ color: '#3b82f6' }}>GRIEF (悲しみ)</span> - HP回復・吸収・リジェネ
           </li>
           <li>
-            <span className="font-bold text-pink-400">ECSTASY (歓喜)</span> - 自己バフ・コメント操作
+            <span className="font-bold" style={{ color: '#eab308' }}>ECSTASY (歓喜)</span> - 自己バフ・コメント操作
           </li>
         </ul>
       </section>
@@ -36,20 +36,20 @@ export function RulesContent() {
         <p className="text-white/80 mb-2">じゃんけんのように感情同士には相性があります。相性勝ちするとダメージ増加。</p>
         <div className="text-white/80 space-y-1 text-sm">
           <p>
-            <span className="font-bold text-red-400">RAGE</span> は{' '}
-            <span className="font-bold text-purple-400">TERROR</span> に強い
+            <span className="font-bold" style={{ color: '#ef4444' }}>RAGE</span> は{' '}
+            <span className="font-bold" style={{ color: '#22c55e' }}>TERROR</span> に強い
           </p>
           <p>
-            <span className="font-bold text-purple-400">TERROR</span> は{' '}
-            <span className="font-bold text-blue-400">GRIEF</span> に強い
+            <span className="font-bold" style={{ color: '#22c55e' }}>TERROR</span> は{' '}
+            <span className="font-bold" style={{ color: '#3b82f6' }}>GRIEF</span> に強い
           </p>
           <p>
-            <span className="font-bold text-blue-400">GRIEF</span> は{' '}
-            <span className="font-bold text-pink-400">ECSTASY</span> に強い
+            <span className="font-bold" style={{ color: '#3b82f6' }}>GRIEF</span> は{' '}
+            <span className="font-bold" style={{ color: '#eab308' }}>ECSTASY</span> に強い
           </p>
           <p>
-            <span className="font-bold text-pink-400">ECSTASY</span> は{' '}
-            <span className="font-bold text-red-400">RAGE</span> に強い
+            <span className="font-bold" style={{ color: '#eab308' }}>ECSTASY</span> は{' '}
+            <span className="font-bold" style={{ color: '#ef4444' }}>RAGE</span> に強い
           </p>
         </div>
       </section>

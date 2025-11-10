@@ -1,16 +1,14 @@
 'use client';
 
-import { RulesContent as RulesContentV2 } from '@/components/battle-v2/RulesContent';
-import { RulesContentV1 } from '@/components/rules/RulesContentV1';
+import { UpdatesContent } from './UpdatesContent';
 import { Button } from './ui/Button';
 
-interface RulesModalProps {
+interface UpdatesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  version?: 'v1' | 'v2';
 }
 
-export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps) {
+export function UpdatesModal({ isOpen, onClose }: UpdatesModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -22,7 +20,7 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
 
         <div className="relative z-10 flex h-full min-h-0 flex-col">
           <div className="mb-6 flex shrink-0 items-center justify-between">
-            <h2 className="text-3xl font-black text-white">ルール</h2>
+            <h2 className="text-3xl font-black text-white">アップデート履歴</h2>
             <button
               onClick={onClose}
               className="text-white/60 hover:text-white transition text-2xl leading-none"
@@ -32,7 +30,7 @@ export function RulesModal({ isOpen, onClose, version = 'v1' }: RulesModalProps)
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-6">
-            {version === 'v2' ? <RulesContentV2 /> : <RulesContentV1 />}
+            <UpdatesContent />
           </div>
 
           <div className="mt-4 border-t border-white/10 pt-4 shrink-0">
