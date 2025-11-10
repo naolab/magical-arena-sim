@@ -930,6 +930,24 @@ function triggerSpecialEffects(params: {
       } else if (selectedVariant === 'limit_heal') {
         result.healing = variantDef.magnitude;
         result.commentLimitReduction = 1;
+      } else if (selectedVariant === 'debuff_heal') {
+        const perDebuff =
+          (variantDef.metadata?.perDebuff as number | undefined) ?? 50;
+        const maxStack =
+          (variantDef.metadata?.maxStack as number | undefined) ?? 5;
+        const activeEffects =
+          target === 'player' ? attacker.activeEffects : defender.activeEffects;
+        const debuffCount = activeEffects.filter(
+          (effect) =>
+            effect.target === target &&
+            (effect.type === 'debuff' ||
+              effect.type === 'poison' ||
+              effect.type === 'curse' ||
+              effect.type === 'fan_block' ||
+              effect.type === 'damage_amp')
+        ).length;
+        const stacks = Math.min(debuffCount, maxStack);
+        result.healing = variantDef.magnitude + stacks * perDebuff;
       }
       break;
 

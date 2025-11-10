@@ -39,7 +39,13 @@ export type TerrorVariant =
   | 'damage_amplify';
 
 /** Griefのバリアント */
-export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen' | 'limit_heal';
+export type GriefVariant =
+  | 'drain'
+  | 'desperate'
+  | 'cleanse_heal'
+  | 'regen'
+  | 'limit_heal'
+  | 'debuff_heal';
 
 /** Ecstasyのバリアント */
 export type EcstasyVariant =

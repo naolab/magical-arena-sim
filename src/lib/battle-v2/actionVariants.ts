@@ -245,6 +245,20 @@ export const GRIEF_VARIANTS: Record<GriefVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 5,
   },
+  debuff_heal: {
+    id: 'debuff_heal',
+    name: 'ペインコンバージョン',
+    nameJa: 'ペインコンバージョン',
+    description: '自分にかかったデバフ1つにつき+50回復（基礎200回復, 上限5個）',
+    effectType: 'drain',
+    magnitude: 200,
+    hasAttack: false,
+    maxUses: 10,
+    metadata: {
+      perDebuff: 50,
+      maxStack: 5,
+    },
+  },
 };
 
 // ========================================
