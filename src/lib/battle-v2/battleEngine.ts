@@ -91,6 +91,8 @@ export function initBattle(params?: BattleParamsV2): BattleState {
     },
     pendingSuperchatTurn: false,
     permanentCommentBoost: 0,
+    superchatBoostTurns: 0,
+    superchatBoostMultiplier: 1,
   };
 }
 
@@ -130,8 +132,9 @@ export function executePlayerAction(
 
   // 2. 新しいコメントを生成して追加（永続的なコメントブーストを適用）
   const commentCount = updatedState.config.commentsPerTurn + (updatedState.permanentCommentBoost ?? 0);
+  const superchatMultiplier = updatedState.superchatBoostMultiplier ?? 1;
   const newComments = generateComments(
-    { count: commentCount },
+    { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
   updatedState = {
@@ -161,8 +164,9 @@ export function executeSuperchatTurn(
 
   // 永続的なコメントブーストを適用
   const commentCount = updatedState.config.commentsPerTurn + (updatedState.permanentCommentBoost ?? 0);
+  const superchatMultiplier = updatedState.superchatBoostMultiplier ?? 1;
   const newComments = generateComments(
-    { count: commentCount },
+    { count: commentCount, superchatMultiplier },
     updatedState.currentTurn
   );
   updatedState = {

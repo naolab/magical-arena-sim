@@ -36,7 +36,13 @@ export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block';
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
 
 /** Ecstasyのバリアント */
-export type EcstasyVariant = 'inspire' | 'convert' | 'comment_boost' | 'refresh' | 'dual_refresh';
+export type EcstasyVariant =
+  | 'inspire'
+  | 'convert'
+  | 'comment_boost'
+  | 'refresh'
+  | 'dual_refresh'
+  | 'superchat_boost';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -87,6 +93,7 @@ export interface Comment {
 export interface CommentGenerationParams {
   count: number; // 生成数
   emotionWeights?: Record<EmotionType, number>; // 感情の重み（省略時は均等）
+  superchatMultiplier?: number; // スパチャ確率の倍率
 }
 
 /** コメント変換イベント */
@@ -111,7 +118,8 @@ export type SpecialEffectType =
   | 'curse'         // Terror: 呪い（割合持続ダメージ）
   | 'cleanse'       // Grief: デバフ解除
   | 'regen'         // Grief: リジェネ（持続回復）
-  | 'fan_block';    // Terror: ファン増加阻害
+  | 'fan_block'     // Terror: ファン増加阻害
+  | 'superchat_boost'; // Ecstasy: スパチャ率上昇
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -231,6 +239,8 @@ export interface BattleState {
   winner: 'player' | 'enemy' | 'draw' | null; // 勝者
   config: BattleParamsV2; // バトル設定パラメータ
   pendingSuperchatTurn: boolean; // スパチャ追撃待機
+  superchatBoostTurns?: number; // スパチャ確率上昇ターン残数
+  superchatBoostMultiplier?: number; // スパチャ確率の倍率
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;

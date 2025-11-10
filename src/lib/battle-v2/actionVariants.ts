@@ -259,6 +259,17 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     hasAttack: false,
     maxUses: 20,
   },
+  superchat_boost: {
+    id: 'superchat_boost',
+    name: 'ミラージュスパーク',
+    nameJa: 'ミラージュスパーク',
+    description: '3ターンの間、スパチャ出現率が2倍になる祝祭の波を呼び込む',
+    effectType: 'buff',
+    magnitude: 2,
+    duration: 3,
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================

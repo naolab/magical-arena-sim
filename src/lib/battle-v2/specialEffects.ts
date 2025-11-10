@@ -371,6 +371,17 @@ export function applyEcstasyRefreshCommentsEffect(
 }
 
 /**
+ * Ecstasy Superchat Boost: スパチャ確率を上げるバフ
+ */
+export function applyEcstasySuperchatBoostEffect(
+  variant: { duration?: number; magnitude: number }
+): { duration: number; multiplier: number } {
+  const duration = variant.duration ?? 3;
+  const multiplier = variant.magnitude || 2;
+  return { duration, multiplier };
+}
+
+/**
  * Ecstasy Dual Refresh: 2属性のみでランダム配置（スパチャなし）
  */
 export function applyEcstasyDualRefreshCommentsEffect(
@@ -498,6 +509,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: リジェネ (${effect.magnitude}回復/ターン, 残り${effect.duration}ターン)`;
     case 'fan_block':
       return `${emotionName}: ファン増加阻害 (残り${effect.duration}ターン)`;
+    case 'superchat_boost':
+      return `${emotionName}: スパチャ率上昇 (残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':

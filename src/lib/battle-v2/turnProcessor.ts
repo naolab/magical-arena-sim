@@ -34,6 +34,7 @@ import {
   applyEcstasyCommentBoostEffect,
   applyEcstasyRefreshCommentsEffect,
   applyEcstasyDualRefreshCommentsEffect,
+  applyEcstasySuperchatBoostEffect,
   applyGriefRegenEffect,
   updateEffectDurations,
   removeExpiredEffects,
@@ -64,6 +65,15 @@ export function processTurn(
 ): BattleState {
   const turnNumber = state.currentTurn + 1;
   const isSuperchatTurn = options?.isSuperchatTurn ?? false;
+  const shouldTickSuperchatBoost = !isSuperchatTurn;
+  let superchatBoostTurns = state.superchatBoostTurns ?? 0;
+  let superchatBoostMultiplier = state.superchatBoostMultiplier ?? 1;
+  if (shouldTickSuperchatBoost && superchatBoostTurns > 0) {
+    superchatBoostTurns -= 1;
+    if (superchatBoostTurns === 0) {
+      superchatBoostMultiplier = 1;
+    }
+  }
 
   const createEmptySkillUses = () => ({
     rage: 0,
@@ -202,6 +212,13 @@ export function processTurn(
   let updatedPermanentCommentBoost = state.permanentCommentBoost ?? 0;
   if (playerSpecialEffects.commentBoost && playerSpecialEffects.commentBoost > 0) {
     updatedPermanentCommentBoost += playerSpecialEffects.commentBoost;
+  }
+
+  if (playerSpecialEffects.superchatBoost) {
+    superchatBoostTurns = playerSpecialEffects.superchatBoost.duration;
+    superchatBoostMultiplier = playerSpecialEffects.superchatBoost.multiplier;
+  } else if (superchatBoostTurns === 0) {
+    superchatBoostMultiplier = Math.min(superchatBoostMultiplier, 1);
   }
 
   // 5. 敵側の特殊効果を発動
@@ -514,6 +531,8 @@ export function processTurn(
     turnHistory: [...state.turnHistory, turnResult],
     pendingSuperchatTurn: earnedSuperchatTurn,
     permanentCommentBoost: updatedPermanentCommentBoost,
+    superchatBoostTurns,
+    superchatBoostMultiplier,
   };
 }
 
@@ -600,6 +619,10 @@ interface SpecialEffectResult {
   commentBoost?: number; // コメント追加量の増加値
   cleansed?: boolean; // デバフが全て解除されたか
   selfDamage?: number; // 自傷ダメージ
+  superchatBoost?: {
+    duration: number;
+    multiplier: number;
+  };
 }
 
 /**
@@ -759,6 +782,15 @@ function triggerSpecialEffects(params: {
           result.convertedComments = dualRefresh.comments;
           result.commentRefresh = dualRefresh;
         }
+      } else if (selectedVariant === 'superchat_boost') {
+        result.playerEffects.push({
+          type: 'superchat_boost',
+          emotion,
+          duration: variantDef.duration ?? 3,
+          magnitude: variantDef.magnitude,
+          target,
+        });
+        result.superchatBoost = applyEcstasySuperchatBoostEffect(variantDef);
       }
       break;
   }
