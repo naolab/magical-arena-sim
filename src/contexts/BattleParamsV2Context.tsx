@@ -28,6 +28,10 @@ export interface BattleParamsV2 {
   rageExtraDamageRatio: number;
   terrorDebuffMagnitude: number;
   terrorDebuffDuration: number;
+  terrorPoisonMagnitude: number;
+  terrorPoisonDuration: number;
+  terrorCurseMagnitude: number;
+  terrorCurseDuration: number;
   griefDrainRatio: number;
   ecstasyBuffMagnitude: number;
   ecstasyBuffDuration: number;
@@ -73,6 +77,10 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   rageExtraDamageRatio: 0.5,
   terrorDebuffMagnitude: 20,
   terrorDebuffDuration: 2,
+  terrorPoisonMagnitude: 100,
+  terrorPoisonDuration: 3,
+  terrorCurseMagnitude: 5,
+  terrorCurseDuration: 3,
   griefDrainRatio: 0.4,
   ecstasyBuffMagnitude: 30,
   ecstasyBuffDuration: 2,
