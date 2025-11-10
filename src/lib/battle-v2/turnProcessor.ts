@@ -33,6 +33,7 @@ import {
   applyEcstasyConvertEffect,
   applyEcstasyCommentBoostEffect,
   applyEcstasyRefreshCommentsEffect,
+  applyEcstasyDualRefreshCommentsEffect,
   applyGriefRegenEffect,
   updateEffectDurations,
   removeExpiredEffects,
@@ -491,6 +492,7 @@ export function processTurn(
       ? {
           count: commentRefreshData.refreshedCommentIds.length,
           comments: commentRefreshData.comments,
+          limitedEmotions: commentRefreshData.limitedEmotions,
         }
       : undefined,
     message: generateTurnMessage(judgement, playerAction, enemyAction, playerPoisonDamage, enemyPoisonDamage),
@@ -750,6 +752,12 @@ function triggerSpecialEffects(params: {
         if (refresh) {
           result.convertedComments = refresh.comments;
           result.commentRefresh = refresh;
+        }
+      } else if (selectedVariant === 'dual_refresh') {
+        const dualRefresh = applyEcstasyDualRefreshCommentsEffect(extendedParams);
+        if (dualRefresh) {
+          result.convertedComments = dualRefresh.comments;
+          result.commentRefresh = dualRefresh;
         }
       }
       break;

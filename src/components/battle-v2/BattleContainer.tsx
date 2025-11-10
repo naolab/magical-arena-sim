@@ -327,16 +327,6 @@ function buildTurnMessages(
     });
   }
 
-  if (result.commentRefresh && result.commentRefresh.count > 0) {
-    messages.push(
-      createMessage(
-        'system',
-        `コメントがリフレッシュされ、${result.commentRefresh.count}件がランダムに入れ替わった！`,
-        () => handlers.onCommentRefresh?.(result.commentRefresh!.comments)
-      )
-    );
-  }
-
   messages.push(
     ...buildEffectMessages(specialEffects.player, 'player', handlers.onPlayerEffect)
   );
@@ -346,6 +336,23 @@ function buildTurnMessages(
       createMessage(
         'system',
         `コメント追加量が+${result.commentBoostApplied}増加した！（現在+${result.currentCommentBoost}）`
+      )
+    );
+  }
+
+  if (result.commentRefresh && result.commentRefresh.count > 0) {
+    const limited =
+      result.commentRefresh &&
+      'limitedEmotions' in result.commentRefresh &&
+      result.commentRefresh.limitedEmotions &&
+      result.commentRefresh.limitedEmotions.length > 0
+        ? `（${result.commentRefresh.limitedEmotions.map((emotion) => getEmotionName(emotion)).join(' / ')}のみ）`
+        : '';
+    messages.push(
+      createMessage(
+        'system',
+        `コメントがシャッフルされ、${result.commentRefresh.count}件が再配置された！${limited}`,
+        () => handlers.onCommentRefresh?.(result.commentRefresh!.comments)
       )
     );
   }

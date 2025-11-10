@@ -36,7 +36,7 @@ export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block';
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
 
 /** Ecstasyのバリアント */
-export type EcstasyVariant = 'inspire' | 'convert' | 'comment_boost' | 'refresh';
+export type EcstasyVariant = 'inspire' | 'convert' | 'comment_boost' | 'refresh' | 'dual_refresh';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -207,6 +207,7 @@ export interface TurnResult {
   commentRefresh?: {
     count: number;
     comments: Comment[];
+    limitedEmotions?: EmotionType[];
   }; // コメントリフレッシュイベント
   superchatAwarded?: boolean; // スパチャ追撃獲得
   commentBoostApplied?: number; // このターンで増加したコメントブースト量

@@ -249,6 +249,16 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     hasAttack: false,
     maxUses: 20,
   },
+  dual_refresh: {
+    id: 'dual_refresh',
+    name: 'デュアルシャッフル',
+    nameJa: 'デュアルシャッフル',
+    description: '現在のコメントをすべてランダムな2属性に付け替える（スパチャは含めない）',
+    effectType: 'buff',
+    magnitude: 0,
+    hasAttack: false,
+    maxUses: 20,
+  },
 };
 
 // ========================================

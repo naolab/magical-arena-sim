@@ -37,6 +37,7 @@ export interface CommentConversionResult {
 export interface CommentRefreshResult {
   comments: Comment[];
   refreshedCommentIds: string[];
+  limitedEmotions?: EmotionType[];
 }
 
 // ========================================
@@ -366,6 +367,36 @@ export function applyEcstasyRefreshCommentsEffect(
   return {
     comments: refreshed,
     refreshedCommentIds: refreshed.map((comment) => comment.id),
+  };
+}
+
+/**
+ * Ecstasy Dual Refresh: 2属性のみでランダム配置（スパチャなし）
+ */
+export function applyEcstasyDualRefreshCommentsEffect(
+  params: ExtendedEffectTriggerParams
+): CommentRefreshResult | null {
+  const { comments } = params;
+  if (!comments || comments.length === 0) return null;
+
+  const emotions: EmotionType[] = ['rage', 'terror', 'grief', 'ecstasy'];
+  const shuffled = [...emotions].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, 2);
+
+  const refreshed = comments.map((comment) => {
+    const newEmotion = selected[Math.floor(Math.random() * selected.length)];
+    return {
+      ...comment,
+      emotion: newEmotion,
+      text: getRandomCommentTextForEmotion(newEmotion),
+      isSuperchat: false,
+    };
+  });
+
+  return {
+    comments: refreshed,
+    refreshedCommentIds: refreshed.map((comment) => comment.id),
+    limitedEmotions: selected,
   };
 }
 
