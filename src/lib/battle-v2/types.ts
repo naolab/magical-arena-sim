@@ -29,7 +29,7 @@ export type TerrorVariant = 'weaken' | 'poison';
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal';
 
 /** Ecstasyのバリアント */
-export type EcstasyVariant = 'inspire' | 'convert';
+export type EcstasyVariant = 'inspire' | 'convert' | 'comment_boost';
 
 /** 全てのアクションバリアント */
 export type ActionVariant =
@@ -100,8 +100,8 @@ export type SpecialEffectType =
   | 'debuff'        // Terror: デバフ（攻撃力低下）
   | 'drain'         // Grief: HP吸収
   | 'buff'          // Ecstasy: バフ（攻撃力上昇）
-  | 'poison';       // Terror: 毒（持続ダメージ）
-  | 'cleanse';
+  | 'poison'        // Terror: 毒（持続ダメージ）
+  | 'cleanse';      // Grief: デバフ解除
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -211,6 +211,7 @@ export interface BattleState {
     player: SkillUsageMap;
     enemy: SkillUsageMap;
   };
+  permanentCommentBoost: number; // 永続的なコメント追加量補正（+1, +2など）
 }
 
 // ========================================

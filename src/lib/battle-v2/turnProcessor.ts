@@ -27,6 +27,7 @@ import {
   applyTerrorPoisonEffect,
   applyGriefDesperateEffect,
   applyEcstasyConvertEffect,
+  applyEcstasyCommentBoostEffect,
   updateEffectDurations,
   removeExpiredEffects,
   calculatePoisonDamage,
@@ -173,6 +174,12 @@ export function processTurn(
       count: playerSpecialEffects.commentConversion.count,
       commentIds: playerSpecialEffects.commentConversion.convertedCommentIds,
     });
+  }
+
+  // コメントブーストがあれば永続的に適用
+  let updatedPermanentCommentBoost = state.permanentCommentBoost ?? 0;
+  if (playerSpecialEffects.commentBoost && playerSpecialEffects.commentBoost > 0) {
+    updatedPermanentCommentBoost += playerSpecialEffects.commentBoost;
   }
 
   // 5. 敵側の特殊効果を発動
@@ -415,6 +422,7 @@ export function processTurn(
     skillUses: updatedSkillUses,
     turnHistory: [...state.turnHistory, turnResult],
     pendingSuperchatTurn: earnedSuperchatTurn,
+    permanentCommentBoost: updatedPermanentCommentBoost,
   };
 }
 
@@ -490,6 +498,7 @@ interface SpecialEffectResult {
   convertedComments?: Comment[]; // コメント変換後の配列
   commentConversion?: CommentConversionSummary;
   extraDamageMultiplier?: number;
+  commentBoost?: number; // コメント追加量の増加値
 }
 
 /**
@@ -603,6 +612,8 @@ function triggerSpecialEffects(params: {
             count: conversion.convertedCommentIds.length,
           };
         }
+      } else if (selectedVariant === 'comment_boost') {
+        result.commentBoost = applyEcstasyCommentBoostEffect(variantDef);
       }
       break;
   }

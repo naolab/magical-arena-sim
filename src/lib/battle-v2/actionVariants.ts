@@ -168,6 +168,16 @@ export const ECSTASY_VARIANTS: Record<EcstasyVariant, ActionVariantDefinition> =
     hasAttack: false, // 変換のみ
     maxUses: 20,
   },
+  comment_boost: {
+    id: 'comment_boost',
+    name: 'コメントブースト',
+    nameJa: 'コメントブースト',
+    description: '毎ターンのコメント追加量を永続的に+1（5回まで使用可能）',
+    effectType: 'buff',
+    magnitude: 1, // コメント追加量+1
+    hasAttack: false, // 効果のみ
+    maxUses: 5,
+  },
 };
 
 // ========================================

@@ -226,6 +226,17 @@ export function applyEcstasyConvertEffect(
   };
 }
 
+/**
+ * Ecstasy - コメントブースト効果: 永続的にコメント追加量を増やす
+ * @param variant バリアント定義
+ * @returns コメント追加量の増加値
+ */
+export function applyEcstasyCommentBoostEffect(
+  variant: { magnitude: number }
+): number {
+  return variant.magnitude; // 追加量（例: +1）
+}
+
 // ========================================
 // Effect Management
 // ========================================
