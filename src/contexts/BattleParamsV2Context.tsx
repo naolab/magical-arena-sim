@@ -93,7 +93,7 @@ export const DEFAULT_BATTLE_PARAMS_V2: BattleParamsV2 = {
   },
 
   // 敵キャラクター
-  enemyCharacterId: 'hitomi',
+  enemyCharacterId: 'marina',
 
   // ファンシステム
   fanRateChangeOnWin: 0.1,
