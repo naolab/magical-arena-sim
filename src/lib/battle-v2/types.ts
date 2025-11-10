@@ -30,7 +30,13 @@ export type RageVariant =
   | 'blood_pact';
 
 /** Terrorのバリアント */
-export type TerrorVariant = 'weaken' | 'poison' | 'curse' | 'fan_block' | 'chaotic_plague';
+export type TerrorVariant =
+  | 'weaken'
+  | 'poison'
+  | 'curse'
+  | 'fan_block'
+  | 'chaotic_plague'
+  | 'damage_amplify';
 
 /** Griefのバリアント */
 export type GriefVariant = 'drain' | 'desperate' | 'cleanse_heal' | 'regen';
@@ -121,7 +127,8 @@ export type SpecialEffectType =
   | 'cleanse'       // Grief: デバフ解除
   | 'regen'         // Grief: リジェネ（持続回復）
   | 'fan_block'     // Terror: ファン増加阻害
-  | 'superchat_boost'; // Ecstasy: スパチャ率上昇
+  | 'superchat_boost' // Ecstasy: スパチャ率上昇
+  | 'damage_amp';   // 与ダメ倍率アップ（対象は被ダメ増加）
 
 /** 特殊効果 */
 export interface SpecialEffect {
@@ -247,10 +254,6 @@ export interface BattleState {
     player: number;
     enemy: number;
   }; // 次ターンの攻撃力倍率
-  nextDamageMultiplier?: {
-    player: number;
-    enemy: number;
-  }; // 次ターンの総与ダメ倍率
   skillUses: {
     player: SkillUsageMap;
     enemy: SkillUsageMap;

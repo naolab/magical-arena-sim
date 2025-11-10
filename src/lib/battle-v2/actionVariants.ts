@@ -163,6 +163,20 @@ export const TERROR_VARIANTS: Record<TerrorVariant, ActionVariantDefinition> = {
     hasAttack: false,
     maxUses: 20,
   },
+  damage_amplify: {
+    id: 'damage_amplify',
+    name: 'アゴニープロミス',
+    nameJa: 'アゴニープロミス',
+    description: '敵が受ける全ダメージを3ターンの間+20%にする（重ね掛け不可）',
+    effectType: 'debuff',
+    magnitude: 20,
+    duration: 3,
+    hasAttack: false,
+    maxUses: 20,
+    metadata: {
+      damageMultiplier: 1.2,
+    },
+  },
 };
 
 // ========================================

@@ -22,6 +22,7 @@ const ICON_CONFIG: Partial<Record<SpecialEffect['type'], IconConfig>> = {
   regen: { color: '#38bdf8', Icon: RegenIcon }, // 回復っぽい水色
   fan_block: { color: '#16a34a', Icon: FanBlockIcon }, // ファン阻害: グリーン系
   superchat_boost: { color: '#ec4899', Icon: SparkIcon }, // スパチャ率UP
+  damage_amp: { color: '#ef4444', Icon: AttackDownIcon }, // 被ダメ増加
 };
 
 export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
@@ -70,7 +71,9 @@ export function ActiveEffectIcons({ effects }: ActiveEffectIconsProps) {
                             ? 'ファン阻害効果'
                             : effect.type === 'superchat_boost'
                               ? 'スパチャ率UP'
-                              : '特殊効果'}
+                              : effect.type === 'damage_amp'
+                                ? '被ダメ増加'
+                                : '特殊効果'}
                 </p>
                 <p className="text-white/90 leading-relaxed">{getEffectDescription(effect)}</p>
               </div>

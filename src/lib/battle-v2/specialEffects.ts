@@ -511,7 +511,14 @@ export function checkActiveBuffsDebuffs(effects: SpecialEffect[]): {
 } {
   return {
     hasBuff: effects.some((e) => e.type === 'buff' || e.type === 'superchat_boost'),
-    hasDebuff: effects.some((e) => e.type === 'debuff' || e.type === 'fan_block'),
+    hasDebuff: effects.some(
+      (e) =>
+        e.type === 'debuff' ||
+        e.type === 'fan_block' ||
+        e.type === 'poison' ||
+        e.type === 'curse' ||
+        e.type === 'damage_amp'
+    ),
   };
 }
 
@@ -545,6 +552,8 @@ export function getEffectDescription(effect: SpecialEffect): string {
       return `${emotionName}: ファン増加阻害 (残り${effect.duration}ターン)`;
     case 'superchat_boost':
       return `${emotionName}: スパチャ率上昇 (残り${effect.duration}ターン)`;
+    case 'damage_amp':
+      return `${emotionName}: 与ダメージ+${effect.magnitude}% (残り${effect.duration}ターン)`;
     case 'extra_damage':
       return `${emotionName}: 追加ダメージ`;
     case 'drain':

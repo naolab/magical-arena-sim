@@ -48,6 +48,16 @@ import {
 } from './specialEffects';
 import { getVariantDefinition, DEFAULT_VARIANTS } from './actionVariants';
 
+function getDamageTakenMultiplierFromEffects(effects?: SpecialEffect[]): number {
+  if (!effects || effects.length === 0) return 1;
+  const relevant = effects.filter((effect) => effect.type === 'damage_amp');
+  if (relevant.length === 0) return 1;
+  return relevant.reduce(
+    (total, effect) => total * Math.max(0, 1 + (effect.magnitude ?? 0) / 100),
+    1
+  );
+}
+
 // ========================================
 // Turn Processing
 // ========================================
@@ -78,9 +88,11 @@ export function processTurn(
   }
   const currentAttackMultiplier = state.nextAttackMultiplier ?? { player: 1, enemy: 1 };
   let nextAttackMultiplierState = { player: 1, enemy: 1 };
-  const currentDamageMultiplier = state.nextDamageMultiplier ?? { player: 1, enemy: 1 };
+  const currentDamageTakenMultiplier = {
+    player: getDamageTakenMultiplierFromEffects(state.player.activeEffects),
+    enemy: getDamageTakenMultiplierFromEffects(state.enemy.activeEffects),
+  };
   let nextDamageMultiplierState = { player: 1, enemy: 1 };
-
   const createEmptySkillUses = () => ({
     rage: 0,
     terror: 0,
@@ -125,7 +137,6 @@ export function processTurn(
         variant: playerVariantDef,
         attackerState: state.player,
         attackMultiplier: currentAttackMultiplier.player ?? 1,
-        damageMultiplier: currentDamageMultiplier.player ?? 1,
       })
     : {
         damage: 0,
@@ -144,7 +155,6 @@ export function processTurn(
         variant: enemyVariantDef,
         attackerState: state.enemy,
         attackMultiplier: currentAttackMultiplier.enemy ?? 1,
-        damageMultiplier: currentDamageMultiplier.enemy ?? 1,
       })
     : {
         damage: 0,
@@ -171,13 +181,18 @@ export function processTurn(
     config: state.config,
   });
 
+  const enemyDamageTakenMultiplier = getDamageTakenMultiplierFromEffects(
+    updatedEnemy.activeEffects
+  );
+  const playerDamageTakenMultiplier = getDamageTakenMultiplierFromEffects(
+    updatedPlayer.activeEffects
+  );
+
   let playerExtraDamage = 0;
   let playerHealing = 0;
 
   if (playerSpecialEffects.extraDamage > 0) {
-    const scaledExtra = Math.round(
-      playerSpecialEffects.extraDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
-    );
+    const scaledExtra = Math.round(playerSpecialEffects.extraDamage * enemyDamageTakenMultiplier);
     playerExtraDamage = scaledExtra;
     updatedEnemy = {
       ...updatedEnemy,
@@ -242,14 +257,6 @@ export function processTurn(
     }
   }
 
-  if (playerSpecialEffects.damageCharge) {
-    if (playerSpecialEffects.damageCharge.target === 'player') {
-      nextDamageMultiplierState.player = playerSpecialEffects.damageCharge.multiplier;
-    } else {
-      nextDamageMultiplierState.enemy = playerSpecialEffects.damageCharge.multiplier;
-    }
-  }
-
   // 5. 敵側の特殊効果を発動
   let enemySpecialEffects: SpecialEffectResult;
   if (isSuperchatTurn) {
@@ -276,9 +283,7 @@ export function processTurn(
   let enemyHealing = 0;
 
   if (!isSuperchatTurn && enemySpecialEffects.extraDamage > 0) {
-    const scaledExtra = Math.round(
-      enemySpecialEffects.extraDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
-    );
+    const scaledExtra = Math.round(enemySpecialEffects.extraDamage * playerDamageTakenMultiplier);
     enemyExtraDamage = scaledExtra;
     updatedPlayer = {
       ...updatedPlayer,
@@ -304,12 +309,8 @@ export function processTurn(
   // 5.5. 毒ダメージの適用（ターン開始時の効果）
   let playerPoisonDamage = calculatePoisonDamage(updatedPlayer.activeEffects);
   let enemyPoisonDamage = calculatePoisonDamage(updatedEnemy.activeEffects);
-  playerPoisonDamage = Math.round(
-    playerPoisonDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
-  );
-  enemyPoisonDamage = Math.round(
-    enemyPoisonDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
-  );
+  playerPoisonDamage = Math.round(playerPoisonDamage * playerDamageTakenMultiplier);
+  enemyPoisonDamage = Math.round(enemyPoisonDamage * enemyDamageTakenMultiplier);
 
   console.log('[DEBUG] Poison Damage:', {
     playerActiveEffects: updatedPlayer.activeEffects,
@@ -335,12 +336,8 @@ export function processTurn(
   // 5.6. 呪いダメージの適用（ターン開始時の効果）
   let playerCurseDamage = calculateCurseDamage(updatedPlayer.activeEffects, updatedPlayer.maxHp);
   let enemyCurseDamage = calculateCurseDamage(updatedEnemy.activeEffects, updatedEnemy.maxHp);
-  playerCurseDamage = Math.round(
-    playerCurseDamage * Math.max(0, currentDamageMultiplier.enemy ?? 1)
-  );
-  enemyCurseDamage = Math.round(
-    enemyCurseDamage * Math.max(0, currentDamageMultiplier.player ?? 1)
-  );
+  playerCurseDamage = Math.round(playerCurseDamage * playerDamageTakenMultiplier);
+  enemyCurseDamage = Math.round(enemyCurseDamage * enemyDamageTakenMultiplier);
 
   if (playerCurseDamage > 0) {
     updatedPlayer = {
@@ -393,8 +390,8 @@ export function processTurn(
 
   const removeDuplicateEffects = (
     effects: ActiveEffectExtended[],
-    type: SpecialEffectType
-  ): ActiveEffectExtended[] => effects.filter((effect) => effect.type !== type);
+    types: SpecialEffectType[]
+  ): ActiveEffectExtended[] => effects.filter((effect) => !types.includes(effect.type as SpecialEffectType));
 
   const playerEffectsAfterTick = tickExistingEffects(playerEffectsBeforeTurn);
   const enemyEffectsAfterTick = tickExistingEffects(enemyEffectsBeforeTurn);
@@ -402,10 +399,13 @@ export function processTurn(
   const newPlayerEffects = annotateNewEffects(playerSpecialEffects.playerEffects);
   const newEnemyOnPlayerEffects = annotateNewEffects(enemySpecialEffects.playerEffects);
 
-  const playerEffectsAfterRemoval =
-    newPlayerEffects.some((effect) => effect.type === 'superchat_boost')
-      ? removeDuplicateEffects(playerEffectsAfterTick, 'superchat_boost')
-      : playerEffectsAfterTick;
+  const dedupTypes: SpecialEffectType[] = ['superchat_boost', 'damage_amp'];
+  const playerNeedsRemoval = [...newPlayerEffects, ...newEnemyOnPlayerEffects].some((effect) =>
+    dedupTypes.includes(effect.type as SpecialEffectType)
+  );
+  const playerEffectsAfterRemoval = playerNeedsRemoval
+    ? removeDuplicateEffects(playerEffectsAfterTick, dedupTypes)
+    : playerEffectsAfterTick;
 
   const finalPlayerEffects: ActiveEffectExtended[] = [
     ...playerEffectsAfterRemoval,
@@ -416,10 +416,12 @@ export function processTurn(
   const newEnemyEffects = annotateNewEffects(playerSpecialEffects.enemyEffects);
   const newPlayerOnEnemyEffects = annotateNewEffects(enemySpecialEffects.enemyEffects);
 
-  const enemyEffectsAfterRemoval =
-    newEnemyEffects.some((effect) => effect.type === 'superchat_boost')
-      ? removeDuplicateEffects(enemyEffectsAfterTick, 'superchat_boost')
-      : enemyEffectsAfterTick;
+  const enemyNeedsRemoval = [...newEnemyEffects, ...newPlayerOnEnemyEffects].some((effect) =>
+    dedupTypes.includes(effect.type as SpecialEffectType)
+  );
+  const enemyEffectsAfterRemoval = enemyNeedsRemoval
+    ? removeDuplicateEffects(enemyEffectsAfterTick, dedupTypes)
+    : enemyEffectsAfterTick;
 
   const finalEnemyEffects: ActiveEffectExtended[] = [
     ...enemyEffectsAfterRemoval,
@@ -440,7 +442,8 @@ export function processTurn(
         effect.type === 'debuff' ||
         effect.type === 'poison' ||
         effect.type === 'curse' ||
-        effect.type === 'fan_block') &&
+        effect.type === 'fan_block' ||
+        effect.type === 'damage_amp') &&
       effect.target === target
     );
 
@@ -617,7 +620,6 @@ interface DamageCalculationParams {
   variant?: ActionVariantDefinition;
   attackerState?: PlayerState | EnemyState;
   attackMultiplier?: number;
-  damageMultiplier?: number;
 }
 
 interface DamageResult {
@@ -639,7 +641,6 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
     variant,
     attackerState,
     attackMultiplier = 1,
-    damageMultiplier = 1,
   } = params;
 
   let baseDamage = calculateDamage({
@@ -671,7 +672,8 @@ function calculateAndApplyDamage(params: DamageCalculationParams): DamageResult 
   }
 
   baseDamage = Math.round(baseDamage * Math.max(0, attackMultiplier));
-  baseDamage = Math.round(baseDamage * Math.max(0, damageMultiplier));
+  const damageTakenMultiplier = getDamageTakenMultiplierFromEffects(defender.activeEffects);
+  baseDamage = Math.round(baseDamage * damageTakenMultiplier);
 
   const updatedDefender = {
     ...defender,
@@ -707,10 +709,6 @@ interface SpecialEffectResult {
     multiplier: number;
   };
   attackCharge?: {
-    target: 'player' | 'enemy';
-    multiplier: number;
-  };
-  damageCharge?: {
     target: 'player' | 'enemy';
     multiplier: number;
   };
@@ -768,7 +766,8 @@ function triggerSpecialEffects(params: {
             effect.type === 'debuff' ||
             effect.type === 'poison' ||
             effect.type === 'curse' ||
-            effect.type === 'fan_block'
+            effect.type === 'fan_block' ||
+            effect.type === 'damage_amp'
         ).length;
         const multiplier = 1 + debuffCount * 0.4;
         result.extraDamage = Math.max(0, Math.round(damage * (multiplier - 1)));
@@ -819,6 +818,20 @@ function triggerSpecialEffects(params: {
           result.playerEffects.push(fanBlock);
         } else {
           result.enemyEffects.push(fanBlock);
+        }
+      } else if (selectedVariant === 'chaotic_plague') {
+      } else if (selectedVariant === 'damage_amplify') {
+        const damageAmp: SpecialEffect = {
+          type: 'damage_amp',
+          emotion,
+          duration: variantDef.duration ?? 3,
+          magnitude: variantDef.magnitude ?? 20,
+          target: target === 'player' ? 'enemy' : 'player',
+        };
+        if (damageAmp.target === 'player') {
+          result.playerEffects.push(damageAmp);
+        } else {
+          result.enemyEffects.push(damageAmp);
         }
       } else if (selectedVariant === 'chaotic_plague') {
         const effects = generateChaoticPlagueEffects(
@@ -884,17 +897,18 @@ function triggerSpecialEffects(params: {
       } else if (selectedVariant === 'damage_resonance') {
         const damageMultiplier =
           (variantDef.metadata?.damageMultiplier as number | undefined) ?? 1.5;
-        result.damageCharge = {
-          target,
-          multiplier: damageMultiplier,
-        };
-        result.playerEffects.push({
-          type: 'buff',
+        const damageAmp: SpecialEffect = {
+          type: 'damage_amp',
           emotion,
           duration: variantDef.duration ?? 1,
           magnitude: variantDef.magnitude,
-          target,
-        });
+          target: target === 'player' ? 'enemy' : 'player',
+        };
+        if (damageAmp.target === 'player') {
+          result.playerEffects.push(damageAmp);
+        } else {
+          result.enemyEffects.push(damageAmp);
+        }
       } else if (selectedVariant === 'attack_charge') {
         const attackMultiplier = (variantDef.metadata?.attackMultiplier as number | undefined) ?? 2;
         result.attackCharge = {
