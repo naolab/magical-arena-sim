@@ -2,12 +2,36 @@
 
 import { useState } from 'react';
 import { useBattleParamsV2 } from '@/contexts/BattleParamsV2Context';
-import { ENEMY_CHARACTERS, getAllEnemyCharacterIds } from '@/lib/battle-v2/enemyCharacters';
+import { ENEMY_CHARACTERS, getAllEnemyCharacterIds, type AIStrategyType } from '@/lib/battle-v2/enemyCharacters';
 import Image from 'next/image';
 
 interface EnemySelectModalProps {
   onRestart?: () => void;
 }
+
+// AI戦略の表示情報
+const AI_STRATEGY_INFO: Record<AIStrategyType, { label: string; description: string; color: string }> = {
+  normal: {
+    label: '通常型',
+    description: '戦況に応じて戦略的に行動',
+    color: 'bg-gray-500/20 text-gray-300 border-gray-400/40',
+  },
+  adaptive: {
+    label: '適応型',
+    description: 'コメント状況に合わせて行動',
+    color: 'bg-purple-500/20 text-purple-300 border-purple-400/40',
+  },
+  mirror: {
+    label: 'ミラー型',
+    description: '前ターンの行動を真似る',
+    color: 'bg-blue-500/20 text-blue-300 border-blue-400/40',
+  },
+  aggressive: {
+    label: '超攻撃的',
+    description: '常に攻撃を最優先',
+    color: 'bg-red-500/20 text-red-300 border-red-400/40',
+  },
+};
 
 export function EnemySelectModal({ onRestart }: EnemySelectModalProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
@@ -92,11 +116,21 @@ export function EnemySelectModal({ onRestart }: EnemySelectModalProps = {}) {
                           {enemy.description && (
                             <p className="text-sm text-white/70 mb-3 leading-relaxed">{enemy.description}</p>
                           )}
-                          <div className="flex items-center gap-2">
-                            <div className="text-xs px-2 py-1 rounded-md bg-white/10 text-white/70 font-medium">
-                              AI戦略: {enemy.aiStrategy === 'adaptive' ? '適応型' : '通常'}
+                          {/* AI戦略バッジ */}
+                          {enemy.aiStrategy && (
+                            <div className="space-y-1.5">
+                              <div className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border font-bold ${AI_STRATEGY_INFO[enemy.aiStrategy].color}`}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <circle cx="12" cy="12" r="3" />
+                                  <path d="M12 1v6m0 6v6M1 12h6m6 0h6" />
+                                </svg>
+                                {AI_STRATEGY_INFO[enemy.aiStrategy].label}
+                              </div>
+                              <p className="text-xs text-white/50 leading-relaxed">
+                                {AI_STRATEGY_INFO[enemy.aiStrategy].description}
+                              </p>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     );
